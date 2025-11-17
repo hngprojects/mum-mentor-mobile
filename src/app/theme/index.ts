@@ -8,24 +8,24 @@ export const fontFamilies = {
   // CORRECTED: Use the exact font file name stem (HankenGrotesk-Weight)
   regular: 'HankenGrotesk-Regular', 
   medium: 'HankenGrotesk-Medium',
-  semibold: 'HankenGrotesk-SemiBold',
+  semiBold: 'HankenGrotesk-SemiBold',
   bold: 'HankenGrotesk-Bold', 
-  extrabold: 'HankenGrotesk-ExtraBold',
+  extraBold: 'HankenGrotesk-ExtraBold',
 };
 //------TYPOGRAPHY CONSTANTS ------//
 export const typography = {
   // Headings (Size / Weight)
   H1: { 
     fontSize: 36, 
-    fontFamily: fontFamilies.semibold 
+    fontFamily: fontFamilies.semiBold 
   },
   H2: { 
     fontSize: 32, 
-    fontFamily: fontFamilies.semibold 
+    fontFamily: fontFamilies.semiBold 
   },
   H3: { 
     fontSize: 24, 
-    fontFamily: fontFamilies.semibold 
+    fontFamily: fontFamilies.semiBold 
   },
 
   // Body Text
