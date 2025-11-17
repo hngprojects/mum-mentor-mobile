@@ -1,0 +1,75 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - 'claude/**'
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Unsigned Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Android APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload Unsigned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-unsigned
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload APK Build Info
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-info
+          path: |
+            android/app/build/outputs/apk/release/output-metadata.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # Placeholder for future Google Drive upload
+      # Will be configured when credentials are provided
+      # - name: Upload to Google Drive
+      #   uses: <proper-action-here>
+      #   with:
+      #     credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
+      #     file: android/app/build/outputs/apk/release/app-release.apk
