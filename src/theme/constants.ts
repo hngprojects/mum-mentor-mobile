@@ -64,7 +64,7 @@ export const colors = {
   background_soft: '#FDEEF3',    // Background Soft (For cards/surfaces, subtle off-white)
   background_subtle: '#F0F0F0',  // Background Subtle (Sections, dividers)
   background_muted: '#F7DCE4',   // Background Muted (Light pink / Muted pink background)
-  background_strong: '#F4B9C7',  // Background Strong (Black, for full contrast)
+  background_strong: '#F4B9C7',  // Background Strong (Light pink background, for strong emphasis)
 
   // Text Colors
   text_primary: '#1A1A1A',       // Primary Text (Black, very readable)
