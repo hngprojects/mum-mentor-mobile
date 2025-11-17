@@ -17,29 +17,52 @@ export const fontFamilies = {
 //------TYPOGRAPHY CONSTANTS ------//
 export const typography = {
   // Headings (Size / Weight)
-  H1: { 
-    fontSize: rfs(36), 
-    fontFamily: fontFamilies.semiBold 
+  heading1: { 
+    fontSize: rfs(28), 
+    fontFamily: fontFamilies.bold
   },
-  H2: { 
-    fontSize: rfs(32), 
-    fontFamily: fontFamilies.semiBold 
-  },
-  H3: { 
+  heading2: { 
     fontSize: rfs(24), 
+    fontFamily: fontFamilies.semiBold 
+  },
+  heading3: { 
+    fontSize: rfs(20), 
     fontFamily: fontFamilies.semiBold 
   },
 
   // Body Text
   bodyLarge: { 
-    fontSize: rfs(20), 
-    fontFamily: fontFamilies.medium 
-  },
-  bodyRegular: { 
     fontSize: rfs(18), 
+    fontFamily: fontFamilies.regular
+  },
+  bodyMedium: { 
+    fontSize: rfs(16), 
     fontFamily: fontFamilies.regular 
   },
-  
+  bodySmall: { 
+    fontSize: rfs(14), 
+    fontFamily: fontFamilies.regular 
+  },
+  labelLarge: { 
+    fontSize: rfs(16), 
+    fontFamily: fontFamilies.medium 
+  },
+  labelMedium: { 
+    fontSize: rfs(14), 
+    fontFamily: fontFamilies.medium 
+  },
+  labelSmall: { 
+    fontSize: rfs(12), 
+    fontFamily: fontFamilies.medium 
+  },
+  caption: { 
+    fontSize: rfs(12), 
+    fontFamily: fontFamilies.regular 
+  },
+  overline: { 
+    fontSize: rfs(10), 
+    fontFamily: fontFamilies.regular 
+  },
   // UI Elements
   buttonText: { 
     fontSize: rfs(16), 
