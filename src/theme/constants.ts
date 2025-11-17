@@ -60,7 +60,7 @@ export const colors = {
   secondary_extra_light: '#FFF3F7', // Secondary Extra Light (Very faint pink for mesh/subtle backgrounds)
 
   // Neutral / Backgrounds
-  background_main: '#FAFAFA',    // Background Main (Pure White)
+  background_main: '#FAFAFA',    // Background Main (Off-White)
   background_soft: '#FDEEF3',    // Background Soft (For cards/surfaces, subtle off-white)
   background_subtle: '#F0F0F0',  // Background Subtle (Sections, dividers)
   background_muted: '#F7DCE4',   // Background Muted (Light pink / Muted pink background)
