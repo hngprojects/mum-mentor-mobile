@@ -5,41 +5,49 @@
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+// App.tsx or your main navigation file (e.g., RootNavigator.tsx)
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+// 1. Corrected Import Path
+// The file is now in: src/features/authentication/screens/
+import { ResetPasswordScreen } from './src/features/authentication/screens/ResetPasswordScreen'; 
+
+// Define the Root Stack Param List (Must be at the root of your navigation)
+type RootStackParamList = {
+  // Define other screens here
+  Login: undefined; 
+  ResetPassword: { token?: string }; 
+  Home: undefined;
+};
+
+// Create the Stack Navigator
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+// Main App Component
+const App = () => {
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <Stack.Navigator 
+        // TEMPORARY: Starting here for checking work
+        initialRouteName="ResetPassword" 
+      >
+        {/* Other screens like Login and Home would go here */}
+
+        {/* 2. Register your screen */}
+        <Stack.Screen 
+          name="ResetPassword" 
+          component={ResetPasswordScreen}
+          options={{
+            title: 'Password Reset', 
+            headerBackTitleVisible: false,
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+};
 
 export default App;
