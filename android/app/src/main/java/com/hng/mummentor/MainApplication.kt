@@ -1,4 +1,4 @@
-package com.mummentormobile
+package com.hng.mummentor
 
 import android.app.Application
 import com.facebook.react.PackageList

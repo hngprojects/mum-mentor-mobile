@@ -1,4 +1,4 @@
-package com.mummentormobile
+package com.hng.mummentor
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
