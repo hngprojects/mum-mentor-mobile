@@ -16,32 +16,32 @@ export const fontFamilies = {
 export const typography = {
   // Headings (Size / Weight)
   H1: { 
-    size: 36, 
-    weight: fontFamilies.semibold 
+    fontSize: 36, 
+    fontFamily: fontFamilies.semibold 
   },
   H2: { 
-    size: 32, 
-    weight: fontFamilies.semibold 
+    fontSize: 32, 
+    fontFamily: fontFamilies.semibold 
   },
   H3: { 
-    size: 24, 
-    weight: fontFamilies.semibold 
+    fontSize: 24, 
+    fontFamily: fontFamilies.semibold 
   },
 
   // Body Text
-  body_large: { 
-    size: 20, 
-    weight: fontFamilies.medium 
+  bodyLarge: { 
+    fontSize: 20, 
+    fontFamily: fontFamilies.medium 
   },
-  body_regular: { 
-    size: 18, 
-    weight: fontFamilies.regular 
+  bodyRegular: { 
+    fontSize: 18, 
+    fontFamily: fontFamilies.regular 
   },
   
   // UI Elements
   buttonText: { 
-    size: 16, 
-    weight: fontFamilies.medium 
+    fontSize: 16, 
+    fontFamily: fontFamilies.medium 
   },
 };
 
@@ -69,8 +69,8 @@ export const colors = {
   // Text Colors
   textPrimary: '#1A1A1A',       // Primary Text (Black, very readable)
   typographyextSecondary: '#2E2E2E',     // Secondary Text / Soft Black
-  textGrey_1: '#3A3A3A',        // Grey Text 1 (Labels, placeholders)
-  textGrey_2: '#C4C4C4',        // Grey Text 2 (Lightest labels)
+  textGrey1: '#3A3A3A',        // Grey Text 1 (Labels, placeholders)
+  textGrey2: '#C4C4C4',        // Grey Text 2 (Lightest labels)
   textWhite: '#FFFFFF',         // White Text
   
   // Status & Borders
