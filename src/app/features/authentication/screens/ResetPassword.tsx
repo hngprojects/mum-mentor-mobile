@@ -6,11 +6,9 @@ import {
   StyleSheet, 
   Alert, 
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
-import { defaultTheme } from '../../../theme/constants';
-
-const { width } = Dimensions.get('window');
+import { defaultTheme } from '../../../styles/index'; // Adjust path if needed
+import { rbr, rw, rh } from '../../../styles/scaling'; // responsive scaling functions
 
 interface ResetPasswordState {
   newPassword: string;
@@ -57,7 +55,7 @@ const ResetPasswordScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         placeholder="New Password"
-        placeholderTextColor={defaultTheme.colors.text_grey_2}
+        placeholderTextColor={defaultTheme.colors.textGrey2}
         secureTextEntry
         value={passwords.newPassword}
         onChangeText={(text) => handleChange('newPassword', text)}
@@ -67,7 +65,7 @@ const ResetPasswordScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         placeholder="Confirm New Password"
-        placeholderTextColor={defaultTheme.colors.text_grey_2}
+        placeholderTextColor={defaultTheme.colors.textGrey2}
         secureTextEntry
         value={passwords.confirmPassword}
         onChangeText={(text) => handleChange('confirmPassword', text)}
@@ -92,40 +90,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: defaultTheme.spacing.lg,
-    backgroundColor: defaultTheme.colors.background_main,
+    backgroundColor: defaultTheme.colors.backgroundMain,
     justifyContent: 'center',
   },
   title: {
-    fontSize: defaultTheme.typography.H1.size,
-    fontFamily: defaultTheme.typography.H1.weight,
-    color: defaultTheme.colors.text_primary,
+    fontSize: defaultTheme.typography.heading1.fontSize,
+    fontFamily: defaultTheme.typography.heading1.fontFamily,
+    color: defaultTheme.colors.textPrimary,
     marginBottom: defaultTheme.spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: defaultTheme.typography.body_regular.size,
-    fontFamily: defaultTheme.typography.body_regular.weight,
-    color: defaultTheme.colors.text_secondary,
+    fontSize: defaultTheme.typography.bodyMedium.fontSize,
+    fontFamily: defaultTheme.typography.bodyMedium.fontFamily,
+    color: defaultTheme.colors.typographyextSecondary,
     marginBottom: defaultTheme.spacing.xl,
     textAlign: 'center',
   },
   input: {
-    height: 50,
-    width: '100%',
-    backgroundColor: defaultTheme.colors.background_soft,
+    height: rh(7), // 7% of screen height
+    width: rw(90), // 90% of screen width
+    backgroundColor: defaultTheme.colors.backgroundSoft,
     borderColor: defaultTheme.colors.outline,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
+    borderRadius: rbr(8),
+    paddingHorizontal: defaultTheme.spacing.md,
     marginBottom: defaultTheme.spacing.md,
-    fontSize: defaultTheme.typography.body_regular.size,
-    fontFamily: defaultTheme.typography.body_regular.weight,
-    color: defaultTheme.colors.text_primary,
+    fontSize: defaultTheme.typography.bodyMedium.fontSize,
+    fontFamily: defaultTheme.typography.bodyMedium.fontFamily,
+    color: defaultTheme.colors.textPrimary,
   },
   button: {
     backgroundColor: defaultTheme.colors.primary,
-    padding: 15,
-    borderRadius: 8,
+    padding: defaultTheme.spacing.md,
+    borderRadius: rbr(8),
     alignItems: 'center',
     marginTop: defaultTheme.spacing.sm,
     elevation: 2,
@@ -135,13 +133,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   buttonText: {
-    color: defaultTheme.colors.text_white,
+    color: defaultTheme.colors.textWhite,
+    fontSize: defaultTheme.typography.buttonText.fontSize,
+    fontFamily: defaultTheme.typography.buttonText.fontFamily,
     fontWeight: 'bold',
-    fontSize: defaultTheme.typography.buttonText.size,
-    fontFamily: defaultTheme.typography.buttonText.weight,
   },
   buttonDisabled: {
-    backgroundColor: defaultTheme.colors.primary_light,
+    backgroundColor: defaultTheme.colors.primaryLight,
   },
 });
 
