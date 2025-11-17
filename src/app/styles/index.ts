@@ -1,4 +1,6 @@
-// src/theme/constants.ts
+// src/styles/index.ts
+
+import { rfs, ms} from './scaling';
 
 // --- TYPOGRAPHY CONSTANTS ---
 
@@ -16,31 +18,31 @@ export const fontFamilies = {
 export const typography = {
   // Headings (Size / Weight)
   H1: { 
-    fontSize: 36, 
+    fontSize: rfs(36), 
     fontFamily: fontFamilies.semiBold 
   },
   H2: { 
-    fontSize: 32, 
+    fontSize: rfs(32), 
     fontFamily: fontFamilies.semiBold 
   },
   H3: { 
-    fontSize: 24, 
+    fontSize: rfs(24), 
     fontFamily: fontFamilies.semiBold 
   },
 
   // Body Text
   bodyLarge: { 
-    fontSize: 20, 
+    fontSize: rfs(20), 
     fontFamily: fontFamilies.medium 
   },
   bodyRegular: { 
-    fontSize: 18, 
+    fontSize: rfs(18), 
     fontFamily: fontFamilies.regular 
   },
   
   // UI Elements
   buttonText: { 
-    fontSize: 16, 
+    fontSize: rfs(16), 
     fontFamily: fontFamilies.medium 
   },
 };
@@ -87,13 +89,13 @@ export const colors = {
 
 // --- SPACING CONSTANTS (A common 8-point scale) ---
 export const spacing = {
-  none: 0,
-  xs: 4,  
-  sm: 8,  
-  md: 16, // Default padding/margin
-  lg: 24, 
-  xl: 32, 
-  xxl: 48,
+  none: ms(0),
+  xs: ms(4),  
+  sm: ms(8),  
+  md: ms(16), // Default padding/margin
+  lg: ms(24), 
+  xl: ms(32), 
+  xxl: ms(48),
 };
 
 // --- Define the single, comprehensive Theme Object Type ---
