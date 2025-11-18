@@ -1,4 +1,4 @@
-name: React Native Android CI/CD
+name: React Native Mobile CI/CD
 
 on:
   push:
@@ -13,6 +13,12 @@ on:
         default: 'staging'
         type: choice
         options: [staging, production]
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'android'
+        type: choice
+        options: [android, ios, both]
 
 env:
   NODE_VERSION: '20'
@@ -21,6 +27,7 @@ jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
+    if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' || github.event.inputs.platform == ''
     outputs:
       apk-name: ${{ steps.build.outputs.apk-name }}
       environment: ${{ steps.vars.outputs.environment }}
@@ -70,7 +77,7 @@ jobs:
         BUILD_NAME="mum-mentor-$ENV_SUFFIX-$(date +'%Y%m%d-%H%M%S')"
         echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
 
-    - name: Build Android APK (New Architecture)
+    - name: Build Android APK
       id: build
       run: |
         cd android
@@ -78,51 +85,105 @@ jobs:
         
         echo "Building React Native 0.82.1 with New Architecture..."
         
-        # Build with new architecture flags for React Native 0.82.1
         ./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a,x86_64 --stacktrace
         
-        # Find the APK file
         APK_PATH=$(find . -name "*.apk" -path "*/debug/*" ! -name "*unaligned*" | head -1)
         
         if [ -z "$APK_PATH" ]; then
           echo "ERROR: No APK file found!"
-          echo "Searching for any APK files:"
           find . -name "*.apk" | head -10
-          echo "Build directory contents:"
-          find . -name "build" -type d | head -10
           exit 1
         fi
         
         echo "APK found at: $APK_PATH"
-        
-        # Copy and rename APK
         cp "$APK_PATH" "../$BUILD_NAME.apk"
         echo "apk-name=$BUILD_NAME.apk" >> $GITHUB_OUTPUT
         echo "APK built successfully: $BUILD_NAME.apk"
 
-    - name: Verify APK
-      run: |
-        echo "APK Info:"
-        ls -la *.apk
-        echo "APK size: $(du -h "$BUILD_NAME.apk" | cut -f1)"
-
-    - name: Upload to GitHub Artifacts
+    - name: Upload Android APK to Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: mum-mentor-${{ steps.vars.outputs.environment }}
+        name: android-apk-${{ steps.vars.outputs.environment }}
         path: ${{ env.BUILD_NAME }}.apk
         retention-days: 30
 
-  upload-to-drive:
-    name: Upload to Google Drive
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest
+    if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+    outputs:
+      environment: ${{ steps.vars.outputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install JS dependencies
+      run: |
+        npm install
+
+    - name: Install CocoaPods dependencies
+      run: |
+        cd ios
+        pod install --repo-update
+
+    - name: Determine environment
+      id: vars
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.environment }}" == "production" ]]; then
+          echo "environment=production" >> $GITHUB_OUTPUT
+          SCHEME="MumMentorMobile"
+        else
+          echo "environment=staging" >> $GITHUB_OUTPUT
+          SCHEME="MumMentorMobile"
+        fi
+
+    - name: Build iOS app
+      run: |
+        cd ios
+        xcodebuild clean \
+          -workspace MumMentorMobile.xcworkspace \
+          -scheme MumMentorMobile \
+          -configuration Debug \
+          -destination 'generic/platform=iOS Simulator' \
+          build
+
+    - name: Archive iOS build
+      run: |
+        cd ios
+        xcodebuild archive \
+          -workspace MumMentorMobile.xcworkspace \
+          -scheme MumMentorMobile \
+          -configuration Debug \
+          -archivePath ./build/MumMentorMobile.xcarchive \
+          -destination 'generic/platform=iOS'
+
+    - name: Upload iOS build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-build-${{ steps.vars.outputs.environment }}
+        path: |
+          ios/build/*.xcarchive
+          ios/build/*.app
+        retention-days: 30
+
+  upload-android-to-drive:
+    name: Upload Android to Google Drive
     needs: build-android
     runs-on: ubuntu-latest
     if: needs.build-android.result == 'success'
+    
     steps:
     - name: Download APK
       uses: actions/download-artifact@v4
       with:
-        name: mum-mentor-${{ needs.build-android.outputs.environment }}
+        name: android-apk-${{ needs.build-android.outputs.environment }}
         
     - name: Upload to Google Drive
       uses: logickoder/g-drive-upload@main
@@ -136,24 +197,21 @@ jobs:
         name: 'MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk'
         overwrite: 'true'
 
-    - name: Confirm Google Drive Upload
-      run: |
-        echo "APK uploaded to Google Drive: MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk"
-
-  upload-to-appetize:
-    name: Upload to Appetize
+  upload-android-to-appetize:
+    name: Upload Android to Appetize
     needs: build-android
     runs-on: ubuntu-latest
     if: needs.build-android.result == 'success'
+    
     steps:
     - name: Download APK
       uses: actions/download-artifact@v4
       with:
-        name: mum-mentor-${{ needs.build-android.outputs.environment }}
+        name: android-apk-${{ needs.build-android.outputs.environment }}
         
     - name: Upload to Appetize.io
       run: |
-        echo "Uploading to Appetize.io..."
+        echo "Uploading Android APK to Appetize.io..."
         RESPONSE=$(curl -s -X POST \
           "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
           -F "file=@${{ needs.build-android.outputs.apk-name }}" \
@@ -161,28 +219,28 @@ jobs:
           -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }} Build $(date +'%Y-%m-%d %H:%M')")
         
         echo "Appetize response: $RESPONSE"
-        
-        if echo "$RESPONSE" | grep -q '"publicKey"'; then
-          PUBLIC_KEY=$(echo "$RESPONSE" | grep -o '"publicKey":"[^"]*' | cut -d'"' -f4)
-          echo "Appetize app created: https://appetize.io/app/$PUBLIC_KEY"
-        else
-          echo "Could not extract public key from response"
-        fi
 
   summary:
     name: Deployment Summary
-    needs: [build-android, upload-to-drive, upload-to-appetize]
+    needs: [build-android, build-ios, upload-android-to-drive, upload-android-to-appetize]
     runs-on: ubuntu-latest
     if: always()
+    
     steps:
     - name: Create Summary
       run: |
         echo "## Mum Mentor Mobile Deployment" >> $GITHUB_STEP_SUMMARY
-        echo "**Environment:** ${{ needs.build-android.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Build:** ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Status:** ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ needs.build-android.outputs.environment || needs.build-ios.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Outputs" >> $GITHUB_STEP_SUMMARY
-        echo "- GitHub Artifacts: ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Google Drive: ${{ needs.upload-to-drive.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Appetize.io: ${{ needs.upload-to-appetize.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Android Build" >> $GITHUB_STEP_SUMMARY
+        echo "- Status: ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.build-android.result }}" == "success" ]]; then
+          echo "- APK: ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Google Drive: ${{ needs.upload-android-to-drive.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Appetize: ${{ needs.upload-android-to-appetize.result }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### iOS Build" >> $GITHUB_STEP_SUMMARY
+        echo "- Status: ${{ needs.build-ios.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
