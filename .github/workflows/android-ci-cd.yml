@@ -14,16 +14,10 @@ on:
         type: choice
         options: [staging, production]
 
-env:
-  NODE_VERSION: '20'
-
 jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
-    outputs:
-      apk-name: ${{ steps.build.outputs.apk-name }}
-      environment: ${{ steps.vars.outputs.environment }}
     
     steps:
     - name: Checkout code
@@ -32,14 +26,14 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
+        node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
       run: |
         npm install
 
-    - name: Setup Java
+    - name: Setup JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
@@ -48,19 +42,9 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Determine environment
-      id: vars
+    - name: Accept Android licenses
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.environment }}" == "production" ]]; then
-          echo "environment=production" >> $GITHUB_OUTPUT
-          echo "BUILD_TYPE=Release" >> $GITHUB_ENV
-        else
-          echo "environment=staging" >> $GITHUB_OUTPUT
-          echo "BUILD_TYPE=Release" >> $GITHUB_ENV
-        fi
-        
-        BUILD_NAME="mum-mentor-${{ steps.vars.outputs.environment }}-$(date +'%Y%m%d-%H%M%S')"
-        echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
     - name: Build Android APK
       id: build
@@ -68,114 +52,85 @@ jobs:
         cd android
         chmod +x ./gradlew
         
-        echo "Building ${{ env.BUILD_TYPE }} APK..."
+        echo "=== Building Android APK ==="
         
-        ./gradlew assembleRelease
+        # First try debug build to see if it works
+        ./gradlew assembleDebug --stacktrace
         
-        APK_PATH=$(find . -name "*.apk" -path "*/release/*" ! -name "*unaligned*" | head -1)
+        echo "=== Debug build completed ==="
         
-        if [ -z "$APK_PATH" ]; then
-          echo "ERROR: No APK file found!"
+        # Check if APK was created
+        if find . -name "*.apk" -path "*/debug/*" ! -name "*unaligned*" | head -1; then
+          echo "Debug APK built successfully"
+          APK_PATH=$(find . -name "*.apk" -path "*/debug/*" ! -name "*unaligned*" | head -1)
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+        else
+          echo "No debug APK found, checking for any APK"
           find . -name "*.apk" | head -10
           exit 1
         fi
-        
-        echo "APK found at: $APK_PATH"
-        
-        cp "$APK_PATH" "../${{ env.BUILD_NAME }}.apk"
-        echo "apk-name=${{ env.BUILD_NAME }}.apk" >> $GITHUB_OUTPUT
-        echo "APK built successfully: ${{ env.BUILD_NAME }}.apk"
 
-    - name: Verify APK
-      run: |
-        echo "APK Info:"
-        ls -la *.apk
-        echo "APK size: $(du -h "${{ env.BUILD_NAME }}.apk" | cut -f1)"
-
-    - name: Upload to GitHub Artifacts
+    - name: Upload APK to artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: mum-mentor-${{ steps.vars.outputs.environment }}
-        path: ${{ env.BUILD_NAME }}.apk
+        name: android-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
 
-  upload-to-drive:
-    name: Upload to Google Drive
-    needs: build-android
+  build-release:
+    name: Build Release APK
     runs-on: ubuntu-latest
-    steps:
-    - name: Download APK
-      uses: actions/download-artifact@v4
-      with:
-        name: mum-mentor-${{ needs.build-android.outputs.environment }}
-        
-    - name: Upload to Google Drive
-      uses: logickoder/g-drive-upload@main
-      with:
-        authType: 'oauth'
-        clientId: ${{ secrets.GOOGLE_CLIENT_ID }}
-        clientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        refreshToken: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
-        filename: '${{ needs.build-android.outputs.apk-name }}'
-        folderId: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        name: 'MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk'
-        overwrite: 'true'
-
-    - name: Confirm Google Drive Upload
-      run: |
-        echo "APK uploaded to Google Drive: MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk"
-
-  upload-to-appetize:
-    name: Upload to Appetize
     needs: build-android
-    runs-on: ubuntu-latest
+    if: success()
+    
     steps:
-    - name: Download APK
-      uses: actions/download-artifact@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        name: mum-mentor-${{ needs.build-android.outputs.environment }}
-        
-    - name: Upload to Appetize.io
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
       run: |
-        echo "Uploading to Appetize.io..."
-        RESPONSE=$(curl -s -X POST \
-          "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
-          -F "file=@${{ needs.build-android.outputs.apk-name }}" \
-          -F "platform=android" \
-          -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }} Build $(date +'%Y-%m-%d %H:%M')")
+        npm install
+
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Build Release APK
+      run: |
+        cd android
+        chmod +x ./gradlew
         
-        echo "Appetize response: $RESPONSE"
+        echo "=== Building Release APK ==="
         
-        if echo "$RESPONSE" | grep -q '"publicKey"'; then
-          PUBLIC_KEY=$(echo "$RESPONSE" | grep -o '"publicKey":"[^"]*' | cut -d'"' -f4)
-          echo "APPETIZE_PUBLIC_KEY=$PUBLIC_KEY" >> $GITHUB_ENV
-          echo "Appetize app created: https://appetize.io/app/$PUBLIC_KEY"
+        # Build release APK
+        ./gradlew assembleRelease --stacktrace
+        
+        echo "=== Release build completed ==="
+        
+        # Check release APK
+        if find . -name "*.apk" -path "*/release/*" ! -name "*unaligned*" | head -1; then
+          echo "Release APK built successfully"
+          RELEASE_APK=$(find . -name "*.apk" -path "*/release/*" ! -name "*unaligned*" | head -1)
+          echo "Release APK: $RELEASE_APK"
         else
-          echo "Could not extract public key from response"
+          echo "No release APK found"
+          find . -name "*.apk" | head -10
         fi
 
-  summary:
-    name: Deployment Summary
-    needs: [build-android, upload-to-drive, upload-to-appetize]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-    - name: Create Summary
-      run: |
-        echo "## Mum Mentor Mobile Deployment" >> $GITHUB_STEP_SUMMARY
-        echo "**Environment:** ${{ needs.build-android.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Build:** ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Status:** Success" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Outputs" >> $GITHUB_STEP_SUMMARY
-        echo "- GitHub Artifacts: APK uploaded" >> $GITHUB_STEP_SUMMARY
-        echo "- Google Drive: MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk" >> $GITHUB_STEP_SUMMARY
-        echo "- Appetize.io: Upload completed" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
-
-    - name: Print Completion
-      run: |
-        echo "All deployment steps completed successfully"
-        echo "Environment: ${{ needs.build-android.outputs.environment }}"
-        echo "APK: ${{ needs.build-android.outputs.apk-name }}"
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-release-apk
+        path: android/app/build/outputs/apk/release/app-release.apk
+        retention-days: 30
