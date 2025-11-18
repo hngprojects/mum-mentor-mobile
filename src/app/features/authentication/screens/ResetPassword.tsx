@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  StyleSheet, 
-  Alert, 
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Alert,
   TouchableOpacity,
 } from 'react-native';
-import { defaultTheme } from '../../../styles/index'; // Adjust path if needed
-import { rbr, rw, rh } from '../../../styles/scaling'; // responsive scaling functions
+import { defaultTheme } from '../../../styles/index';
+import { rbr, rw, rh } from '../../../styles/scaling';
 
 interface ResetPasswordState {
   newPassword: string;
@@ -21,7 +21,13 @@ const ResetPasswordScreen: React.FC = () => {
     confirmPassword: '',
   });
 
-  const isFormValid = passwords.newPassword.length > 0 && passwords.confirmPassword.length > 0;
+  // Strong password regex (uppercase, lowercase, number, special character, 12 chars min)
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+
+  const isFormValid =
+    strongPasswordRegex.test(passwords.newPassword) &&
+    passwords.newPassword === passwords.confirmPassword;
 
   const handleChange = (field: keyof ResetPasswordState, value: string) => {
     setPasswords(prev => ({
@@ -30,7 +36,7 @@ const ResetPasswordScreen: React.FC = () => {
     }));
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     const { newPassword, confirmPassword } = passwords;
 
     if (newPassword !== confirmPassword) {
@@ -38,12 +44,20 @@ const ResetPasswordScreen: React.FC = () => {
       return;
     }
 
-    if (newPassword.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters.');
+    if (!strongPasswordRegex.test(newPassword)) {
+      Alert.alert(
+        'Weak Password',
+        'Password must be at least 12 characters and include:\n• Uppercase letter\n• Lowercase letter\n• Number\n• Special character'
+      );
       return;
     }
 
+    // TODO: API INTEGRATION
+    // Example:
+    // await api.resetPassword({ token, newPassword })
+
     Alert.alert('Success', 'Password reset successfully!');
+
     setPasswords({ newPassword: '', confirmPassword: '' });
   };
 
@@ -58,7 +72,7 @@ const ResetPasswordScreen: React.FC = () => {
         placeholderTextColor={defaultTheme.colors.textGrey2}
         secureTextEntry
         value={passwords.newPassword}
-        onChangeText={(text) => handleChange('newPassword', text)}
+        onChangeText={text => handleChange('newPassword', text)}
         autoCapitalize="none"
       />
 
@@ -68,15 +82,12 @@ const ResetPasswordScreen: React.FC = () => {
         placeholderTextColor={defaultTheme.colors.textGrey2}
         secureTextEntry
         value={passwords.confirmPassword}
-        onChangeText={(text) => handleChange('confirmPassword', text)}
+        onChangeText={text => handleChange('confirmPassword', text)}
         autoCapitalize="none"
       />
 
       <TouchableOpacity
-        style={[
-          styles.button,
-          !isFormValid && styles.buttonDisabled
-        ]}
+        style={[styles.button, !isFormValid && styles.buttonDisabled]}
         onPress={handleResetPassword}
         disabled={!isFormValid}
       >
@@ -97,19 +108,19 @@ const styles = StyleSheet.create({
     fontSize: defaultTheme.typography.heading1.fontSize,
     fontFamily: defaultTheme.typography.heading1.fontFamily,
     color: defaultTheme.colors.textPrimary,
-    marginBottom: defaultTheme.spacing.sm,
     textAlign: 'center',
+    marginBottom: defaultTheme.spacing.sm,
   },
   subtitle: {
     fontSize: defaultTheme.typography.bodyMedium.fontSize,
     fontFamily: defaultTheme.typography.bodyMedium.fontFamily,
-    color: defaultTheme.colors.typographyextSecondary,
-    marginBottom: defaultTheme.spacing.xl,
+    color: defaultTheme.colors.textSecondary,
     textAlign: 'center',
+    marginBottom: defaultTheme.spacing.xl,
   },
   input: {
-    height: rh(7), // 7% of screen height
-    width: rw(90), // 90% of screen width
+    height: rh(7),
+    width: rw(90),
     backgroundColor: defaultTheme.colors.backgroundSoft,
     borderColor: defaultTheme.colors.outline,
     borderWidth: 1,
