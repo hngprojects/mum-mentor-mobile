@@ -91,7 +91,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/keystore/release.keystore
           
           # Create local.properties with signing config
-          cat >> android/local.properties << EOF
+          cat >> android/gradle.properties << EOF
           RELEASE_STORE_FILE=keystore/release.keystore
           RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD
           RELEASE_KEY_ALIAS=$KEY_ALIAS
