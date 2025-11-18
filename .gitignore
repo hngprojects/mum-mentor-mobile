@@ -80,3 +80,5 @@ nora.keystore
 keystore.properties
 local.properties
 package-lock.json
+.expo/devices.json
+.expo/README.md
