@@ -44,37 +44,20 @@ jobs:
       run: |
         echo "--- Entry Point Validation ---"
         
-        # Find all App component files in the project
-        echo "Searching for App component files..."
-        APP_FILES=$(find . -name "App.*" -type f | grep -v node_modules | grep -v __tests__)
-        
-        if [ -z "$APP_FILES" ]; then
-          echo "ERROR: No App component files found in the project!"
-          echo "The mobile team must create a main App component."
-          exit 1
-        fi
-        
-        echo "Found App component files:"
-        echo "$APP_FILES"
-        
-        # Check what index.js expects
-        IMPORT_LINE=$(grep "import.*App.*from" index.js | head -1)
-        IMPORT_PATH=$(echo "$IMPORT_LINE" | sed -n "s/.*from '\([^']*\)'.*/\1/p")
-        echo "Index.js expects: $IMPORT_PATH"
-        
-        # Verify the expected path exists
-        if [ -f "${IMPORT_PATH}.tsx" ] || [ -f "${IMPORT_PATH}.js" ] || [ -f "${IMPORT_PATH}.ts" ] || [ -f "${IMPORT_PATH}.jsx" ]; then
-          echo "SUCCESS: Import path resolves correctly"
-        else
-          echo "ERROR: CONFIGURATION MISMATCH"
-          echo "Index.js imports from: '$IMPORT_PATH'"
-          echo "But actual App files are at:"
-          echo "$APP_FILES"
+        # Direct check: current import expects ./App but file is at ./src/App.tsx
+        if grep -q "import App from './App'" index.js && [ -f "./src/App.tsx" ]; then
+          echo "ERROR: Build configuration issue detected"
+          echo "Problem: index.js imports from './App' but App component is at './src/App.tsx'"
           echo ""
-          echo "MOBILE TEAM ACTION REQUIRED:"
-          echo "Update the import in index.js to match the actual file location"
+          echo "Required fix in index.js:"
+          echo "Change: import App from './App'"
+          echo "To:     import App from './src/App'"
+          echo ""
+          echo "This must be fixed by the mobile development team."
           exit 1
         fi
+        
+        echo "SUCCESS: Entry point configuration is valid"
 
     - name: Setup Java
       uses: actions/setup-java@v4
