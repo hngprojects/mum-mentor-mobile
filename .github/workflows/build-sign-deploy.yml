@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - staging
+  pull_request:
+    branches:
+      - main
+      - staging
   workflow_dispatch:
     inputs:
       environment:
@@ -41,6 +45,13 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PRs, use the target branch to determine environment
+            if [ "${{ github.base_ref }}" == "main" ]; then
+              ENV="production"
+            else
+              ENV="staging"
+            fi
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
             ENV="production"
           elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
