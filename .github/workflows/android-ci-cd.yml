@@ -13,12 +13,6 @@ on:
         default: 'staging'
         type: choice
         options: [staging, production]
-      platform:
-        description: 'Platform to build'
-        required: true
-        default: 'android'
-        type: choice
-        options: [android, ios, both]
 
 env:
   NODE_VERSION: '20'
@@ -27,7 +21,6 @@ jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
-    if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' || github.event.inputs.platform == ''
     outputs:
       apk-name: ${{ steps.build.outputs.apk-name }}
       environment: ${{ steps.vars.outputs.environment }}
@@ -54,10 +47,6 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-      with:
-        api-level: 34
-        build-tools: 34.0.0
-        ndk: 25.1.8937393
 
     - name: Accept Android licenses
       run: |
@@ -66,7 +55,7 @@ jobs:
     - name: Determine environment
       id: vars
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.environment }}" == "production" ]]; then
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
           echo "environment=production" >> $GITHUB_OUTPUT
           ENV_SUFFIX="production"
         else
@@ -82,10 +71,7 @@ jobs:
       run: |
         cd android
         chmod +x ./gradlew
-        
-        echo "Building React Native 0.82.1 with New Architecture..."
-        
-        ./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a,x86_64 --stacktrace
+        ./gradlew assembleDebug --stacktrace
         
         APK_PATH=$(find . -name "*.apk" -path "*/debug/*" ! -name "*unaligned*" | head -1)
         
@@ -98,7 +84,6 @@ jobs:
         echo "APK found at: $APK_PATH"
         cp "$APK_PATH" "../$BUILD_NAME.apk"
         echo "apk-name=$BUILD_NAME.apk" >> $GITHUB_OUTPUT
-        echo "APK built successfully: $BUILD_NAME.apk"
 
     - name: Upload Android APK to Artifacts
       uses: actions/upload-artifact@v4
@@ -110,7 +95,6 @@ jobs:
   build-ios:
     name: Build iOS App
     runs-on: macos-latest
-    if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
     outputs:
       environment: ${{ steps.vars.outputs.environment }}
     
@@ -128,62 +112,59 @@ jobs:
       run: |
         npm install
 
+    - name: Setup Ruby and CocoaPods
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+
     - name: Install CocoaPods dependencies
       run: |
         cd ios
-        pod install --repo-update
+        pod install
 
     - name: Determine environment
       id: vars
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.environment }}" == "production" ]]; then
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
           echo "environment=production" >> $GITHUB_OUTPUT
-          SCHEME="MumMentorMobile"
         else
           echo "environment=staging" >> $GITHUB_OUTPUT
-          SCHEME="MumMentorMobile"
         fi
 
-    - name: Build iOS app
+    - name: Build iOS app for simulator
       run: |
         cd ios
-        xcodebuild clean \
+        xcodebuild clean build \
           -workspace MumMentorMobile.xcworkspace \
           -scheme MumMentorMobile \
           -configuration Debug \
-          -destination 'generic/platform=iOS Simulator' \
-          build
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
+          CODE_SIGNING_ALLOWED=NO
 
-    - name: Archive iOS build
-      run: |
-        cd ios
-        xcodebuild archive \
-          -workspace MumMentorMobile.xcworkspace \
-          -scheme MumMentorMobile \
-          -configuration Debug \
-          -archivePath ./build/MumMentorMobile.xcarchive \
-          -destination 'generic/platform=iOS'
-
-    - name: Upload iOS build artifacts
+    - name: Upload iOS build logs
       uses: actions/upload-artifact@v4
       with:
-        name: ios-build-${{ steps.vars.outputs.environment }}
-        path: |
-          ios/build/*.xcarchive
-          ios/build/*.app
-        retention-days: 30
+        name: ios-build-logs-${{ steps.vars.outputs.environment }}
+        path: ios/build/
+        retention-days: 7
 
   upload-android-to-drive:
     name: Upload Android to Google Drive
     needs: build-android
     runs-on: ubuntu-latest
-    if: needs.build-android.result == 'success'
     
     steps:
     - name: Download APK
       uses: actions/download-artifact@v4
       with:
         name: android-apk-${{ needs.build-android.outputs.environment }}
+        
+    - name: Debug file check
+      run: |
+        echo "Current directory: $(pwd)"
+        echo "Files in directory:"
+        ls -la
+        echo "APK filename: ${{ needs.build-android.outputs.apk-name }}"
         
     - name: Upload to Google Drive
       uses: logickoder/g-drive-upload@main
@@ -201,7 +182,6 @@ jobs:
     name: Upload Android to Appetize
     needs: build-android
     runs-on: ubuntu-latest
-    if: needs.build-android.result == 'success'
     
     steps:
     - name: Download APK
@@ -212,13 +192,11 @@ jobs:
     - name: Upload to Appetize.io
       run: |
         echo "Uploading Android APK to Appetize.io..."
-        RESPONSE=$(curl -s -X POST \
+        curl -X POST \
           "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
           -F "file=@${{ needs.build-android.outputs.apk-name }}" \
           -F "platform=android" \
-          -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }} Build $(date +'%Y-%m-%d %H:%M')")
-        
-        echo "Appetize response: $RESPONSE"
+          -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }}"
 
   summary:
     name: Deployment Summary
@@ -229,18 +207,15 @@ jobs:
     steps:
     - name: Create Summary
       run: |
-        echo "## Mum Mentor Mobile Deployment" >> $GITHUB_STEP_SUMMARY
-        echo "**Environment:** ${{ needs.build-android.outputs.environment || needs.build-ios.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "## Mum Mentor Mobile Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ needs.build-android.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Android Build" >> $GITHUB_STEP_SUMMARY
-        echo "- Status: ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
-        if [[ "${{ needs.build-android.result }}" == "success" ]]; then
-          echo "- APK: ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Google Drive: ${{ needs.upload-android-to-drive.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Appetize: ${{ needs.upload-android-to-appetize.result }}" >> $GITHUB_STEP_SUMMARY
-        fi
+        echo "- Build: ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Google Drive: ${{ needs.upload-android-to-drive.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Appetize: ${{ needs.upload-android-to-appetize.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### iOS Build" >> $GITHUB_STEP_SUMMARY
-        echo "- Status: ${{ needs.build-ios.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Build: ${{ needs.build-ios.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
