@@ -78,3 +78,5 @@ yarn-error.log
 mys.sh
 nora.keystore
 keystore.properties
+local.properties
+package-lock.json
