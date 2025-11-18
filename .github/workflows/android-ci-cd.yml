@@ -5,7 +5,7 @@ on:
     branches: [main, staging]
   pull_request:
     branches: [main, staging]
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger
     inputs:
       environment:
         description: 'Environment'
@@ -16,9 +16,6 @@ on:
 
 env:
   NODE_VERSION: '20'
-  ANDROID_COMPILE_SDK: '34'
-  ANDROID_BUILD_TOOLS: '34.0.0'
-  ANDROID_SDK_TOOLS: '9477386'
 
 jobs:
   build-android:
@@ -38,19 +35,46 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
 
-    - name: Debug - Show project structure
-      run: |
-        echo "### Project Structure ###"
-        ls -la
-        echo "### Android Directory ###"
-        ls -la android/ || echo "No android directory"
-        echo "### iOS Directory ###" 
-        ls -la ios/ || echo "No ios directory"
-
     - name: Install dependencies
       run: |
         npm install
-        echo "✅ Dependencies installed"
+
+    - name: Validate Entry Point Configuration
+      id: validate-entry
+      run: |
+        echo "--- Entry Point Validation ---"
+        
+        # Find all App component files in the project
+        echo "Searching for App component files..."
+        APP_FILES=$(find . -name "App.*" -type f | grep -v node_modules | grep -v __tests__)
+        
+        if [ -z "$APP_FILES" ]; then
+          echo "ERROR: No App component files found in the project!"
+          echo "The mobile team must create a main App component."
+          exit 1
+        fi
+        
+        echo "Found App component files:"
+        echo "$APP_FILES"
+        
+        # Check what index.js expects
+        IMPORT_LINE=$(grep "import.*App.*from" index.js | head -1)
+        IMPORT_PATH=$(echo "$IMPORT_LINE" | sed -n "s/.*from '\([^']*\)'.*/\1/p")
+        echo "Index.js expects: $IMPORT_PATH"
+        
+        # Verify the expected path exists
+        if [ -f "${IMPORT_PATH}.tsx" ] || [ -f "${IMPORT_PATH}.js" ] || [ -f "${IMPORT_PATH}.ts" ] || [ -f "${IMPORT_PATH}.jsx" ]; then
+          echo "SUCCESS: Import path resolves correctly"
+        else
+          echo "ERROR: CONFIGURATION MISMATCH"
+          echo "Index.js imports from: '$IMPORT_PATH'"
+          echo "But actual App files are at:"
+          echo "$APP_FILES"
+          echo ""
+          echo "MOBILE TEAM ACTION REQUIRED:"
+          echo "Update the import in index.js to match the actual file location"
+          exit 1
+        fi
 
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -60,11 +84,6 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-      with:
-        api-level: ${{ env.ANDROID_COMPILE_SDK }}
-        build-tools: ${{ env.ANDROID_BUILD_TOOLS }}
-        ndk: '25.1.8937393'
-        cmake: '3.22.1'
 
     - name: Determine environment
       id: vars
@@ -77,77 +96,55 @@ jobs:
           echo "BUILD_TYPE=Release" >> $GITHUB_ENV
         fi
         
+        # Generate build name
         BUILD_NAME="mum-mentor-${{ steps.vars.outputs.environment }}-$(date +'%Y%m%d-%H%M%S')"
         echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
         echo "Build environment: ${{ steps.vars.outputs.environment }}"
 
-    - name: Setup Android environment
-      run: |
-        echo "ANDROID_HOME=$ANDROID_HOME"
-        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --list | head -20
-
     - name: Build Android APK
       id: build
       run: |
-        echo "### Starting Android Build ###"
         cd android
-        
-        # Make gradlew executable
         chmod +x ./gradlew
-        echo "✅ Gradlew is executable"
         
-        # Clean first
-        echo "### Cleaning project ###"
-        ./gradlew clean --no-daemon --stacktrace
+        echo "Building ${{ env.BUILD_TYPE }} APK..."
         
-        # Build with detailed logging
-        echo "### Building ${{ env.BUILD_TYPE }} APK ###"
-        ./gradlew assembleRelease --no-daemon --stacktrace --info --warning-mode all
+        # Build the APK (uses debug signing as configured in their build.gradle)
+        ./gradlew assembleRelease
         
-        echo "### Finding APK files ###"
-        find . -name "*.apk" -type f | head -10
-        
-        # Look for APK in different possible locations
+        # Find the APK file
         APK_PATH=$(find . -name "*.apk" -path "*/release/*" ! -name "*unaligned*" | head -1)
         
         if [ -z "$APK_PATH" ]; then
-          echo "No release APK found. Searching all APK files:"
-          find . -name "*.apk" -type f
-          echo "### Build directories ###"
-          find . -name "build" -type d
+          echo "ERROR: No APK file found!"
+          find . -name "*.apk" | head -10
           exit 1
         fi
         
-        echo "✅ APK found at: $APK_PATH"
+        echo "APK found at: $APK_PATH"
         
         # Copy and rename APK
         cp "$APK_PATH" "../${{ env.BUILD_NAME }}.apk"
         echo "apk-name=${{ env.BUILD_NAME }}.apk" >> $GITHUB_OUTPUT
-        echo "✅ APK built successfully: ${{ env.BUILD_NAME }}.apk"
+        echo "SUCCESS: APK built successfully: ${{ env.BUILD_NAME }}.apk"
 
     - name: Verify APK
-      if: success()
       run: |
-        echo "### APK Verification ###"
+        echo "APK Info:"
         ls -la *.apk
         echo "APK size: $(du -h "${{ env.BUILD_NAME }}.apk" | cut -f1)"
-        file "${{ env.BUILD_NAME }}.apk"
 
     - name: Upload to GitHub Artifacts
-      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: mum-mentor-${{ steps.vars.outputs.environment }}
         path: ${{ env.BUILD_NAME }}.apk
         retention-days: 30
 
-  # The upload jobs will only run if build succeeds
   upload-to-drive:
     name: Upload to Google Drive
     needs: build-android
     runs-on: ubuntu-latest
-    if: needs.build-android.result == 'success'
     steps:
     - name: Download APK
       uses: actions/download-artifact@v4
@@ -166,11 +163,14 @@ jobs:
         name: 'MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk'
         overwrite: 'true'
 
+    - name: Confirm Google Drive Upload
+      run: |
+        echo "SUCCESS: APK uploaded to Google Drive: MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk"
+
   upload-to-appetize:
     name: Upload to Appetize
     needs: build-android
     runs-on: ubuntu-latest
-    if: needs.build-android.result == 'success'
     steps:
     - name: Download APK
       uses: actions/download-artifact@v4
@@ -180,11 +180,22 @@ jobs:
     - name: Upload to Appetize.io
       run: |
         echo "Uploading to Appetize.io..."
-        curl -X POST \
+        RESPONSE=$(curl -s -X POST \
           "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
           -F "file=@${{ needs.build-android.outputs.apk-name }}" \
           -F "platform=android" \
-          -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }}"
+          -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }} Build $(date +'%Y-%m-%d %H:%M')")
+        
+        echo "Appetize response: $RESPONSE"
+        
+        # Extract public URL if available
+        if echo "$RESPONSE" | grep -q '"publicKey"'; then
+          PUBLIC_KEY=$(echo "$RESPONSE" | grep -o '"publicKey":"[^"]*' | cut -d'"' -f4)
+          echo "APPETIZE_PUBLIC_KEY=$PUBLIC_KEY" >> $GITHUB_ENV
+          echo "Appetize app created: https://appetize.io/app/$PUBLIC_KEY"
+        else
+          echo "Could not extract public key from response"
+        fi
 
   summary:
     name: Deployment Summary
@@ -196,14 +207,17 @@ jobs:
       run: |
         echo "## Mum Mentor Mobile Deployment" >> $GITHUB_STEP_SUMMARY
         echo "**Environment:** ${{ needs.build-android.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Status:** ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Build:** ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
         if [[ "${{ needs.build-android.result }}" == "success" ]]; then
-          echo "**Build:** ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Success" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Outputs" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ GitHub Artifacts: APK uploaded" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Google Drive: Upload completed" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Appetize.io: Upload completed" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Artifacts: APK uploaded" >> $GITHUB_STEP_SUMMARY
+          echo "- Google Drive: MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk" >> $GITHUB_STEP_SUMMARY
+          echo "- Appetize.io: Upload completed" >> $GITHUB_STEP_SUMMARY
         else
-          echo "### Build Failed" >> $GITHUB_STEP_SUMMARY
-          echo "Check the build logs for details" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Issues" >> $GITHUB_STEP_SUMMARY
+          echo "- Build process failed - check logs for details" >> $GITHUB_STEP_SUMMARY
         fi
