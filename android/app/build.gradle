@@ -3,14 +3,6 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 
-// Load keystore properties from the external file if it exists
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('keystore.properties')
-
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -102,12 +94,13 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        // --- NEW RELEASE SIGNING CONFIG ---
+ // --- UPDATED RELEASE SIGNING CONFIG ---
         release {
-            storeFile file(keystoreProperties['NORA_RELEASE_STORE_FILE'])
-            storePassword keystoreProperties['NORA_RELEASE_STORE_PASSWORD']
-            keyAlias keystoreProperties['NORA_RELEASE_KEY_ALIAS']
-            keyPassword keystoreProperties['NORA_RELEASE_KEY_PASSWORD']
+            // Read properties directly from gradle.properties using rootProject.property
+            storeFile file(rootProject.property('RELEASE_STORE_FILE'))
+            storePassword rootProject.property('RELEASE_STORE_PASSWORD')
+            keyAlias rootProject.property('RELEASE_KEY_ALIAS')
+            keyPassword rootProject.property('RELEASE_KEY_PASSWORD')
         }
     }
     buildTypes {
