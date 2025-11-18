@@ -1,0 +1,209 @@
+name: React Native Android CI/CD
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+
+env:
+  NODE_VERSION: '20'
+  ANDROID_COMPILE_SDK: '34'
+  ANDROID_BUILD_TOOLS: '34.0.0'
+  ANDROID_SDK_TOOLS: '9477386'
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    outputs:
+      apk-name: ${{ steps.build.outputs.apk-name }}
+      environment: ${{ steps.vars.outputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Debug - Show project structure
+      run: |
+        echo "### Project Structure ###"
+        ls -la
+        echo "### Android Directory ###"
+        ls -la android/ || echo "No android directory"
+        echo "### iOS Directory ###" 
+        ls -la ios/ || echo "No ios directory"
+
+    - name: Install dependencies
+      run: |
+        npm install
+        echo "✅ Dependencies installed"
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: ${{ env.ANDROID_COMPILE_SDK }}
+        build-tools: ${{ env.ANDROID_BUILD_TOOLS }}
+        ndk: '25.1.8937393'
+        cmake: '3.22.1'
+
+    - name: Determine environment
+      id: vars
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.environment }}" == "production" ]]; then
+          echo "environment=production" >> $GITHUB_OUTPUT
+          echo "BUILD_TYPE=Release" >> $GITHUB_ENV
+        else
+          echo "environment=staging" >> $GITHUB_OUTPUT
+          echo "BUILD_TYPE=Release" >> $GITHUB_ENV
+        fi
+        
+        BUILD_NAME="mum-mentor-${{ steps.vars.outputs.environment }}-$(date +'%Y%m%d-%H%M%S')"
+        echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
+        echo "Build environment: ${{ steps.vars.outputs.environment }}"
+
+    - name: Setup Android environment
+      run: |
+        echo "ANDROID_HOME=$ANDROID_HOME"
+        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --list | head -20
+
+    - name: Build Android APK
+      id: build
+      run: |
+        echo "### Starting Android Build ###"
+        cd android
+        
+        # Make gradlew executable
+        chmod +x ./gradlew
+        echo "✅ Gradlew is executable"
+        
+        # Clean first
+        echo "### Cleaning project ###"
+        ./gradlew clean --no-daemon --stacktrace
+        
+        # Build with detailed logging
+        echo "### Building ${{ env.BUILD_TYPE }} APK ###"
+        ./gradlew assembleRelease --no-daemon --stacktrace --info --warning-mode all
+        
+        echo "### Finding APK files ###"
+        find . -name "*.apk" -type f | head -10
+        
+        # Look for APK in different possible locations
+        APK_PATH=$(find . -name "*.apk" -path "*/release/*" ! -name "*unaligned*" | head -1)
+        
+        if [ -z "$APK_PATH" ]; then
+          echo "No release APK found. Searching all APK files:"
+          find . -name "*.apk" -type f
+          echo "### Build directories ###"
+          find . -name "build" -type d
+          exit 1
+        fi
+        
+        echo "✅ APK found at: $APK_PATH"
+        
+        # Copy and rename APK
+        cp "$APK_PATH" "../${{ env.BUILD_NAME }}.apk"
+        echo "apk-name=${{ env.BUILD_NAME }}.apk" >> $GITHUB_OUTPUT
+        echo "✅ APK built successfully: ${{ env.BUILD_NAME }}.apk"
+
+    - name: Verify APK
+      if: success()
+      run: |
+        echo "### APK Verification ###"
+        ls -la *.apk
+        echo "APK size: $(du -h "${{ env.BUILD_NAME }}.apk" | cut -f1)"
+        file "${{ env.BUILD_NAME }}.apk"
+
+    - name: Upload to GitHub Artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: mum-mentor-${{ steps.vars.outputs.environment }}
+        path: ${{ env.BUILD_NAME }}.apk
+        retention-days: 30
+
+  # The upload jobs will only run if build succeeds
+  upload-to-drive:
+    name: Upload to Google Drive
+    needs: build-android
+    runs-on: ubuntu-latest
+    if: needs.build-android.result == 'success'
+    steps:
+    - name: Download APK
+      uses: actions/download-artifact@v4
+      with:
+        name: mum-mentor-${{ needs.build-android.outputs.environment }}
+        
+    - name: Upload to Google Drive
+      uses: logickoder/g-drive-upload@main
+      with:
+        authType: 'oauth'
+        clientId: ${{ secrets.GOOGLE_CLIENT_ID }}
+        clientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        refreshToken: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+        filename: '${{ needs.build-android.outputs.apk-name }}'
+        folderId: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        name: 'MumMentor-${{ needs.build-android.outputs.environment }}-latest.apk'
+        overwrite: 'true'
+
+  upload-to-appetize:
+    name: Upload to Appetize
+    needs: build-android
+    runs-on: ubuntu-latest
+    if: needs.build-android.result == 'success'
+    steps:
+    - name: Download APK
+      uses: actions/download-artifact@v4
+      with:
+        name: mum-mentor-${{ needs.build-android.outputs.environment }}
+        
+    - name: Upload to Appetize.io
+      run: |
+        echo "Uploading to Appetize.io..."
+        curl -X POST \
+          "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
+          -F "file=@${{ needs.build-android.outputs.apk-name }}" \
+          -F "platform=android" \
+          -F "note=Mum Mentor Mobile - ${{ needs.build-android.outputs.environment }}"
+
+  summary:
+    name: Deployment Summary
+    needs: [build-android, upload-to-drive, upload-to-appetize]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Create Summary
+      run: |
+        echo "## Mum Mentor Mobile Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ needs.build-android.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.build-android.result }}" == "success" ]]; then
+          echo "**Build:** ${{ needs.build-android.outputs.apk-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub Artifacts: APK uploaded" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Google Drive: Upload completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Appetize.io: Upload completed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### Build Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Check the build logs for details" >> $GITHUB_STEP_SUMMARY
+        fi
