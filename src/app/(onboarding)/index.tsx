@@ -1,12 +1,11 @@
 import { StyleSheet, View } from "react-native";
-import OnboardingScreen from "./onboardingScreen";
+import OnboardingScreen from "./onboarding-screen";
 // import { useRouter } from "expo-router";
 // import { useEffect } from "react";
 // import OnboardingSplash from "./splashscreen";
 
 /**
  * Onboarding entry point
- * Shows splash screen for 2 seconds, then transitions to onboarding slides
  */
 export default function Index() {
   // const router = useRouter();
