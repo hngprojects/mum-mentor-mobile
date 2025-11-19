@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.ukemeikot.MumMentorMobile"
     },
     "web": {
       "output": "static",
@@ -44,7 +45,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "87bf5b82-51c6-4270-a4cb-268e96ef6ff9"
+        "projectId": "eb49307c-ac6d-4ddb-b0d5-c2e51a067520"
       }
     }
   }

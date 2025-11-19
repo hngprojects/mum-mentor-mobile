@@ -7,7 +7,7 @@ import {
   Switch,
   StyleSheet
 } from 'react-native';
-import { OTPVerificationScreen } from '../(otp)';
+import { OTPVerificationScreen } from '../(auth)/OtpScreen';
 
 const momStatuses: string[] = ['Pregnant', 'New Mom', 'Toddler Mom', 'Mixed'];
 

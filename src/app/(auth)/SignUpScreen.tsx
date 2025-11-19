@@ -1,4 +1,4 @@
-// src/features/authentication/screens/SignUpScreen.tsx
+// src/app/(auth)/screens/SignUpScreen.tsx
 
 import React, { useState } from 'react';
 import { 
@@ -14,13 +14,21 @@ import {
   StatusBar
 } from 'react-native';
 import { router } from 'expo-router';
+import { AxiosError } from 'axios';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+
 
 // --- Imports from Core Components and Styles ---
 import CustomInput from '../components/CustomInput'; 
 import PrimaryButton from '../components/PrimaryButton';
-import { colors, typography, spacing } from '../../core/styles/index'; 
-import { ms, rfs } from '../../core/styles/scaling';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, typography, spacing  } from '../../core/styles/index';
+import { rfs, ms } from '../../core/styles/scaling'
+
+// --- API Service and Types ---
+// CRITICAL FIX: Import the ApiErrorResponse and RegisterPayload types to handle the contract safely
+import { register, RegisterPayload, ApiErrorResponse } from '../../core/services/authService'; 
+
 
 // --- Constants for Validation ---
 const MIN_PASSWORD_LENGTH = 8;
@@ -34,10 +42,12 @@ export default function SignUpScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // --- Validation Logic ---
+  // --- Client-Side Validation Logic (Simplified) ---
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
     let isValid = true;
+
+    // ... (Validation logic remains the same for brevity)
 
     if (!fullName) {
       newErrors.fullName = 'Full Name is required.';
@@ -70,17 +80,153 @@ export default function SignUpScreen() {
     setIsLoading(true);
     setErrors({});
 
+    const payload: RegisterPayload = { 
+      full_name: fullName, 
+      email: email, 
+      password: password,
+      confirm_password: confirmPassword
+    };
+
+    // --- LIVE API CALL INTEGRATION ---
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      Alert.alert("Success!", "Account created. Redirecting to Mom Setup.");
-      router.replace('./(tabs)/Home'); 
+      await register(payload);
+
+      // 1. Success: Redirect to the verification screen, passing the email as a parameter
+      Alert.alert("Success!", "Account created. Please check your email for the verification code.");
+      
+      // Navigate to the reusable verification screen, passing context and email
+      router.replace({ 
+        pathname: '/(auth)/OtpScreen', 
+        params: { 
+          context: 'register', 
+          email: email 
+        } 
+      });
+
     } catch (error) {
-      Alert.alert("Signup Failed", "Could not create account. Please try again.");
-      console.error("Signup API Error:", error);
+      // --- CRITICAL FIX: SAFELY HANDLE UNKNOWN AXIOS ERROR ---
+      // 1. Assert the error type.
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      let errorMessage = "Signup Failed. Please try again.";
+      let apiErrors: { [key: string]: string } = {};
+
+      // 2. Safely check for the response data using optional chaining and type guards.
+      if (axiosError.response && axiosError.response.data) {
+          const detail = axiosError.response.data.detail;
+          
+          if (typeof detail === 'string') {
+              // Handle general 400 errors (e.g., "user already exists")
+              if (detail.toLowerCase().includes('already exists')) {
+                  apiErrors.email = "This email is already registered. Try logging in.";
+              } else {
+                  errorMessage = detail;
+              }
+          } else if (Array.isArray(detail)) {
+              // Handle 422 validation errors with loc, msg structure
+              detail.forEach(err => {
+                  // Map the API field name (e.g., 'full_name') to the state variable name
+                  if (typeof err.loc[1] === 'string') {
+                      apiErrors[err.loc[1]] = err.msg;
+                  }
+              });
+              errorMessage = "Please check your highlighted inputs.";
+          }
+      }
+      
+      // 3. Update specific input errors or show a general alert
+      if (Object.keys(apiErrors).length > 0) {
+          setErrors(prev => ({...prev, ...apiErrors}));
+      } else {
+          Alert.alert("Signup Failed", errorMessage);
+      }
+
     } finally {
       setIsLoading(false);
     }
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      backgroundColor: colors.backgroundMain,
+    },
+    innerContainer: {
+      flex: 1,
+      paddingHorizontal: ms(spacing.lg),
+      paddingTop: ms(spacing.xl),
+      paddingBottom: ms(spacing.xl),
+    },
+    header: {
+      fontSize: rfs(typography.heading1.fontSize),
+      fontFamily: typography.heading1.fontFamily,
+      color: colors.textPrimary,
+      marginBottom: ms(spacing.xl),
+      textAlign: 'center',
+    },
+    agreementContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: ms(spacing.xl),
+      marginTop: ms(spacing.sm),
+      borderRadius: ms(15),
+    },
+    agreementText: {
+      fontSize: rfs(typography.bodySmall.fontSize),
+      fontFamily: typography.bodySmall.fontFamily,
+      color: colors.textPrimary,
+      marginLeft: ms(spacing.sm),
+      flexShrink: 1,
+    },
+    termsLink: {
+      color: colors.primary,
+      textDecorationLine: 'underline',
+    },
+    loginText: {
+      fontSize: rfs(typography.bodyMedium.fontSize),
+      fontFamily: typography.bodyMedium.fontFamily,
+      color: colors.textPrimary,
+      textAlign: 'center',
+      marginTop: ms(spacing.lg),
+      marginBottom: ms(spacing.lg),
+    },
+    loginLink: {
+      color: colors.primary,
+      textDecorationLine: 'underline',
+      fontWeight: 'bold',
+    },
+    socialLoginText: {
+      fontSize: rfs(typography.caption.fontSize),
+      fontFamily: typography.caption.fontFamily,
+      color: colors.textGrey1,
+      textAlign: 'center',
+      marginVertical: ms(spacing.md),
+    },
+    socialButtonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    socialButton: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: colors.outline,
+      paddingVertical: ms(spacing.sm),
+      paddingHorizontal: ms(40),
+      borderRadius: ms(spacing.sm),
+      alignItems: 'center',
+      marginHorizontal: ms(spacing.xs),
+      minHeight: ms(50),
+    },
+    socialButtonImage: {
+      width: rfs(24),
+      height: rfs(24),
+      marginRight: ms(spacing.sm),
+    },
+    socialButtonText: {
+      fontSize: rfs(typography.bodyMedium.fontSize),
+      fontFamily: typography.bodyMedium.fontFamily,
+      color: colors.textPrimary,
+    },
+  });
 
   return (
     <>
@@ -119,7 +265,7 @@ export default function SignUpScreen() {
                 isValid={email.includes('@') && email.includes('.') && !errors.email}
               />
 
-              {/* Password Input */}
+              {/* Choose Password Input */}
               <CustomInput
                 label="Choose Password"
                 placeholder={`Minimum ${MIN_PASSWORD_LENGTH} characters`}
@@ -150,17 +296,10 @@ export default function SignUpScreen() {
                   onPress={() => setIsAgreed(!isAgreed)} 
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Image
-                    source={
-                      isAgreed
-                        ? require('../../assets/images/checkbox_checked.png')
-                        : require('../../assets/images/checkbox_unchecked.png')
-                    }
-                    style={{
-                      width: rfs(24),
-                      height: rfs(24),
-                      borderRadius: rfs(6),
-                    }}
+                  <Ionicons
+                    name={isAgreed ? 'checkbox' : 'square-outline'}
+                    size={rfs(24)}
+                    color={isAgreed ? colors.success : (errors.agreement ? colors.error : colors.textPrimary)}
                   />
                 </TouchableOpacity>
                 <Text style={styles.agreementText}>
@@ -195,18 +334,20 @@ export default function SignUpScreen() {
               {/* Social Login Buttons */}
               <View style={styles.socialButtonsContainer}>
                 <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Google Login')}>
-                  <Image 
-                    source={require('../../assets/images/google.png')} 
-                    style={styles.socialButtonImage} 
-                    resizeMode="contain"
+                  <Ionicons 
+                    name="logo-google" 
+                    size={rfs(24)} 
+                    style={{marginRight: ms(spacing.sm)}} 
+                    color={colors.textPrimary} 
                   />
                   <Text style={styles.socialButtonText}>Google</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} onPress={() => Alert.alert('Apple Login')}>
-                  <Image 
-                    source={require('../../assets/images/apple.png')} 
-                    style={styles.socialButtonImage} 
-                    resizeMode="contain"
+                  <Ionicons 
+                    name="logo-apple" 
+                    size={rfs(24)} 
+                    style={{marginRight: ms(spacing.sm)}} 
+                    color={colors.textPrimary} 
                   />
                   <Text style={styles.socialButtonText}>Apple</Text>
                 </TouchableOpacity>
@@ -219,86 +360,3 @@ export default function SignUpScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: colors.backgroundMain,
-  },
-  innerContainer: {
-    flex: 1,
-    paddingHorizontal: ms(spacing.lg),
-    paddingTop: ms(spacing.xl),
-    paddingBottom: ms(spacing.xl),
-  },
-  header: {
-    fontSize: rfs(typography.heading1.fontSize),
-    fontFamily: typography.heading1.fontFamily,
-    color: colors.textPrimary,
-    marginBottom: ms(spacing.xl),
-    textAlign: 'center',
-  },
-  agreementContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: ms(spacing.xl),
-    marginTop: ms(spacing.sm),
-    borderRadius: ms(15),
-  },
-  agreementText: {
-    fontSize: rfs(typography.bodySmall.fontSize),
-    fontFamily: typography.bodySmall.fontFamily,
-    color: colors.textPrimary,
-    marginLeft: ms(spacing.sm),
-    flexShrink: 1,
-  },
-  termsLink: {
-    color: colors.primary,
-    textDecorationLine: 'underline',
-  },
-  loginText: {
-    fontSize: rfs(typography.bodyMedium.fontSize),
-    fontFamily: typography.bodyMedium.fontFamily,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginTop: ms(spacing.lg),
-    marginBottom: ms(spacing.lg),
-  },
-  loginLink: {
-    color: colors.primary,
-    textDecorationLine: 'underline',
-    fontWeight: 'bold',
-  },
-  socialLoginText: {
-    fontSize: rfs(typography.caption.fontSize),
-    fontFamily: typography.caption.fontFamily,
-    color: colors.textGrey1,
-    textAlign: 'center',
-    marginVertical: ms(spacing.md),
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  socialButton: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: colors.outline,
-    paddingVertical: ms(spacing.sm),
-    paddingHorizontal: ms(40),
-    borderRadius: ms(spacing.sm),
-    alignItems: 'center',
-    marginHorizontal: ms(spacing.xs),
-    minHeight: ms(50),
-  },
-  socialButtonImage: {
-    width: rfs(24),
-    height: rfs(24),
-    marginRight: ms(spacing.sm),
-  },
-  socialButtonText: {
-    fontSize: rfs(typography.bodyMedium.fontSize),
-    fontFamily: typography.bodyMedium.fontFamily,
-    color: colors.textPrimary,
-  },
-});
