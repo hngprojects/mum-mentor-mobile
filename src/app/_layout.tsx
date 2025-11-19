@@ -1,5 +1,32 @@
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+
+// Prevent the splash screen from auto-hiding before fonts are loaded
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  return <Stack />;
+  // Load HankenGrotesk fonts
+  const [fontsLoaded, fontsError] = useFonts({
+    "HankenGrotesk-Regular": require("@/src/core/assets/fonts/HankenGrotesk-Regular.ttf"),
+    "HankenGrotesk-Medium": require("@/src/core/assets/fonts/HankenGrotesk-Medium.ttf"),
+    "HankenGrotesk-SemiBold": require("@/src/core/assets/fonts/HankenGrotesk-SemiBold.ttf"),
+    "HankenGrotesk-Bold": require("@/src/core/assets/fonts/HankenGrotesk-Bold.ttf"),
+    "HankenGrotesk-ExtraBold": require("@/src/core/assets/fonts/HankenGrotesk-ExtraBold.ttf"),
+  });
+
+  useEffect(() => {
+    // Hide splash screen once fonts are loaded or if there's an error
+    if (fontsLoaded || fontsError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontsError]);
+
+  // Don't render anything until fonts are loaded
+  if (!fontsLoaded && !fontsError) {
+    return null;
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
