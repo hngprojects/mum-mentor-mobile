@@ -3,6 +3,7 @@ import OnboardingScreen from "./OnboardingScreen";
 // import { useRouter } from "expo-router";
 // import { useEffect } from "react";
 // import OnboardingSplash from "./splashscreen";
+// import MomSetupScreen from "../(setup)";
 
 /**
  * Onboarding entry point
@@ -22,7 +23,6 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <OnboardingScreen />
-      {/* <SetupScreen /> */}
     </View>
   );
 }

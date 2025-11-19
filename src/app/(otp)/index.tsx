@@ -129,7 +129,7 @@ export const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({
         <View style={styles.iconContainer}>
           <View style={styles.logoContainer}>
           <Image
-              source={require('@/src/core/assets/images/onboarding/mail.png')}
+              source={require('../assets/images/otp/mail.png')}
               style={styles.logo}
               resizeMode="contain"
             />
