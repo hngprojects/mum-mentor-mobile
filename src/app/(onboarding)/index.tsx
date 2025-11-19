@@ -1,5 +1,5 @@
 import { StyleSheet, View } from "react-native";
-import OnboardingScreen from "./onboarding-screen";
+import OnboardingScreen from "./OnboardingScreen";
 // import { useRouter } from "expo-router";
 // import { useEffect } from "react";
 // import OnboardingSplash from "./splashscreen";

@@ -12,11 +12,11 @@ import { fontFamilies } from '../styles/index';
 export const loadApplicationFonts = async () => {
   await Font.loadAsync({
     // Map the font family key (used in the theme) to the local asset file
-    [fontFamilies.regular]: require('../../core/assets/fonts/HankenGrotesk-Regular.ttf'),
-    [fontFamilies.medium]: require('../../core/assets/fonts/HankenGrotesk-Medium.ttf'),
-    [fontFamilies.semiBold]: require('../../core/assets/fonts/HankenGrotesk-SemiBold.ttf'),
-    [fontFamilies.bold]: require('../../core/assets/fonts/HankenGrotesk-Bold.ttf'),
-    [fontFamilies.extraBold]: require('../../core/assets/fonts/HankenGrotesk-ExtraBold.ttf'),
+    [fontFamilies.regular]: require('../../app/assets/fonts/HankenGrotesk-Regular.ttf'),
+    [fontFamilies.medium]: require('../../app/assets/fonts/HankenGrotesk-Medium.ttf'),
+    [fontFamilies.semiBold]: require('../../app/assets/fonts/HankenGrotesk-SemiBold.ttf'),
+    [fontFamilies.bold]: require('../../app/assets/fonts/HankenGrotesk-Bold.ttf'),
+    [fontFamilies.extraBold]: require('../../app/assets/fonts/HankenGrotesk-ExtraBold.ttf'),
   });
 };
 
