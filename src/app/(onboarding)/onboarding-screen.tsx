@@ -2,12 +2,12 @@ import { colors, spacing, typography } from '@/src/core/styles';
 import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
 import React, { useState } from 'react';
 import {
-   Image,
-   ImageBackground,
-   StyleSheet,
-   Text,
-   TouchableOpacity,
-   View,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 /**
@@ -44,20 +44,20 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: '1',
     title: 'Your Motherhood Companion',
     subtitle: 'Personalized support for every stage of motherhood.',
-    image: require('@/src/app/assets/images/onboarding/slide1.png'),
+    image: require('@/assets/images/onboarding/slide1.png'),
   },
   {
     id: '2',
     title: 'Your 24/7 AI Mentor',
     subtitle:
       'Ask questions, get clarity, and receive trusted answers anytime you need support.',
-    image: require('@/src/app/assets/images/onboarding/slide2.png'),
+    image: require('@/assets/images/onboarding/slide2.png'),
   },
   {
     id: '3',
     title: 'Track Milestones With Ease',
     subtitle: 'Track milestones, save memories, stay confident.',
-    image: require('@/src/app/assets/images/onboarding/slide3.png'),
+    image: require('@/assets/images/onboarding/slide3.png'),
   },
 ];
 
@@ -111,7 +111,7 @@ const OnboardingSlideItem: React.FC<OnboardingSlideItemProps> = ({
 
         {/* NORA Logo */}
         <Image
-          source={require('@/src/app/assets/images/onboarding/logo.png')}
+          source={require('@/assets/images/logo-horizontal.png')}
           style={styles.logo}
           resizeMode="contain"
         />
