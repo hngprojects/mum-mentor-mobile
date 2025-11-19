@@ -56,7 +56,7 @@ npm start
 ## Project Structure
 
 - `src/app/` – Expo Router routes (kebab-case files)
-- `src/app/assets/` – fonts, images, and other assets
+- `src/assets/` – fonts, images, and other assets
 - `src/core/styles/` – design tokens, typography, scaling utilities
 
 ## Scripts Reference
