@@ -2,12 +2,12 @@ import { colors, spacing, typography } from '@/src/core/styles';
 import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
 import React, { useState } from 'react';
 import {
-   Image,
-   ImageBackground,
-   StyleSheet,
-   Text,
-   TouchableOpacity,
-   View,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 /**
@@ -44,20 +44,20 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: '1',
     title: 'Your Motherhood Companion',
     subtitle: 'Personalized support for every stage of motherhood.',
-    image: require('@/src/core/assets/images/onboarding/slide1.png'),
+    image: require('../assets/images/onboarding/slide1.png'),
   },
   {
     id: '2',
     title: 'Your 24/7 AI Mentor',
     subtitle:
       'Ask questions, get clarity, and receive trusted answers anytime you need support.',
-    image: require('@/src/core/assets/images/onboarding/slide2.png'),
+    image: require('../assets/images/onboarding/slide2.png'),
   },
   {
     id: '3',
     title: 'Track Milestones With Ease',
     subtitle: 'Track milestones, save memories, stay confident.',
-    image: require('@/src/core/assets/images/onboarding/slide3.png'),
+    image: require('../assets/images/onboarding/slide3.png'),
   },
 ];
 
@@ -111,7 +111,7 @@ const OnboardingSlideItem: React.FC<OnboardingSlideItemProps> = ({
 
         {/* NORA Logo */}
         <Image
-          source={require('@/src/core/assets/images/onboarding/logo.png')}
+          source={require('../assets/images/logo-horizontal.png')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -130,6 +130,8 @@ const OnboardingSlideItem: React.FC<OnboardingSlideItemProps> = ({
           style={styles.primaryButton}
           onPress={isLastSlide ? onLogin : onNext}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={isLastSlide ? 'Log in to your account' : 'Go to next slide'}
         >
           <Text style={styles.primaryButtonText}>
             {isLastSlide ? 'Log in' : 'Next'}
@@ -141,6 +143,8 @@ const OnboardingSlideItem: React.FC<OnboardingSlideItemProps> = ({
           style={styles.secondaryButton}
           onPress={isLastSlide ? onSignUp : onSkip}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={isLastSlide ? 'Sign up for a new account' : 'Skip to last slide'}
         >
           <Text style={styles.secondaryButtonText}>
             {isLastSlide ? 'Sign Up' : 'Skip'}
@@ -153,10 +157,6 @@ const OnboardingSlideItem: React.FC<OnboardingSlideItemProps> = ({
 
 
 
-/**
- * Main onboarding slides screen component
- * Shows one slide at a time, handles navigation between slides
- */
 export default function OnboardingSlides() {
 
   // Track current active slide index (0, 1, or 2)
@@ -295,10 +295,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
 
-  // Bottom controls container (button)
+  // Bottom controls container (buttons)
   controlsContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: vs(20),
     left: 0,
     right: 0,
     paddingHorizontal: spacing.lg,

@@ -1,32 +1,50 @@
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+// app/_layout.tsx
 
-// Prevent the splash screen from auto-hiding before fonts are loaded
+import React, { useEffect } from 'react';
+import { Stack } from 'expo-router';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
+import { useAssetLoading } from '../core/utils/assetsLoading';
+import { colors } from '../core/styles/index';
+
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  // Load HankenGrotesk fonts
-  const [fontsLoaded, fontsError] = useFonts({
-    "HankenGrotesk-Regular": require("@/src/core/assets/fonts/HankenGrotesk-Regular.ttf"),
-    "HankenGrotesk-Medium": require("@/src/core/assets/fonts/HankenGrotesk-Medium.ttf"),
-    "HankenGrotesk-SemiBold": require("@/src/core/assets/fonts/HankenGrotesk-SemiBold.ttf"),
-    "HankenGrotesk-Bold": require("@/src/core/assets/fonts/HankenGrotesk-Bold.ttf"),
-    "HankenGrotesk-ExtraBold": require("@/src/core/assets/fonts/HankenGrotesk-ExtraBold.ttf"),
-  });
+function RootLayoutContent({ children }: { children: React.ReactNode }) {
+  const isLoaded = useAssetLoading();
 
   useEffect(() => {
-    // Hide splash screen once fonts are loaded or if there's an error
-    if (fontsLoaded || fontsError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontsError]);
+    if (isLoaded) SplashScreen.hideAsync();
+  }, [isLoaded]);
 
-  // Don't render anything until fonts are loaded
-  if (!fontsLoaded && !fontsError) {
-    return null;
+  if (!isLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <>{children}</>;
 }
+
+export default function RootLayout() {
+  return (
+    <RootLayoutContent>
+      <Stack>
+        <Stack.Screen
+          name="(onboarding)"
+          options={{ headerShown: false }}
+        />
+      </Stack>
+    </RootLayoutContent>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundMain,
+  },
+});

@@ -1,97 +1,96 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Mum Mentor Mobile
 
-# Getting Started
+Expo-based React Native app for the Mum Mentor AI platform, built with [Expo Router](https://docs.expo.dev/router/introduction/).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Tech Stack
 
-## Step 1: Start Metro
+- **Framework**: [Expo](https://expo.dev/) with Expo Router (file-based routing)
+- **Language**: TypeScript
+- **Fonts**: HankenGrotesk (Regular, Medium, SemiBold, Bold, ExtraBold)
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Prerequisites
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- [Node.js](https://nodejs.org/) 18+
+- npm (bundled with Node) or [Yarn](https://yarnpkg.com/)
+- [Expo Go](https://expo.dev/client) for device testing
+- Android Studio / Xcode only if you need emulators or native builds
+
+## Install & Start
+
+Install dependencies:
 
 ```sh
-# Using npm
+npm install
+```
+
+Start the Expo dev server (opens Metro + Dev Tools automatically):
+
+```sh
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+## Run Targets
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+- **Android**
 
-### Android
+  ```sh
+  npm run android
+  ```
 
-```sh
-# Using npm
-npm run android
+- **iOS** (on macOS; install pods first)
 
-# OR using Yarn
-yarn android
-```
+  ```sh
+  bundle install
+  bundle exec pod install
+  npm run ios
+  ```
 
-### iOS
+- **Web**
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+  ```sh
+  npm run web
+  ```
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+- **Expo Go** – after `npm start`, scan the QR code in the terminal or Dev Tools.
 
-```sh
-bundle install
-```
+## Project Structure
 
-Then, and every time you update your native dependencies, run:
+- `src/app/` – Expo Router routes (kebab-case files)
+- `src/app/assets/` – fonts, images, and other assets
+- `src/core/styles/` – design tokens, typography, scaling utilities
 
-```sh
-bundle exec pod install
-```
+## Scripts Reference
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start Expo dev server |
+| `npm run android` | Run on Android emulator/device |
+| `npm run ios` | Run on iOS simulator/device (macOS only) |
+| `npm run web` | Run in web browser |
+| `npm run lint` | Run ESLint with Expo preset |
+| `npm start -- --clear` | Start with cleared Metro cache |
 
-```sh
-# Using npm
-npm run ios
+## Contributing
 
-# OR using Yarn
-yarn ios
-```
+We follow a **feature branch workflow**:
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+1. Always branch from `staging`:
+   ```sh
+   git checkout staging
+   git pull origin staging
+   git checkout -b yourname/<type>/<feature-name>
+   ```
+   
+2. Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+3. Make your changes and commit with descriptive messages
 
-## Step 3: Modify your app
+4. Push and create a PR targeting `staging` (not `main`)
 
-Now that you have successfully run the app, let's make changes!
+5. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Useful Docs
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- [Expo Documentation](https://docs.expo.dev/)
+- [Expo Router Guide](https://docs.expo.dev/router/introduction/)
+- [React Native Docs](https://reactnative.dev/)

@@ -4,7 +4,7 @@
     "slug": "MumMentorMobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "@/src/assets/images/logo.png",
     "scheme": "mummentormobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -30,13 +30,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "@/src/app/assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#F9C1CC"
         }
       ]
     ],
