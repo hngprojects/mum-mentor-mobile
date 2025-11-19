@@ -1,6 +1,7 @@
 import { colors, spacing, typography } from '@/src/core/styles';
 import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
 import React, { useState } from 'react';
+import { router } from 'expo-router';
 import {
   Image,
   ImageBackground,
@@ -187,6 +188,7 @@ export default function OnboardingSlides() {
   const handleLogin = () => {
     // TODO: Add navigation to login screen
     console.log('Navigate to login');
+    router.push('./(auth)/SignInScreen');
   };
 
   /**
@@ -196,6 +198,7 @@ export default function OnboardingSlides() {
   const handleSignUp = () => {
     // TODO: Add navigation to signup screen
     console.log('Navigate to signup');
+    router.push('./(auth)/SignUpScreen');
   };
 
   // --- RENDER ---
@@ -293,12 +296,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: rfs(24),
     paddingHorizontal: spacing.md,
+    bottom: vs(8),
   },
 
   // Bottom controls container (buttons)
   controlsContainer: {
     position: 'absolute',
-    bottom: vs(20),
+    bottom: vs(40),
     left: 0,
     right: 0,
     paddingHorizontal: spacing.lg,
