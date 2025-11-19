@@ -46,26 +46,26 @@ We follow a **Vertical Slice Architecture** where each feature is self-contained
 
 ```
 src/
-├── app/                    # Shared logic and components
-│   ├── components/         # Reusable UI components
-│   ├── hooks/              # Custom React hooks
-│   ├── utils/              # Helper functions and utilities
-│   ├── styles/             # Global styles and theme
-│   └── types/              # Shared TypeScript types
-│
-├── features/               # Feature modules (vertical slices)
-│   ├── authentication/
-│   │   ├── components/     # Feature-specific components
-│   │   ├── screens/        # Feature screens
-│   │   ├── hooks/          # Feature-specific hooks
-│   │   ├── stores/         # Zustand stores for this feature
-│   │   ├── api/            # API calls for this feature
-│   │   └── types/          # Feature-specific types
-│   │
-│   ├── onboarding/
-│   └── dashboard/
-│
-└── navigation/             # App navigation setup
+    ├── app/                     <-- NEW: This is the routing root for Expo Router
+    │   ├── (auth)/              <-- Authentication Group (No header)
+    │   │   ├── sign-in.tsx
+    │   │   └── sign-up.tsx
+    │   │
+    │   ├── (tabs)/              <-- Main App Group (Bottom tabs)
+    │   │   ├── _layout.tsx
+    │   │   ├── home.tsx         # Home Dashboard Screen
+    │   │   ├── milestone.tsx    # Milestone Tracker Screen
+    │   │   └── chat.tsx         # AI Chat Screen
+    │   │
+    │   └── _layout.tsx          # Root Layout for the entire application
+    │
+    └── core/                    <-- NEW: Contains shared, non-visual logic
+        ├── api/                 # Axios setup
+        ├── assets/              # Fonts, Images, Lottie
+        ├── theme/               # Constants.ts, ThemeContext.tsx (Your work)
+        ├── hooks/               # Global hooks (useTheme, useAuth)
+        ├── stores/              # Zustand/Redux stores
+        └── types/
 ```
 
 ### Key Principles
