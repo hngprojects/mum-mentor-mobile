@@ -1,5 +1,3 @@
-// src/app/(auth)/screens/SignUpScreen.tsx
-
 import React, { useState } from 'react';
 import { 
   View, 
@@ -206,17 +204,20 @@ export default function SignUpScreen() {
       justifyContent: 'space-between',
     },
     socialButton: {
+      // Adjusted flex properties to match the sign-in screen's layout
+      flex: 1,
       flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
       borderWidth: 1,
       borderColor: colors.outline,
       paddingVertical: ms(spacing.sm),
-      paddingHorizontal: ms(40),
       borderRadius: ms(spacing.sm),
-      alignItems: 'center',
       marginHorizontal: ms(spacing.xs),
       minHeight: ms(50),
     },
     socialButtonImage: {
+      // Styles for the image assets
       width: rfs(24),
       height: rfs(24),
       marginRight: ms(spacing.sm),
@@ -333,21 +334,21 @@ export default function SignUpScreen() {
 
               {/* Social Login Buttons */}
               <View style={styles.socialButtonsContainer}>
+                {/* FIX: Use Image asset for Google icon */}
                 <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Google Login')}>
-                  <Ionicons 
-                    name="logo-google" 
-                    size={rfs(24)} 
-                    style={{marginRight: ms(spacing.sm)}} 
-                    color={colors.textPrimary} 
+                  <Image 
+                    source={require('../../assets/images/google.png')} 
+                    style={styles.socialButtonImage} 
+                    resizeMode="contain"
                   />
                   <Text style={styles.socialButtonText}>Google</Text>
                 </TouchableOpacity>
+                {/* FIX: Use Image asset for Apple icon */}
                 <TouchableOpacity style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} onPress={() => Alert.alert('Apple Login')}>
-                  <Ionicons 
-                    name="logo-apple" 
-                    size={rfs(24)} 
-                    style={{marginRight: ms(spacing.sm)}} 
-                    color={colors.textPrimary} 
+                  <Image 
+                    source={require('../../assets/images/apple.png')} 
+                    style={styles.socialButtonImage} 
+                    resizeMode="contain"
                   />
                   <Text style={styles.socialButtonText}>Apple</Text>
                 </TouchableOpacity>

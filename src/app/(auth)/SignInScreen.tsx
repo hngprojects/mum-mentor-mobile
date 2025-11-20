@@ -1,5 +1,3 @@
-// src/app/(auth)/screens/SignInScreen.tsx
-
 import React, { useState } from 'react';
 import { 
   View, 
@@ -13,7 +11,9 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { router } from 'expo-router';
-
+import { AxiosError } from 'axios';
+// FIX: Import StatusBar component
+import { StatusBar } from 'expo-status-bar';
 
 // --- Imports from Core Components and Styles (Adjust path as needed) ---
 import CustomInput from '../components/CustomInput'; 
@@ -21,12 +21,17 @@ import PrimaryButton from '../components/PrimaryButton';
 import { colors, typography, spacing } from '../../core/styles/index';
 import { ms, rfs } from '../../core/styles/scaling';
 
+// --- API Service Import ---
+import { login, ApiErrorResponse } from '../../core/services/authService'; 
+
+
 export default function SignInScreen() {
   // --- Local State Management ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   // --- Validation Logic (Client-Side Check) ---
   const validate = () => {
@@ -35,17 +40,18 @@ export default function SignInScreen() {
 
     // Email Validation
     if (!email || !email.includes('@')) {
-      newErrors.email = 'The Email Address is incorrect.';
+      newErrors.email = 'Please enter a valid email address.';
       isValid = false;
     }
 
-    // Password Validation (Simulating incorrect password error shown in design)
+    // Password Validation
     if (!password) {
-      newErrors.password = 'The Password is incorrect.';
+      newErrors.password = 'Password is required.';
       isValid = false;
     }
 
     setErrors(newErrors);
+    setGeneralError(null);
     return isValid;
   };
 
@@ -56,40 +62,74 @@ export default function SignInScreen() {
 
     setIsLoading(true);
     setErrors({});
+    setGeneralError(null);
 
-    // --- Backend API Call Logic (Placeholder for Sprint 2) ---
     try {
-      // NOTE: Here is where Axios will be integrated to POST /auth/login
+      // 1. CALL THE LOGIN SERVICE
+      const loginPayload = { email, password };
       
-      // Simulate API success
-      await new Promise(resolve => setTimeout(resolve, 2000)); 
+      // FIX: Call the login function without assigning the unused return value
+      // The login function handles the token saving internally upon success.
+      await login(loginPayload); 
 
-      Alert.alert("Welcome Back!", "Login successful. Redirecting to app.");
-      
-      // On success, navigate to the main app area (e.g., the Home Dashboard tab)
+      // 2. SUCCESS NAVIGATION
+      Alert.alert("Welcome Back!", "Login successful.");
       router.replace('/(tabs)/Home'); 
 
     } catch (error) {
-      // Show generic login error (The Password/Email is incorrect)
-      setErrors({
-        email: 'The Email Address is incorrect',
-        password: 'The Password is incorrect',
-      });
-      console.error("Login API Error:", error);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const statusCode = axiosError.response?.status;
+      
+      console.error("Login API Error:", statusCode, axiosError.response?.data);
+
+      // 3. ERROR HANDLING based on API responses
+      if (statusCode === 401 || statusCode === 404) {
+        // Handle Invalid Credentials (401) or User Not Found (404)
+        setErrors({
+          email: 'The Email Address is incorrect or user not found.',
+          password: 'The Password is incorrect.',
+        });
+        
+      } else if (statusCode === 422) {
+        // Handle Validation Errors (e.g., password too short)
+        setGeneralError('Validation failed. Check input formats.');
+
+      } else {
+        // Catch-all for 500 or network errors
+        setGeneralError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   
+  // --- Navigation Handlers ---
+  const handleForgotPassword = () => {
+    router.push('/(auth)/ForgotPasswordScreen');
+  };
+  
+  const handleSignUp = () => {
+    router.replace('/(auth)/SignUpScreen');
+  };
+
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* FIX: Set the status bar style to dark content for a light screen background */}
+      <StatusBar style="dark" /> 
+      
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.innerContainer}>
           <Text style={styles.header}>Log In</Text>
+          
+          {/* General Error Message Display */}
+          {generalError && (
+            <Text style={styles.generalErrorText}>{generalError}</Text>
+          )}
 
           {/* Email Input */}
           <CustomInput
@@ -101,7 +141,6 @@ export default function SignInScreen() {
             isError={!!errors.email}
             errorMessage={errors.email}
             iconName="mail-outline"
-            // Simple client-side validation check
             isValid={email.includes('@') && email.length > 0 && !errors.email}
           />
 
@@ -120,7 +159,7 @@ export default function SignInScreen() {
           {/* Forgot Password Link */}
           <TouchableOpacity 
             style={styles.forgotPasswordLink} 
-            onPress={() => Alert.alert('Navigation Required', 'Redirect to Forgot Password Flow')}
+            onPress={handleForgotPassword}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
@@ -131,7 +170,7 @@ export default function SignInScreen() {
             title="Log In"
             onPress={handleLogin}
             isLoading={isLoading}
-            disabled={!email || !password}
+            disabled={!email || !password || isLoading}
           />
 
           {/* Don't have an account (Redirect to Sign Up) */}
@@ -139,7 +178,7 @@ export default function SignInScreen() {
             Don&apos;t have an account? {' '}
             <Text 
               style={styles.signupLink} 
-              onPress={() => router.replace('/(auth)/SignUpScreen')}
+              onPress={handleSignUp}
             >
               Sign up
             </Text>
@@ -150,27 +189,28 @@ export default function SignInScreen() {
           {/* Social Login Buttons (Google / Apple) */}
           <View style={styles.socialButtonsContainer}>
               <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Google Login')}>
-                                <Image 
-                                  source={require('../../assets/images/google.png')} 
-                                  style={styles.socialButtonImage} 
-                                  resizeMode="contain"
-                                />
-                                <Text style={styles.socialButtonText}>Google</Text>
-                              </TouchableOpacity>
-                              <TouchableOpacity style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} onPress={() => Alert.alert('Apple Login')}>
-                                <Image 
-                                  source={require('../../assets/images/apple.png')} 
-                                  style={styles.socialButtonImage} 
-                                  resizeMode="contain"
-                                />
-                                <Text style={styles.socialButtonText}>Apple</Text>
-                              </TouchableOpacity>
+                <Image 
+                  source={require('../../assets/images/google.png')} 
+                  style={styles.socialButtonImage} 
+                  resizeMode="contain"
+                />
+                <Text style={styles.socialButtonText}>Google</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} onPress={() => Alert.alert('Apple Login')}>
+                <Image 
+                  source={require('../../assets/images/apple.png')} 
+                  style={styles.socialButtonImage} 
+                  resizeMode="contain"
+                />
+                <Text style={styles.socialButtonText}>Apple</Text>
+              </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
 const styles = StyleSheet.create({
     container: {
       flexGrow: 1,
@@ -188,6 +228,12 @@ const styles = StyleSheet.create({
       fontFamily: typography.heading1.fontFamily,
       color: colors.textPrimary,
       marginBottom: ms(spacing.xl * 2), // Large space below header
+    },
+    generalErrorText: {
+      ...typography.bodyMedium,
+      color: colors.error,
+      textAlign: 'center',
+      marginBottom: ms(spacing.md),
     },
     forgotPasswordLink: {
       alignSelf: 'flex-end',

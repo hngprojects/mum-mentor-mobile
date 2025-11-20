@@ -1,5 +1,3 @@
-// src/app/(auth)/screens/OtpScreen.tsx
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -23,27 +21,35 @@ import { Ionicons } from '@expo/vector-icons';
 
 // --- API Service and Types ---
 import { 
-  verifyCode, 
+  verifyValue, // <--- Renamed function: now handles both OTP and Token
   resendVerification, 
   ApiErrorResponse, 
-  VerifyCodePayload,
-  EmailPayload
+  VerificationPayload, // <--- New payload interface
+  EmailPayload,
+  TokenResponse,
+  ServiceResponse
 } from '../../core/services/authService'; 
 import PrimaryButton from '../components/PrimaryButton'; 
 
 
+// --- TYPE ASSERTION FOR FLOWS ---
+// TokenResponse should be used for the register flow, as it contains the access_token.
+// For the password reset flow, the response is expected to have a verification_token instead of (or in addition to) the access_token.
+interface ResetTokenResponse extends TokenResponse {
+  verification_token: string;
+}
+
 // --- Component ---
-// NOTE: This component is exported as default to satisfy Expo Router's file-based routing.
 export default function OtpScreen() {
   
-  // Get URL parameters (email, context, and optional resetToken)
+  // Get URL parameters (email, context, and optional verificationToken)
   const params = useLocalSearchParams<{ email: string; context?: 'register' | 'reset'; verificationToken?: string }>();
   const email = params.email;
   const context = params.context || 'register';
   const resetToken = params.verificationToken; // Token used for password recovery context
 
   const otpLength = 6;
-  const initialResendTimer = 60; // seconds (increased for production use)
+  const initialResendTimer = 60; // seconds
 
   const [otp, setOtp] = useState<string[]>(Array(otpLength).fill(''));
   const [isLoading, setIsLoading] = useState(false);
@@ -63,71 +69,158 @@ export default function OtpScreen() {
       Alert.alert("Error", "Email parameter missing. Redirecting to Login.");
       router.replace('/(auth)/SignInScreen');
     }
-    inputRefs.current[0]?.focus();
-    
-    // Start the timer to control the resend button availability
-    if (timer === initialResendTimer) {
-        // Only start timer if it wasn't started automatically in the signup flow
-        // setTimer(initialResendTimer); 
-    }
-  }, []);
+    // Set focus on the first input field
+    const focusTimeout = setTimeout(() => {
+        inputRefs.current[0]?.focus();
+    }, 100); // Small delay to ensure input is mounted
+
+    return () => clearTimeout(focusTimeout);
+  }, [email]);
 
   // Countdown timer effect
   useEffect(() => {
-    if (timer > 0 && !isLoading) {
+    if (timer > 0 && !isLoading && !isResending) {
       const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
       return () => clearInterval(interval);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timer, isLoading]);
+  }, [timer, isLoading, isResending]);
 
 
   // --- HANDLERS ---
+  
+  /**
+   * Type guard to check if an error is an AxiosError.
+   */
+  const isAxiosError = (err: any): err is AxiosError<ApiErrorResponse> => {
+    return err.isAxiosError === true;
+  };
 
   const handleVerify = async (code?: string) => {
-    const otpCode = code || otp.join('');
-    if (otpCode.length !== otpLength) return;
+    // The input value (6 digits) will be the verification_value
+    const verificationValue = code || otp.join('');
+    if (verificationValue.length !== otpLength) {
+        setVerificationError('Please enter the full 6-digit code.');
+        return;
+    }
 
     setIsLoading(true);
     setVerificationError('');
 
-    const payload: VerifyCodePayload = { email, otp_code: otpCode };
+    // Determine the type for the payload based on context
+    const verificationType: VerificationPayload['type'] = 
+        context === 'register' ? 'email_verification' : 'password_reset';
+
+    // Construct the payload using the new interface
+    const payload: VerificationPayload = { 
+        email, 
+        verification_value: verificationValue,
+        type: verificationType 
+    };
     
+    // --- DEBUG LOG: Check the exact payload and type being sent to the service ---
+    console.log(`Sending Verification Payload (Type: ${verificationType}):`, payload);
+
     try {
-      const response = await verifyCode(payload);
+      // API call now uses the unified verifyValue function
+      const result: ServiceResponse<TokenResponse> = await verifyValue(payload);
       
-      // Success Logic:
-      if (context === 'register') {
-        // 1. New Registration Verification Success -> Go to Onboarding/App
-        Alert.alert("Success", "Email verified successfully! Welcome to NORA.");
-        // Redirect to the main app flow
-        router.replace('/(tabs)/Home'); 
+      // --- SUCCESS HANDLING ---
+      if (result.success) {
+        const response = result.data;
+
+        if (context === 'register') {
+          // 1. Email Verification Success (Expecting token)
+          
+          const tokenResponse = response as unknown as TokenResponse;
+          
+          console.log("Verification Success Response (Register Context):", tokenResponse);
+
+          if (tokenResponse.access_token) {
+              // ✅ Preferred Path: Token received. Now logged in. Redirect.
+              Alert.alert("Success", "Email verified and logged in! Welcome to NORA.");
+              router.replace('/(tabs)/Home'); 
+              
+          } else {
+              // ⚠️ Fallback Path: Verification succeeded, but access_token is missing (BE issue).
+              // Instead of showing a broken error, redirect to Sign In so the user can proceed.
+              console.warn("Verification successful but missing access_token. Redirecting to Sign In.");
+              
+              Alert.alert(
+                  "Verification Success", 
+                  "Your email has been verified. Please log in to continue.",
+                  [{ 
+                      text: "Log In", 
+                      onPress: () => router.replace('/(auth)/SignInScreen') 
+                  }]
+              );
+          }
+          
+        } else if (context === 'reset') {
+          // 2. Password Recovery Verification Success
+          
+          console.log("Verification Success Response (Reset Context):", response);
+
+          // Assert the response to include the expected verification token for password reset
+          const resetResponse = response as unknown as ResetTokenResponse; 
+          
+          const verificationToken = resetResponse.verification_token || resetToken; 
+          
+          if (!verificationToken) {
+              setVerificationError("Verification successful, but missing token for password reset. Check console log for API response details.");
+          } else {
+              Alert.alert("Success", "Code verified. Proceeding to reset password.");
+              router.replace({ 
+                  pathname: '/(auth)/ResetPassword',
+                  params: { 
+                      verificationToken: verificationToken,
+                      email: email
+                  } 
+              });
+          }
+        }
+      } 
+      // --- FAILURE HANDLING ---
+      else { 
+        const error = result.error;
+        let serverMessage = 'A network or unexpected error occurred. Please check your connection.';
         
-      } else if (context === 'reset') {
-        // 2. Password Recovery Verification Success -> Go to Reset Password screen
+        if (isAxiosError(error)) {
+            const axiosError = error;
+            
+            // Log relevant failure details
+            console.warn(
+                "Verification Server Failure:",
+                { 
+                    status: axiosError.response?.status, 
+                    message: axiosError.response?.data?.message,
+                    details: axiosError.response?.data?.detail
+                }
+            );
+
+            // Robust way to get the error message
+            serverMessage = axiosError.response?.data?.message 
+                || (typeof axiosError.response?.data?.detail === 'string' ? axiosError.response.data.detail : undefined)
+                || 'Incorrect code, expired token, or server error. Please try again.';
+            
+        } else {
+            console.warn("Verification Error (Unexpected/Non-Axios):", error);
+        }
         
-        // Assuming the API returns the verification_token required for the final password change:
-        const verificationToken = response.verification_token || resetToken; 
+        // Show the pop-up message
+        Alert.alert("Verification Failed", serverMessage);
+
+        // Set the persistent in-line error message
+        setVerificationError(serverMessage); 
         
-        Alert.alert("Success", "Code verified. Proceeding to reset password.");
-        router.replace({ 
-            pathname: '/(auth)/ResetPassword',
-            params: { 
-                // Pass the necessary token/ID to the final reset screen
-                verificationToken: verificationToken,
-                email: email
-            } 
-        });
+        // Clear inputs and refocus
+        setOtp(Array(otpLength).fill('')); 
+        inputRefs.current[0]?.focus(); 
       }
 
     } catch (error) {
-        const axiosError = error as AxiosError<ApiErrorResponse>;
-        console.error("OTP Verification Error:", axiosError.response?.data);
-        
-        // Handle API error responses (400 Invalid Code)
-        setVerificationError('Incorrect code or expired token. Please try again.');
-        setOtp(Array(otpLength).fill('')); // Clear inputs
-        inputRefs.current[0]?.focus(); // Refocus first input
+        console.error("Unhandled Runtime Error during verification flow:", error);
+        Alert.alert("Fatal Error", "An unhandled error occurred in the application. Please restart.");
+        setVerificationError("An unhandled error occurred.");
 
     } finally {
       setIsLoading(false);
@@ -143,12 +236,8 @@ export default function OtpScreen() {
     try {
       const payload: EmailPayload = { email };
       
-      // Use the appropriate resend API based on context
-      if (context === 'register') {
-           await resendVerification(payload); // Resend email verification code
-      } else if (context === 'reset') {
-           await resendVerification(payload); // Resend OTP for password reset
-      }
+      // Use the appropriate resend API
+      await resendVerification(payload); 
 
       // Reset timer and inputs after successful resend request
       setOtp(Array(otpLength).fill(''));
@@ -157,34 +246,48 @@ export default function OtpScreen() {
       Alert.alert("Sent!", "New code has been sent to your email.");
 
     } catch (error) {
-      Alert.alert("Error", "Could not resend code. Please try again.");
+        // Robust error handling for resend failure
+        let errorMessage = "Could not resend code. Please try again.";
+        if (isAxiosError(error)) {
+            const axiosError = error;
+            errorMessage = axiosError.response?.data?.message 
+                || (typeof axiosError.response?.data?.detail === 'string' ? axiosError.response.data.detail : errorMessage);
+            console.error("Resend Verification Error:", axiosError.response?.data);
+        } else {
+            console.error("Resend Verification Unexpected Error:", error);
+        }
+        Alert.alert("Error", errorMessage);
     } finally {
-      setIsResending(false);
+      setIsResending(false); 
     }
   };
 
   const handleChangeText = (text: string, index: number) => {
+    // Only allow numeric input
     const numericText = text.replace(/[^0-9]/g, '');
+
     if (numericText.length <= 1) {
       const newOtp = [...otp];
       newOtp[index] = numericText;
       setOtp(newOtp);
 
-      // Move focus forward
+      // Move focus forward if a digit was entered and it's not the last box
       if (numericText && index < otpLength - 1) {
         inputRefs.current[index + 1]?.focus();
       }
 
       // Auto-submit when all fields are filled
-      if (newOtp.every((digit) => digit !== '')) {
+      if (newOtp.filter(d => d).length === otpLength) {
         handleVerify(newOtp.join(''));
       }
     }
   };
 
   const handleKeyPress = (key: string, index: number) => {
+    // Handle backspace when the current input is empty, moving focus back
     if (key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
+      // Clear the digit in the previous box
       setOtp(otp.map((d, i) => (i === index - 1 ? '' : d)));
     }
   };
@@ -295,7 +398,9 @@ export default function OtpScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Verify Your Account</Text>
+        <Text style={styles.title}>
+            {context === 'register' ? 'Verify Your Account' : 'Reset Password Code'}
+        </Text>
 
         <View style={styles.iconContainer}>
           <View style={styles.mailIcon}>
@@ -304,7 +409,7 @@ export default function OtpScreen() {
         </View>
 
         <Text style={styles.description}>
-          We just emailed you, please enter the code we sent
+          We sent a code to the email address:
         </Text>
         <Text style={styles.email}>{email}</Text>
 
@@ -337,7 +442,7 @@ export default function OtpScreen() {
           style={styles.resendContainer}
         >
           <Text style={[styles.resendText, (timer > 0 || isResending || isLoading) && styles.resendTextDisabled]}>
-            Resend code
+            {isResending ? 'Sending...' : 'Resend code'}
           </Text>
           {timer > 0 && <Text style={styles.timerText}>{formatTimer(timer)}</Text>}
         </TouchableOpacity>
@@ -348,16 +453,6 @@ export default function OtpScreen() {
           disabled={!isOtpComplete || isLoading}
           isLoading={isLoading}
         />
-        
-        {/* We assume this link is needed only for the Reset context, where users might go back to Login */}
-        {context === 'reset' && (
-             <PrimaryButton
-                title="Back to Login"
-                onPress={() => router.replace('/(auth)/sign-in')}
-                style={{backgroundColor: defaultTheme.colors.surface_subtle, marginTop: ms(spacing.md)}}
-                textStyle={{color: defaultTheme.colors.textPrimary}}
-            />
-        )}
         
       </ScrollView>
     </KeyboardAvoidingView>

@@ -1,20 +1,27 @@
-// src/core/services/authService.ts
-
 import apiClient from './apiClient';
-// Assuming authStorage.ts is a sibling file in core/utils/
-import { setAuthToken, removeAuthToken } from './authStorage'; 
-import { AxiosError } from 'axios';
+import { setAuthToken, removeAuthToken } from './authStorage';
+import { AxiosError, isAxiosError } from 'axios';
 
-// --- TYPE DEFINITIONS FOR API CONTRACTS ---
-
-// 1. STANDARD SUCCESS RESPONSE 
-export interface AuthResponse {
-  access_token: string; // The JWT needed for authenticated calls
-  token_type: string;
-  // User data or status message may also be included
+// --- TYPES ---
+export interface AuthTokenData {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
 }
 
-// 2. PAYLOADS (Data sent to the API)
+export interface LoginAPIResponse {
+  data: AuthTokenData;
+  message: string;
+  status: string;
+  status_code: number;
+}
+
+export type TokenResponse = AuthTokenData;
+
 export interface RegisterPayload {
   full_name: string;
   email: string;
@@ -28,9 +35,10 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface VerifyCodePayload {
+export interface VerificationPayload {
   email: string;
-  otp_code: string;
+  verification_value: string;
+  type: 'email_verification' | 'password_reset';
 }
 
 export interface EmailPayload {
@@ -38,132 +46,116 @@ export interface EmailPayload {
 }
 
 export interface ResetPasswordPayload {
-  verification_token: string; // Token received after successful OTP verification
+  verification_token: string;
   password: string;
   confirm_password: string;
 }
 
-// 3. ERROR RESPONSE STRUCTURE (For safely checking error data)
+export interface MessageResponse {
+  message: string;
+}
+
 export interface ValidationErrorDetail {
-    loc: (string | number)[];
-    msg: string;
-    type: string;
+  loc: (string | number)[];
+  msg: string;
+  type: string;
 }
 
 export interface ApiErrorResponse {
-    detail?: string | ValidationErrorDetail[];
+  detail?: string | ValidationErrorDetail[];
+  message?: string;
 }
 
-// --- CORE AUTHENTICATION FUNCTIONS ---
+export type ServiceResponse<T> = { success: true; data: T } | { success: false; error: AxiosError<ApiErrorResponse> };
 
-/**
- * Handles user registration (POST /auth/register).
- * On success, securely saves the JWT and returns user data.
- */
-export async function register(payload: RegisterPayload): Promise<AuthResponse> {
+// --- AUTH FUNCTIONS ---
+export async function register(payload: RegisterPayload): Promise<MessageResponse> {
   try {
-    // Note: The generic type <AuthResponse> is now correctly recognized
-    const response = await apiClient.post<AuthResponse>('/auth/register', payload);
-
-    // On successful registration (Code 201), set the JWT for immediate session start
-    await setAuthToken(response.data.access_token);
+    const sanitizedPayload = { ...payload, phone: payload.phone || '' };
+    const response = await apiClient.post<MessageResponse>('/api/v1/auth/register', sanitizedPayload);
     return response.data;
   } catch (error) {
-    // CRITICAL FIX: Cast the error to AxiosError<ApiErrorResponse> to safely throw it
+    if (isAxiosError(error) && error.response) {
+      console.error('Registration API Failed:', { status: error.response.status, data: error.response.data });
+    } else {
+      console.error('Registration failed with non-Axios error:', error);
+    }
     throw error as AxiosError<ApiErrorResponse>;
   }
 }
 
-/**
- * Handles user login (POST /auth/login).
- * On success, securely saves the JWT.
- */
-export async function login(payload: LoginPayload): Promise<AuthResponse> {
+export async function login(payload: LoginPayload): Promise<AuthTokenData> {
   try {
-    const response = await apiClient.post<AuthResponse>('/auth/login', payload);
+    const response = await apiClient.post<LoginAPIResponse>('/api/v1/auth/login', payload);
+    const tokenData = response.data.data;
+    const token = tokenData?.access_token;
 
-    // On successful login, set the JWT for session start
-    await setAuthToken(response.data.access_token);
-    return response.data;
+    if (token && token.length > 0) {
+      await setAuthToken(token);
+      console.log('Login successful. Token stored.');
+    } else {
+      console.error('Login response missing access_token:', response.data);
+      throw new Error('API response missing access token.');
+    }
+
+    return tokenData;
   } catch (error) {
-    // FIX: Apply type assertion
-    throw error as AxiosError<ApiErrorResponse>;
+    throw error as AxiosError<ApiErrorResponse> | Error;
   }
 }
 
-/**
- * Logs the user out by clearing the locally stored JWT.
- */
 export async function logout(): Promise<void> {
   await removeAuthToken();
 }
 
+// --- VERIFICATION AND RECOVERY ---
+export async function forgotPassword(payload: EmailPayload): Promise<MessageResponse> {
+  const response = await apiClient.post<MessageResponse>('/api/v1/auth/forgot-password', payload);
+  return response.data;
+}
 
-// --- VERIFICATION AND RECOVERY FUNCTIONS ---
+export async function resendVerification(payload: EmailPayload): Promise<MessageResponse> {
+  const response = await apiClient.post<MessageResponse>('/api/v1/auth/resend-verification', payload);
+  return response.data;
+}
 
-/**
- * Initiates the password recovery flow (POST /auth/forgot-password).
- * Sends the OTP code to the user's email.
- * @returns A promise that may include a verification token/ID needed for the subsequent verifyCode step.
- */
-export async function forgotPassword(payload: EmailPayload): Promise<any> {
+export async function verifyValue(payload: VerificationPayload): Promise<ServiceResponse<TokenResponse>> {
   try {
-    const response = await apiClient.post('/auth/forgot-password', payload);
-    return response.data;
+    let apiUrl: string;
+    let requestBody: Record<string, string>;
+
+    if (payload.type === 'email_verification') {
+      apiUrl = '/api/v1/auth/verify-email';
+      requestBody = { token: payload.verification_value };
+    } else if (payload.type === 'password_reset') {
+      apiUrl = '/api/v1/auth/verify-otp';
+      requestBody = { otp_code: payload.verification_value, otp_type: 'password_reset' };
+    } else {
+      throw new Error('Invalid verification type provided.');
+    }
+
+    const response = await apiClient.post<AuthTokenData>(apiUrl, requestBody);
+    const token = response.data.access_token;
+
+    if (token && token.length > 0) {
+      await setAuthToken(token);
+      console.log('Verification successful. Token stored.');
+    } else {
+      console.warn('Verification returned no access token:', response.data);
+    }
+
+    return { success: true, data: response.data };
   } catch (error) {
-    throw error as AxiosError<ApiErrorResponse>;
+    return { success: false, error: error as AxiosError<ApiErrorResponse> };
   }
 }
 
-/**
- * Resends the verification email (POST /auth/resend-verification).
- */
-export async function resendVerification(payload: EmailPayload): Promise<any> {
-  try {
-    const response = await apiClient.post('/auth/resend-verification', payload);
-    return response.data;
-  } catch (error) {
-    throw error as AxiosError<ApiErrorResponse>;
-  }
+export async function resetPassword(payload: ResetPasswordPayload): Promise<MessageResponse> {
+  const response = await apiClient.patch<MessageResponse>('/api/v1/auth/reset-password', payload);
+  return response.data;
 }
 
-
-/**
- * Verifies the OTP code (POST /api/v1/auth/verify-otp or /auth/verify-email).
- * This is used for both email verification (after register) and OTP recovery (after forgot-password).
- */
-export async function verifyCode(payload: VerifyCodePayload): Promise<any> {
-  try {
-    const response = await apiClient.post('/auth/verify-otp', payload); 
-    return response.data;
-  } catch (error) {
-    throw error as AxiosError<ApiErrorResponse>;
-  }
-}
-
-
-/**
- * Sets the user's new password after verification (PATCH /auth/reset-password).
- * Requires the verification token from the previous step.
- */
-export async function resetPassword(payload: ResetPasswordPayload): Promise<any> {
-  try {
-    const response = await apiClient.patch('/auth/reset-password', payload);
-    return response.data;
-  } catch (error) {
-    throw error as AxiosError<ApiErrorResponse>;
-  }
-}
-
-/**
- * Allows an authenticated user to change their password (PATCH /auth/change-password).
- * This endpoint requires a valid, current JWT in the Authorization header.
- */
-export async function changePassword(payload: ResetPasswordPayload): Promise<any> {
-  try {
-    const response = await apiClient.patch('/auth/change-password', payload);
-    return response.data;
-  } catch (error) {
-    throw error as AxiosError<ApiErrorResponse>;
-  }
+export async function changePassword(payload: ResetPasswordPayload): Promise<MessageResponse> {
+  const response = await apiClient.patch<MessageResponse>('/api/v1/auth/change-password', payload);
+  return response.data;
 }
