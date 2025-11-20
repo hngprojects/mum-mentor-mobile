@@ -18,6 +18,10 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Keystore base64 (for GitHub Actions setup)
+keystore_base64.txt
+*_base64.txt
+
 # Metro
 .metro-health-check*
 
@@ -31,6 +35,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -41,3 +46,4 @@ app-example
 # generated native folders
 /ios
 /android
+

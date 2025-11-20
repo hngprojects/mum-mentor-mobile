@@ -3,6 +3,7 @@ import OnboardingScreen from "./OnboardingScreen";
 // import { useRouter } from "expo-router";
 // import { useEffect } from "react";
 // import OnboardingSplash from "./splashscreen";
+// import MomSetupScreen from "../(setup)";
 
 /**
  * Onboarding entry point

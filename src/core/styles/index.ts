@@ -93,7 +93,7 @@ export const colors = {
 
   // Text Colors
   textPrimary: '#1A1A1A',       // Primary Text (Black, very readable)
-  typographyextSecondary: '#2E2E2E',     // Secondary Text / Soft Black
+  textSecondary: '#2E2E2E',     // Secondary Text / Soft Black
   textGrey1: '#3A3A3A',        // Grey Text 1 (Labels, placeholders)
   textGrey2: '#C4C4C4',        // Grey Text 2 (Lightest labels)
   textWhite: '#FFFFFF',         // White Text

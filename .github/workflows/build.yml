@@ -1,0 +1,182 @@
+
+name: Build Android Release
+
+on:
+ push:
+   branches:
+     - main
+     - staging
+ pull_request:
+   branches:
+     - main
+     - staging
+ workflow_dispatch:
+
+jobs:
+ build:
+   name: Build Android APK
+   runs-on: ubuntu-latest
+
+   steps:
+     - name: Checkout repository
+       uses: actions/checkout@v4
+
+     - name: Setup Node.js
+       uses: actions/setup-node@v4
+       with:
+         node-version: '20'
+         cache: 'npm'
+
+     - name: Setup Java
+       uses: actions/setup-java@v4
+       with:
+         distribution: 'temurin'
+         java-version: '17'
+
+     - name: Install dependencies
+       run: npm ci
+
+     - name: Create .env file with keystore credentials
+       run: |
+         echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> .env
+         echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> .env
+         echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> .env
+         echo ".env file created successfully"
+
+     - name: Decode and save keystore file
+       run: |
+         echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > keystore.jks
+         ls -lah keystore.jks
+         echo "Keystore file decoded and saved successfully"
+
+     - name: Setup Expo
+       uses: expo/expo-github-action@v8
+       with:
+         expo-version: latest
+         token: ${{ secrets.EXPO_TOKEN }}
+
+     - name: Run Expo prebuild
+       run: npx expo prebuild --clean --platform android
+
+     - name: Make gradlew executable
+       run: chmod +x android/gradlew
+
+     - name: Build Android Release APK with Gradle Cache
+       uses: burrunan/gradle-cache-action@v3
+       with:
+         job-id: build-android-release
+         gradle-version: wrapper
+         execution-only-caches: true
+         arguments: assembleRelease
+         build-root-directory: android
+         gradle-distribution-sha-256-sum-warning: false
+
+     - name: Verify APK exists
+       run: |
+         ls -lah android/app/build/outputs/apk/release/
+         echo "APK built successfully"
+
+     - name: Get version info
+       id: version
+       run: |
+         VERSION=$(cat package.json | jq -r '.version')
+         echo "version=$VERSION" >> $GITHUB_OUTPUT
+         echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+         echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+     - name: Rename APK
+       run: |
+         cd android/app/build/outputs/apk/release
+         mv app-release.apk MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk
+         echo "APK renamed to MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk"
+
+     - name: Upload APK to GitHub Artifacts
+       uses: actions/upload-artifact@v4
+       with:
+         name: MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.timestamp }}
+         path: android/app/build/outputs/apk/release/MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk
+         retention-days: 30
+         if-no-files-found: error
+
+#      - name: Upload APK to Appetize.io
+#        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+#        run: |
+#          RESPONSE=$(curl -X POST "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
+#            -F "file=@android/app/build/outputs/apk/release/MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk" \
+#            -F "platform=android" \
+#            -F "note=Build from ${{ github.ref_name }} - v${{ steps.version.outputs.version }} (${{ steps.version.outputs.short_sha }})")
+#
+#          echo "Appetize Response: $RESPONSE"
+#          PUBLIC_KEY=$(echo $RESPONSE | jq -r '.publicKey')
+#          APP_URL="https://appetize.io/app/$PUBLIC_KEY"
+#
+#          echo "### 📱 Appetize.io Preview" >> $GITHUB_STEP_SUMMARY
+#          echo "**App URL:** $APP_URL" >> $GITHUB_STEP_SUMMARY
+#          echo "**Public Key:** $PUBLIC_KEY" >> $GITHUB_STEP_SUMMARY
+#          echo "**Version:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+#          echo "**Commit:** ${{ steps.version.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+#
+#          echo "appetize_url=$APP_URL" >> $GITHUB_OUTPUT
+#          echo "appetize_public_key=$PUBLIC_KEY" >> $GITHUB_OUTPUT
+#
+#      - name: Upload APK to Google Drive
+#        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+#        uses: logickoder/google-drive-upload@v1
+#        with:
+#          credentials: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+#          folder_id: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+#          filename: MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk
+#          filepath: android/app/build/outputs/apk/release/MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk
+#          overwrite: true
+
+     - name: Build Summary
+       if: always()
+       run: |
+         echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
+         echo "" >> $GITHUB_STEP_SUMMARY
+         echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+         echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+         echo "| **Version** | v${{ steps.version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+         echo "| **Commit** | ${{ steps.version.outputs.short_sha }} |" >> $GITHUB_STEP_SUMMARY
+         echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+         echo "| **Build Time** | ${{ steps.version.outputs.timestamp }} |" >> $GITHUB_STEP_SUMMARY
+         echo "| **APK Name** | MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk |" >> $GITHUB_STEP_SUMMARY
+         echo "" >> $GITHUB_STEP_SUMMARY
+         echo "### ✅ Upload Locations" >> $GITHUB_STEP_SUMMARY
+         echo "- 📦 GitHub Artifacts" >> $GITHUB_STEP_SUMMARY
+         if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+           echo "- 📱 Appetize.io" >> $GITHUB_STEP_SUMMARY
+           echo "- 📁 Google Drive" >> $GITHUB_STEP_SUMMARY
+         fi
+
+     - name: Comment on PR
+       if: github.event_name == 'pull_request'
+       uses: actions/github-script@v7
+       with:
+         github-token: ${{ secrets.GITHUB_TOKEN }}
+         script: |
+           const output = `### 🤖 Android Build Complete
+          
+           | Property | Value |
+           |----------|-------|
+           | **Version** | v${{ steps.version.outputs.version }} |
+           | **Commit** | ${{ steps.version.outputs.short_sha }} |
+           | **APK** | MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk |
+          
+           📦 **Download:** Available in [GitHub Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+           *Build completed at ${{ steps.version.outputs.timestamp }}*`;
+          
+           github.rest.issues.createComment({
+             issue_number: context.issue.number,
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             body: output
+           });
+
+     - name: Cleanup sensitive files
+       if: always()
+       run: |
+         rm -f .env
+         rm -f keystore.jks
+         echo "Sensitive files cleaned up"
