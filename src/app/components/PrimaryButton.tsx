@@ -1,17 +1,18 @@
 // src/app/components/ui/PrimaryButton.tsx
 
 import React from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator, 
-  TouchableOpacityProps 
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  TouchableOpacityProps,
 } from 'react-native';
 
 // --- IMPORTS FROM CORE UTILITIES ---
 // Path adjusted to reach core/styles from app/components/ui/
-import { colors, typography, spacing } from '../../core/styles/index'; 
+import { colors, spacing, typography } from '../../core/styles/index';
 import { ms, rfs } from '../../core/styles/scaling';
 
 // --- TYPES ---
@@ -22,6 +23,7 @@ interface PrimaryButtonProps extends TouchableOpacityProps {
   disabled?: boolean;
   // Optional style prop to allow overriding the button's container style
   style?: TouchableOpacityProps['style'];
+  textStyle?: TextStyle;
 }
 
 // --- COMPONENT ---
@@ -31,6 +33,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   isLoading = false,
   disabled = false,
   style,
+  textStyle,
   ...props
 }) => {
   
@@ -67,7 +70,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {isLoading ? (
         <ActivityIndicator size="small" color={colors.textWhite} />
       ) : (
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, textStyle]}>{title}</Text>
       )}
     </TouchableOpacity>
   );

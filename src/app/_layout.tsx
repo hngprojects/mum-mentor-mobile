@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
-import { Stack, Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Redirect, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AuthProvider, useAuth } from '../core/services/authContext'; // Adjust path if needed
-import { useAssetLoading } from '../core/utils/assetsLoading'; // Adjust path if needed
 import { colors } from '../core/styles/index'; // Adjust path if needed
+import { useAssetLoading } from '../core/utils/assetsLoading'; // Adjust path if needed
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,17 +30,18 @@ function RootLayoutContent() {
       <Stack>
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Redirect href="/(onboarding)" />
       </Stack>
     );
   }
 
   // --- Authenticated users ---
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
       <Redirect href="/(tabs)/Home" />
-    </Stack>
+    </>
   );
 }
 
