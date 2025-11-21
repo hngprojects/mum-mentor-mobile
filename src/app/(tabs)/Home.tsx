@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -11,9 +11,12 @@ import {
 } from "react-native";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
+import TaskCreationFlow from "../components/CreateTask"; 
+import TaskCreationSuccessModal from "../components/TaskSuccess"; 
 
 const heroImage = require("../../assets/images/home-image.png");
 const profileImage = require("../../assets/images/profile-image.png");
@@ -57,106 +60,142 @@ const HeaderIconButton = ({
 );
 
 const Home = () => {
+  // --- NEW STATES FOR TWO MODALS ---
+  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  // ---------------------------------
+
+  const handleTaskCreated = () => {
+    setIsFormModalVisible(false);    // 1. Close the form modal
+    setIsSuccessModalVisible(true);  // 2. Open the success modal
+  };
+
+  const handleSuccessDone = () => {
+    setIsSuccessModalVisible(false); // Close the success modal
+    // Optional: Refresh task list data here
+  };
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <View>
-          <View style={styles.greetingRow}>
-            <Image source={profileImage} style={styles.profileAvatar} />
-            <Text style={styles.greetingLabel}>Hi, Tracy</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Top Bar */}
+        <View style={styles.topBar}>
+          <View>
+            <View style={styles.greetingRow}>
+              <Image source={profileImage} style={styles.profileAvatar} />
+              <Text style={styles.greetingLabel}>Hi, Tracy</Text>
+            </View>
+
+            <Text style={styles.greetingTitle}>Good Morning</Text>
           </View>
 
-          <Text style={styles.greetingTitle}>Good Morning</Text>
+          <Image source={notificationIcon} style={styles.notificationIcon} />
         </View>
 
-        <Image source={notificationIcon} style={styles.notificationIcon} />
-      </View>
+        {/* Hero Section */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroImageWrapper}>
+            <Image source={heroImage} style={styles.heroImage} />
+          </View>
 
-      {/* Hero Section */}
-      <View style={styles.heroCard}>
-        <View style={styles.heroImageWrapper}>
-          <Image source={heroImage} style={styles.heroImage} />
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>You are Amazing</Text>
+            <Text style={styles.heroSubtitle}>
+              {"You\u2019re growing right alongside your child,\nand that\u2019s something to be proud of"}
+            </Text>
+
+            <PrimaryButton
+              title="Chat with Nora AI"
+              onPress={() => {}}
+              style={styles.heroButton}
+            />
+          </View>
         </View>
 
-        <View style={styles.heroText}>
-          <Text style={styles.heroTitle}>You are Amazing</Text>
-          <Text style={styles.heroSubtitle}>
-            {"You&apos;re growing right alongside your child,\nand that&apos;s something to be proud of"}
-          </Text>
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-          <PrimaryButton
-            title="Chat with Nora AI"
-            onPress={() => {}}
-            style={styles.heroButton}
-          />
+          <View style={styles.quickActions}>
+            {quickActions.map((action) => (
+              <View key={action.id} style={styles.quickActionCard}>
+                {action.id === "journal" ? (
+                  <Image
+                    source={journalIcon}
+                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                  />
+                ) : action.id === "resources" ? (
+                  <Image
+                    source={resourceIcon}
+                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                  />
+                ) : (
+                  <Feather
+                    name={action.icon}
+                    size={18}
+                    color={colors.primary}
+                    style={styles.quickActionIconSpacing}
+                  />
+                )}
+
+                <Text style={styles.quickActionTitle}>{action.title}</Text>
+                <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
 
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        {/* Task Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
 
-        <View style={styles.quickActions}>
-          {quickActions.map((action) => (
-            <View key={action.id} style={styles.quickActionCard}>
-              {action.id === "journal" ? (
-                <Image
-                  source={journalIcon}
-                  style={[styles.quickActionImage, styles.quickActionIconSpacing]}
-                />
-              ) : action.id === "resources" ? (
-                <Image
-                  source={resourceIcon}
-                  style={[styles.quickActionImage, styles.quickActionIconSpacing]}
-                />
-              ) : (
-                <Feather
-                  name={action.icon}
-                  size={18}
-                  color={colors.primary}
-                  style={styles.quickActionIconSpacing}
-                />
-              )}
+          <View style={styles.taskCard}>
+            <Image source={taskIcon} style={styles.taskIcon} />
 
-              <Text style={styles.quickActionTitle}>{action.title}</Text>
-              <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
-            </View>
-          ))}
+            <Text style={styles.taskEmptyTitle}>No task added yet</Text>
+            <Text style={styles.taskEmptySubtitle}>
+              {"Your today\u2019s task will be displayed here"}
+            </Text>
+
+            <SecondaryButton
+              title="Add Task"
+              // --- UPDATED HANDLER to open the FORM modal ---
+              onPress={() => setIsFormModalVisible(true)}
+              style={styles.taskButton}
+            />
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
-      {/* Task Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
-
-        <View style={styles.taskCard}>
-          <Image source={taskIcon} style={styles.taskIcon} />
-
-          <Text style={styles.taskEmptyTitle}>No task added yet</Text>
-          <Text style={styles.taskEmptySubtitle}>
-            {"Your today\u2019s task will be displayed here"}
-          </Text>
-
-          <SecondaryButton
-            title="Add Task"
-            onPress={() => {}}
-            style={styles.taskButton}
-          />
-        </View>
-      </View>
-    </ScrollView>
+      {/* 1. TASK FORM MODAL (Bottom Sheet) */}
+      {/* Property 'onTaskCreated' is now correctly passed */}
+      <TaskCreationFlow 
+        isVisible={isFormModalVisible}
+        onClose={() => setIsFormModalVisible(false)}
+        onTaskCreated={handleTaskCreated} // <-- PASSING THE REQUIRED PROP
+      />
+      
+      {/* 2. TASK SUCCESS MODAL (Middle of Screen) */}
+      <TaskCreationSuccessModal
+        isVisible={isSuccessModalVisible}
+        onDone={handleSuccessDone} // Function to close the success modal
+      />
+    </SafeAreaView>
   );
 };
 
 export default Home;
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundMain,
-  },
+  } as ViewStyle, 
 
+  scrollView: {
+    flex: 1,
+  },
+  
   scrollContent: {
     paddingTop: ms(spacing.xl),
     paddingBottom: ms(spacing.xl * 1.5),
@@ -227,9 +266,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    pointerEvents: "none",
+    // @ts-ignore
+    pointerEvents: "none", 
     opacity: 0.8,
-  },
+  } as ViewStyle,
 
   heroText: {
     gap: ms(10),
