@@ -33,7 +33,7 @@ export async function createTask({
   due_date: string;
 }) {
   try {
-    const response = await apiClient.patch(`${TASKS_ENDPOINT}`, {
+    const response = await apiClient.post(`${TASKS_ENDPOINT}`, {
       name,
       description,
       due_date,

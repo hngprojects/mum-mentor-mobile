@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   Alert,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextStyle,
@@ -41,12 +42,25 @@ interface CreateTaskFormModalProps {
   onTaskCreated: () => void;
 }
 
-// --- MOCK DATE PICKER COMPONENT ---
 const CustomDatePicker: React.FC<{
   isVisible: boolean;
   onConfirm: (date: Date) => void;
   onCancel: () => void;
 }> = ({ isVisible, onConfirm, onCancel }) => {
+  if (Platform.OS === "web") {
+    return isVisible ? (
+      <input
+        type="date"
+        onChange={(e) => {
+          onConfirm(new Date(e.target.value));
+        }}
+        onBlur={onCancel}
+        style={{ display: "block" }}
+      />
+    ) : null;
+  }
+
+  // Mobile
   return (
     <DateTimePickerModal
       isVisible={isVisible}
