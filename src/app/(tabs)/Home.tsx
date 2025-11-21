@@ -49,17 +49,7 @@ const quickActions: {
   },
 ];
 
-const HeaderIconButton = ({
-  name,
-  style,
-}: {
-  name: FeatherIconName;
-  style?: ViewStyle;
-}) => (
-  <TouchableOpacity style={[styles.iconButton, style]} activeOpacity={0.8}>
-    <Feather name={name} size={20} color={colors.textPrimary} />
-  </TouchableOpacity>
-);
+
 
 const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
