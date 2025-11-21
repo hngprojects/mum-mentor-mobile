@@ -2,7 +2,8 @@ import { Tabs } from "expo-router";
 import React from "react";
 import { Image, StyleSheet } from "react-native";
 
-import { colors, fontFamilies } from "../../core/styles";
+import { colors, fontFamilies } from "../../core/styles/index";
+import { vs } from "../../core/styles/scaling";
 
 const TAB_ICONS = {
   Home: require("../../assets/images/home.png"),
@@ -26,7 +27,7 @@ const TabLayout = () => {
         tabBarStyle: {
           borderTopColor: colors.outlineVariant,
           backgroundColor: colors.textWhite,
-          height: 100,
+          height: vs(70),
         },
         tabBarIcon: ({ focused }) => {
           const icon = TAB_ICONS[route.name as keyof typeof TAB_ICONS];

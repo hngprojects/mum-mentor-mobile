@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -8,14 +9,16 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
 import { fetchTasks } from "@/src/core/services/tasksService";
-import { useEffect, useState } from "react";
+import TaskCreationFlow from "../components/CreateTask";
 import ListTasks from "../components/ListTasks";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
+import TaskCreationSuccessModal from "../components/TaskSuccess";
 
 const heroImage = require("../../assets/images/home-image.png");
 const profileImage = require("../../assets/images/profile-image.png");
@@ -69,15 +72,29 @@ const Home = () => {
       console.error(error);
     }
   }
+  // --- NEW STATES FOR TWO MODALS ---
+  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  // ---------------------------------
+
+  const handleTaskCreated = () => {
+    setIsFormModalVisible(false); // 1. Close the form modal
+    setIsSuccessModalVisible(true); // 2. Open the success modal
+  };
+
+  const handleSuccessDone = () => {
+    setIsSuccessModalVisible(false); // Close the success modal
+    // Optional: Refresh task list data here
+  };
 
   useEffect(() => {
     listUserTasks();
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        style={styles.container}
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Top Bar */}
@@ -87,10 +104,8 @@ const Home = () => {
               <Image source={profileImage} style={styles.profileAvatar} />
               <Text style={styles.greetingLabel}>Hi, Tracy</Text>
             </View>
-
             <Text style={styles.greetingTitle}>Good Morning</Text>
           </View>
-
           <Image source={notificationIcon} style={styles.notificationIcon} />
         </View>
 
@@ -99,15 +114,13 @@ const Home = () => {
           <View style={styles.heroImageWrapper}>
             <Image source={heroImage} style={styles.heroImage} />
           </View>
-
           <View style={styles.heroText}>
             <Text style={styles.heroTitle}>You are Amazing</Text>
             <Text style={styles.heroSubtitle}>
               {
-                "You&apos;re growing right alongside your child,\nand that&apos;s something to be proud of"
+                "You\u2019re growing right alongside your child,\nand that\u2019s something to be proud of"
               }
             </Text>
-
             <PrimaryButton
               title="Chat with Nora AI"
               onPress={() => {}}
@@ -119,7 +132,6 @@ const Home = () => {
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-
           <View style={styles.quickActions}>
             {quickActions.map((action) => (
               <View key={action.id} style={styles.quickActionCard}>
@@ -147,7 +159,6 @@ const Home = () => {
                     style={styles.quickActionIconSpacing}
                   />
                 )}
-
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
                 <Text style={styles.quickActionSubtitle}>
                   {action.subtitle}
@@ -175,7 +186,7 @@ const Home = () => {
               </Text>
               <SecondaryButton
                 title="Add Task"
-                onPress={() => {}}
+                onPress={() => setIsFormModalVisible(true)}
                 style={styles.taskButton}
               />
             </View>
@@ -186,21 +197,41 @@ const Home = () => {
       </ScrollView>
 
       {/* Floating Add Button */}
-      {tasks?.length !== 0 ? (
-        <TouchableOpacity style={styles.floatingButton} onPress={() => {}}>
+      {tasks?.length !== 0 && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setIsFormModalVisible(true)}
+        >
           <Text style={styles.floatingButtonText}>+</Text>
         </TouchableOpacity>
-      ) : null}
-    </View>
+      )}
+
+      {/* TASK FORM MODAL (Bottom Sheet) */}
+      <TaskCreationFlow
+        isVisible={isFormModalVisible}
+        onClose={() => setIsFormModalVisible(false)}
+        onTaskCreated={handleTaskCreated}
+      />
+
+      {/* TASK SUCCESS MODAL (Middle of Screen) */}
+      <TaskCreationSuccessModal
+        isVisible={isSuccessModalVisible}
+        onDone={handleSuccessDone}
+      />
+    </SafeAreaView>
   );
 };
 
 export default Home;
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundMain,
+  } as ViewStyle,
+
+  scrollView: {
+    flex: 1,
   },
 
   scrollContent: {
@@ -273,9 +304,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-start",
     alignItems: "flex-start",
+    // @ts-ignore
     pointerEvents: "none",
     opacity: 0.8,
-  },
+  } as ViewStyle,
 
   heroText: {
     gap: ms(10),
