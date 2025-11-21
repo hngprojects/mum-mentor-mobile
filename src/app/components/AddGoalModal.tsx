@@ -1,3 +1,5 @@
+// src/components/AddGoalModal.tsx
+
 import React, { useEffect, useRef } from 'react';
 import {
   Modal,
@@ -9,7 +11,9 @@ import {
   Pressable,
   Image,
   Animated,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { colors, typography } from '@/src/core/styles';
 import { rbr, ms, vs } from '@/src/core/styles/scaling';
@@ -50,8 +54,11 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         {/* Background pressable so modal closes when tapping outside */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
@@ -86,8 +93,7 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
 
           </Animated.View>
         </TouchableWithoutFeedback>
-
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -114,40 +120,29 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // input: {
-  //   borderWidth: 1,
-  //   borderColor: colors.outline,
-  //   borderRadius: rbr(10),
-  //   padding: 12,
-  //   marginBottom: 20,
-  //   fontSize: 16,
-  //   color: colors.textPrimary,
-  // },
-
   inputWrapper: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: colors.outline,
-  borderRadius: rbr(10),
-  paddingHorizontal: 12,
-  marginBottom: 20,
-  backgroundColor: '#fff',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.outline,
+    borderRadius: rbr(10),
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+  },
 
-flagIcon: {
-  width: 20,
-  height: 20,
-  marginRight: 10,
-},
+  flagIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
 
-input: {
-  flex: 1,
-  ...typography.labelLarge,
-  color: colors.textPrimary,
-  paddingVertical: 12,
-},
-
+  input: {
+    flex: 1,
+    ...typography.labelLarge,
+    color: colors.textPrimary,
+    paddingVertical: 12,
+  },
 
   addBtn: {
     backgroundColor: colors.primary,

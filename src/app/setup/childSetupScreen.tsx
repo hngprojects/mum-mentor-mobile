@@ -6,6 +6,7 @@ import { ms, vs } from '@/src/core/styles/scaling';
 import PrimaryButton from '../components/PrimaryButton';
 import { SuccessModal, useSuccessModal } from '../components/SucessModal';
 import SecondaryButton from '../components/SecondaryButton';
+import { router } from 'expo-router';
 
 const SetupScreen = () => {
   const [children, setChildren] = useState<ChildData[]>([
@@ -22,8 +23,13 @@ const SetupScreen = () => {
     setChildren(newChildren);
   };
 
-  const nextPage = () => {
-    // later
+  const removeChild = (index: number) => {
+    const updated = children.filter((_, i) => i !== index);
+    setChildren(updated);
+  };
+
+  const canceled = () => {
+    router.back()
   };
 
   const { visible, show, hide } = useSuccessModal();
@@ -48,6 +54,7 @@ const SetupScreen = () => {
             index={index}
             childData={child}
             onUpdate={updateChild}
+            onDelete={() => removeChild(index)}
           />
         ))}
 
@@ -62,8 +69,7 @@ const SetupScreen = () => {
         message=""
         iconComponent={
           <Image
-            source={require('../../assets/images/success-icon.png')}
-           
+            source={require('../../assets/images/success-icon.png')}          
           />
         }
       />
@@ -78,7 +84,7 @@ const SetupScreen = () => {
 
         <SecondaryButton
           title="Cancel"
-          onPress={nextPage} 
+          onPress={canceled} 
         />
       </View>
     </View>

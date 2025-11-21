@@ -1,3 +1,5 @@
+// src/components/EditGoalModal.tsx
+
 import React, { useEffect, useRef } from 'react';
 import {
   Modal,
@@ -9,7 +11,9 @@ import {
   Pressable,
   Image,
   Animated,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { colors, typography } from '@/src/core/styles';
 import { rbr, ms, vs } from '@/src/core/styles/scaling';
@@ -50,8 +54,11 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         {/* Background pressable so modal closes when tapping outside */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
@@ -87,8 +94,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 
           </Animated.View>
         </TouchableWithoutFeedback>
-
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -165,19 +171,3 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
