@@ -3,7 +3,7 @@ name: iOS CI/CD
 on:
   push:
     branches:
-      - feat/cicd-pipeline
+      - feat/ci-cd-pipeline
   workflow_dispatch:
     inputs:
       environment:
