@@ -18,6 +18,12 @@ export default function HomeScreen() {
             <Text style={styles.buttonText}>Go to Mum Setup</Text>
           </TouchableOpacity>
         </Link>
+
+        <Link href="/(tabs)/setup/Chat" asChild>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Go to Chat</Text>
+          </TouchableOpacity>
+        </Link>
       </View>
     </SafeAreaView>
   );
