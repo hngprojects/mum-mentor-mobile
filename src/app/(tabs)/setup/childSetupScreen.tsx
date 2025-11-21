@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
 import ChildSetupItem, { ChildData } from '../../components/ChildSetupItem';
-import { colors, typography } from '@/src/core/styles';
-import { ms, vs } from '@/src/core/styles/scaling';
+import { colors, typography } from '@/core/styles';
+import { ms, vs } from '@/core/styles/scaling';
 import PrimaryButton from '../../components/PrimaryButton';
 import { SuccessModal, useSuccessModal } from '../../components/SucessModal';
 import SecondaryButton from '../../components/SecondaryButton';
@@ -17,70 +17,78 @@ const SetupScreen = () => {
   };
 
   const updateChild = (index: number, updatedChild: ChildData) => {
-    const newChildren = [...children];
-    newChildren[index] = updatedChild;
-    setChildren(newChildren);
+    const updatedChildren = [...children];
+    updatedChildren[index] = updatedChild;
+    setChildren(updatedChildren);
   };
 
-  const nextPage = () => {
-    // later
+  const removeChild = (index: number) => {
+    const updatedChildren = children.filter((_, i) => i !== index);
+    setChildren(updatedChildren);
   };
 
-  const { visible, show, hide } = useSuccessModal();
+  const { hide, show, visible } = useSuccessModal();
 
-  const isFormComplete = () => {
-    return children.every(child =>
-      child.fullName?.trim() &&
-      child.age?.trim() &&
-      child.dob?.trim() &&
-      child.gender?.trim()
-    );
+  const onSave = () => {
+    console.log('Saved children data:', children);
+    show();
   };
+
+  const canSave = children.length > 0 && children.every(
+    (child) => child.fullName.trim() && child.age.trim() && child.dob.trim() && child.gender.trim()
+  );
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <Text style={styles.title}>Set Up</Text>
+    <View style={styles.mainContainer}>
+      <View style={styles.setupHeader}>
+        <Text style={styles.setupTitle}>Child setup</Text>
+        <Text style={styles.setupSubtitle}>
+          Setup your child’s profile so mum mentor can know how to help.
+        </Text>
+      </View>
 
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {children.map((child, index) => (
           <ChildSetupItem
             key={index}
             index={index}
             childData={child}
             onUpdate={updateChild}
+            onRemove={removeChild}
           />
         ))}
 
         <TouchableOpacity style={styles.addBtn} onPress={addChild}>
-          <Text style={styles.addBtnText}>＋ Add Another Child</Text>
+          <Image
+            source={require('@/assets/icons/icon_add.png')}
+            style={{ width: 18, height: 20, marginRight: 10 }}
+          />
+          <Text style={styles.addBtnText}>Add another child</Text>
         </TouchableOpacity>
       </ScrollView>
-      <SuccessModal
-        visible={visible}
-        onClose={hide}
-        title="Setup Successful!"
-        message=""
-        iconComponent={
-          <Image
-            source={require('../../../assets/images/success-icon.png')}
-           
-          />
-        }
-      />
 
-      {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <PrimaryButton
-          title="Done"
-          onPress={show}
-          disabled={!isFormComplete()}
+          title="Save and continue"
+          onPress={onSave}
+          disabled={!canSave}
         />
-
-        <SecondaryButton
-          title="Cancel"
-          onPress={nextPage} 
-        />
+        <SecondaryButton title="Skip for now" onPress={() => {}} />
       </View>
+
+      <SuccessModal
+        visible={visible}
+        title="Profile setup completed"
+        message="Your child's profile has been set up. You can now start using Mum Mentor."
+        actionLabel="Continue"
+        onAction={() => {
+          hide();
+        }}
+        onClose={hide}
+      />
     </View>
   );
 };
@@ -88,30 +96,39 @@ const SetupScreen = () => {
 export default SetupScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.backgroundMain,
+  mainContainer: {
     flex: 1,
+    backgroundColor: colors.backgroundMain,
   },
-  scrollView: {
-    paddingHorizontal: 20,
-    paddingBottom: 140,
+  setupHeader: {
+    paddingHorizontal: ms(20),
+    paddingTop: vs(16),
   },
-  title: {
-    ...typography.heading1,
+  setupTitle: {
+    ...typography.heading2,
     color: colors.textPrimary,
-    textAlign: 'center',
-    marginTop: ms(60),
-    marginBottom: vs(12),
+  },
+  setupSubtitle: {
+    ...typography.bodySmall,
+    color: colors.textGrey1,
+    marginTop: vs(4),
+    marginBottom: vs(8),
+  },
+  scrollContent: {
+    paddingHorizontal: ms(20),
+    paddingBottom: vs(12),
   },
   addBtn: {
-    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 12,
     marginVertical: 20,
   },
   addBtnText: {
     ...typography.labelLarge,
     color: colors.primary,
   },
-
   bottomButtons: {
     padding: 20,
     gap: 12,

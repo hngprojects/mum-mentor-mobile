@@ -11,84 +11,114 @@ import {
   Animated,
   TouchableWithoutFeedback
 } from 'react-native';
-import { colors, typography } from '@/src/core/styles';
-import { rbr, ms, vs } from '@/src/core/styles/scaling';
+import { colors, typography } from '@/core/styles';
+import { rbr, ms, vs } from '@/core/styles/scaling';
 
 interface EditGoalModalProps {
   visible: boolean;
   onClose: () => void;
-  goalValue: string;
-  setGoalValue: (value: string) => void;
-  onUpdateGoal: () => void;
+  goal: {
+    id: number;
+    goal: string;
+    schedules: string[];
+  };
+  onSave: (goalId: number, updatedGoal: string, updatedSchedule: string) => void;
 }
 
-const EditGoalModal: React.FC<EditGoalModalProps> = ({
-  visible,
-  onClose,
-  goalValue,
-  setGoalValue,
-  onUpdateGoal,
-}) => {
+const EditGoalModal: React.FC<EditGoalModalProps> = ({ visible, onClose, goal, onSave }) => {
+  const [goalText, setGoalText] = React.useState(goal.goal);
+  const [schedule, setSchedule] = React.useState(goal.schedules[0] || '');
 
-  const slideAnim = useRef(new Animated.Value(400)).current; // bottom start position
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
+      setGoalText(goal.goal);
+      setSchedule(goal.schedules[0] || '');
       Animated.timing(slideAnim, {
-        toValue: 0,
+        toValue: 1,
         duration: 250,
         useNativeDriver: true,
       }).start();
     } else {
       Animated.timing(slideAnim, {
-        toValue: 400,
+        toValue: 0,
         duration: 250,
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [visible, goal, slideAnim]);
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0],
+  });
+
+  const handleSave = () => {
+    if (!goalText.trim() || !schedule.trim()) {
+      return;
+    }
+    onSave(goal.id, goalText.trim(), schedule.trim());
+  };
+
+  const handleClose = () => {
+    onClose();
+  };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+      <TouchableWithoutFeedback onPress={handleClose}>
+        <View style={styles.backdrop} />
+      </TouchableWithoutFeedback>
 
-        {/* Background pressable so modal closes when tapping outside */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
-        {/* Modal bottom sheet */}
-        <TouchableWithoutFeedback>
-          <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
-
-            <Text style={styles.title}>Edit Goal</Text>
-
-            <View style={styles.inputWrapper}>
+      <Animated.View style={[styles.sheetContainer, { transform: [{ translateY }] }]}>
+        <View style={styles.sheet}>
+          <View style={styles.header}>
+            <View style={styles.iconWrap}>
               <Image
-                source={require('../../assets/images/flag.png')}
-                style={styles.flagIcon}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Enter goal name"
-                value={goalValue}
-                onChangeText={setGoalValue}
-                placeholderTextColor={colors.textGrey2}
-                autoFocus
+                source={require('@/assets/icons/icon_edit.png')}
+                style={{ width: 24, height: 24 }}
               />
             </View>
+            <View style={styles.headerTextWrap}>
+              <Text style={styles.title}>Edit goal</Text>
+              <Text style={styles.subtitle}>
+                Update your goal or schedule as your needs change.
+              </Text>
+            </View>
+          </View>
 
-            <TouchableOpacity style={styles.updateBtn} onPress={onUpdateGoal}>
-              <Text style={styles.updateBtnText}>Update Goal</Text>
+          <View style={styles.form}>
+            <Text style={styles.label}>Goal</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="E.g. Build a consistent sleep routine"
+              placeholderTextColor={colors.textGrey2}
+              value={goalText}
+              onChangeText={setGoalText}
+            />
+
+            <Text style={[styles.label, { marginTop: 16 }]}>Schedule</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="E.g. Daily at 8:00 PM"
+              placeholderTextColor={colors.textGrey2}
+              value={schedule}
+              onChangeText={setSchedule}
+            />
+          </View>
+
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={handleSave} activeOpacity={0.9} style={styles.saveBtn}>
+              <Text style={styles.saveBtnText}>Save changes</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <Pressable onPress={handleClose} style={styles.closeBtn}>
               <Text style={styles.closeBtnText}>Cancel</Text>
-            </TouchableOpacity>
-
-          </Animated.View>
-        </TouchableWithoutFeedback>
-
-      </View>
+            </Pressable>
+          </View>
+        </View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -96,88 +126,94 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 export default EditGoalModal;
 
 const styles = StyleSheet.create({
-  overlay: {
+  backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(5, 5, 5, 0.65)',
+  },
+  sheetContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 0,
+    paddingBottom: vs(20),
     justifyContent: 'flex-end',
   },
-
   sheet: {
     backgroundColor: colors.backgroundMain,
-    padding: 20,
-    borderTopLeftRadius: rbr(20),
-    borderTopRightRadius: rbr(20),
+    borderTopLeftRadius: rbr(28),
+    borderTopRightRadius: rbr(28),
+    paddingHorizontal: ms(20),
+    paddingTop: vs(16),
+    paddingBottom: vs(20),
   },
-
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: ms(12),
+    marginBottom: vs(12),
+  },
+  iconWrap: {
+    width: ms(44),
+    height: ms(44),
+    borderRadius: rbr(22),
+    backgroundColor: colors.backgroundMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTextWrap: {
+    flex: 1,
+  },
   title: {
     ...typography.heading3,
-    marginBottom: 20,
+    marginBottom: 4,
     color: colors.textPrimary,
   },
-
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  subtitle: {
+    ...typography.caption,
+    color: colors.textGrey1,
+  },
+  form: {
+    marginTop: vs(8),
+  },
+  label: {
+    ...typography.labelSmall,
+    marginBottom: 4,
+    color: colors.textGrey1,
+  },
+  input: {
+    borderRadius: rbr(12),
     borderWidth: 1,
     borderColor: colors.outline,
-    borderRadius: rbr(10),
-    paddingHorizontal: 12,
-    marginBottom: 20,
-    backgroundColor: '#fff',
-  },
-
-  flagIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
-  },
-
-  input: {
-    flex: 1,
-    ...typography.labelLarge,
+    paddingHorizontal: ms(12),
+    paddingVertical: vs(10),
+    ...typography.bodySmall,
     color: colors.textPrimary,
-    paddingVertical: 12,
+    backgroundColor: colors.backgroundSoft,
   },
-
-  updateBtn: {
+  actions: {
+    marginTop: vs(20),
+    gap: vs(8),
+  },
+  saveBtn: {
     backgroundColor: colors.primary,
-    paddingVertical: 12,
-    borderRadius: rbr(10),
-    marginBottom: 12,
+    borderRadius: rbr(999),
+    paddingVertical: vs(12),
+    alignItems: 'center',
   },
-
-  updateBtnText: {
-    textAlign: 'center',
+  saveBtnText: {
+    ...typography.buttonText,
     color: colors.textWhite,
-    ...typography.labelLarge,
   },
-
   closeBtn: {
     paddingVertical: 12,
     borderRadius: rbr(10),
     borderWidth: 1.2,
     borderColor: colors.primary,
   },
-
   closeBtnText: {
     ...typography.labelLarge,
     textAlign: 'center',
     color: colors.primary,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

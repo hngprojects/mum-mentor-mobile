@@ -1,6 +1,7 @@
 // src/styles/index.ts
 
-import { rfs, ms} from './scaling';
+import { ms, vs, rfs } from '@/core/styles/scaling';
+
 
 // --- TYPOGRAPHY CONSTANTS ---
 

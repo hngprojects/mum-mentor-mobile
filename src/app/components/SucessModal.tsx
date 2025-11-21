@@ -1,5 +1,5 @@
-import { colors, typography } from '@/src/core/styles';
-import { ms, rfs, vs } from '@/src/core/styles/scaling';
+import { colors, typography } from '@/core/styles';
+import { ms, rfs, vs } from '@/core/styles/scaling';
 import React from 'react';
 import {
   View,
@@ -15,72 +15,79 @@ interface SuccessModalProps {
   visible: boolean;
   title?: string;
   message?: string;
-  buttonText?: string;
-  onClose: () => void;
-  iconComponent?: React.ReactNode;
+  actionLabel?: string;
+  onAction?: () => void;
+  onClose?: () => void;
 }
 
 export const SuccessModal: React.FC<SuccessModalProps> = ({
   visible,
-  title = 'Set Up Successful',
-  message,
-  buttonText = 'Done',
+  title = 'Setup complete',
+  message = 'Your setup is complete. You can now start using Mum Mentor AI.',
+  actionLabel = 'Continue',
+  onAction,
   onClose,
-  iconComponent,
 }) => {
-  const scaleValue = React.useRef(new Animated.Value(0)).current;
+  const opacity = React.useRef(new Animated.Value(0)).current;
+  const scale = React.useRef(new Animated.Value(0.9)).current;
 
   React.useEffect(() => {
     if (visible) {
-      Animated.spring(scaleValue, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 7,
-      }).start();
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 6,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      scaleValue.setValue(0);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.9,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
-  }, [visible, scaleValue]);
+  }, [visible, opacity, scale]);
+
+  const handleAction = () => {
+    onAction?.();
+  };
+
+  const handleClose = () => {
+    onClose?.();
+  };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <Animated.View
-          style={[
-            styles.modalContainer,
-            {
-              transform: [{ scale: scaleValue }],
-            },
-          ]}
-        >
-          {/* Success Icon */}
-          <View style={styles.iconContainer}>
-            {iconComponent || (
-              <View style={styles.successIconWrapper}>
-                <View style={styles.successIconOuter}>
-                  <View style={styles.successIconInner}>
-                    <Text style={styles.checkmark}>✓</Text>
-                  </View>
-                </View>
-              </View>
-            )}
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+      <View style={styles.backdrop}>
+        <Animated.View style={[styles.modalContainer, { opacity, transform: [{ scale }] }]}>
+          <View style={styles.iconWrapper}>
+            <Image
+              source={require('@/assets/icons/icon_success.png')}
+              style={styles.icon}
+            />
           </View>
-
-          {/* Title */}
           <Text style={styles.title}>{title}</Text>
+          <Text style={styles.message}>{message}</Text>
 
-          {/* Optional Message */}
-          {message && <Text style={styles.message}>{message}</Text>}
+          <TouchableOpacity style={styles.primaryButton} onPress={handleAction}>
+            <Text style={styles.primaryButtonText}>{actionLabel}</Text>
+          </TouchableOpacity>
 
-          {/* Done Button */}
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>{buttonText}</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -88,84 +95,68 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
   );
 };
 
-export default SuccessModal;
-
 const styles = StyleSheet.create({
-  overlay: {
+  backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(12, 12, 12, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: ms(24),
   },
   modalContainer: {
-    backgroundColor: colors.textWhite,
-    borderRadius: ms(16),
-    paddingVertical: vs(40),
-    paddingHorizontal: ms(24),
     width: '100%',
-    maxWidth: ms(400),
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  iconContainer: {
-    marginBottom: vs(24),
-  },
-  successIconWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successIconOuter: {
-    width: ms(80),
-    height: ms(80),
-    borderRadius: ms(40),
-    backgroundColor: colors.successLight,
-    justifyContent: 'center',
+    borderRadius: ms(20),
+    backgroundColor: colors.backgroundMain,
+    paddingHorizontal: ms(20),
+    paddingVertical: vs(24),
     alignItems: 'center',
   },
-  successIconInner: {
+  iconWrapper: {
     width: ms(64),
     height: ms(64),
     borderRadius: ms(32),
-    backgroundColor: colors.success,
-    justifyContent: 'center',
+    backgroundColor: colors.backgroundMuted,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: vs(12),
   },
-  checkmark: {
-    fontSize: rfs(32),
-    color: colors.textWhite,
-    fontWeight: 'bold',
+  icon: {
+    width: ms(32),
+    height: ms(32),
+    resizeMode: 'contain',
   },
   title: {
-    ...typography.heading2,
-    color: colors.textPrimary,
+    ...typography.heading3,
     textAlign: 'center',
-    marginBottom: vs(32),
+    marginBottom: vs(8),
+    color: colors.textPrimary,
   },
   message: {
-    ...typography.bodyMedium,
-    color: colors.textGrey1,
+    ...typography.bodySmall,
     textAlign: 'center',
-    marginBottom: vs(24),
+    color: colors.textGrey1,
+    marginBottom: vs(20),
   },
-  button: {
-    backgroundColor: colors.primary,
-    paddingVertical: vs(16),
-    paddingHorizontal: ms(48),
-    borderRadius: ms(8),
+  primaryButton: {
     width: '100%',
+    paddingVertical: vs(10),
+    borderRadius: ms(999),
+    backgroundColor: colors.primary,
     alignItems: 'center',
+    marginBottom: vs(8),
   },
-  buttonText: {
-    ...typography.buttonText,
+  primaryButtonText: {
+    fontSize: rfs(14),
     color: colors.textWhite,
+    fontFamily: typography.buttonText.fontFamily,
+  },
+  closeButton: {
+    paddingVertical: vs(6),
+    paddingHorizontal: ms(12),
+  },
+  closeButtonText: {
+    ...typography.caption,
+    color: colors.textGrey1,
   },
 });
 

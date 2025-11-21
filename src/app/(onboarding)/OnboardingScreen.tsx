@@ -1,5 +1,5 @@
-import { colors, spacing, typography } from '@/src/core/styles';
-import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
+import { colors, spacing, typography } from '@/core/styles';
+import { ms, rbr, rfs, vs } from '@/core/styles/scaling';
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import {
@@ -14,395 +14,290 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
 
-/**
- * Interface for each onboarding slide
- * Contains all necessary data to render a single slide
- */
 interface OnboardingSlide {
-  id: string;
+  id: number;
   title: string;
-  subtitle: string;
-  image: any; // Image source from require()
+  text: string;
+  backgroundImage: any;
+  image: any;
+  buttonText: string;
 }
 
-/**
- * Props for the OnboardingSlideItem component
- */
-interface OnboardingSlideItemProps {
-  slide: OnboardingSlide;
-  currentIndex: number;
-  totalSlides: number;
-  onSelectSlide: (index: number) => void;
-  onNext: () => void;
-  onSkip: () => void;
-  onLogin: () => void;
-  onSignUp: () => void;
-}
-
-/**
- * Onboarding slides data array
- * Contains the content for all 3 onboarding screens
- */
-const ONBOARDING_SLIDES: OnboardingSlide[] = [
+const slides = [
   {
-    id: '1',
-    title: 'Your Motherhood Companion',
-    subtitle: 'Personalized support for every stage of motherhood.',
-    image: require('../../assets/images/onboarding/slide1.png'),
+    title: 'Welcome to Mum Mentor AI',
+    text: 'Parent with confidence, backed by AI-powered support.',
+    backgroundImage: require('@/assets/images/onboarding/slide1.png'),
+    image: require('@/assets/images/onboarding/slide1.png'),
+    buttonText: 'Continue',
   },
   {
-    id: '2',
-    title: 'Your 24/7 AI Mentor',
-    subtitle:
-      'Ask questions, get clarity, and receive trusted answers anytime you need support.',
-    image: require('../../assets/images/onboarding/slide2.png'),
+    title: 'Track Your Baby’s Growth',
+    text: 'Stay ahead with weekly insights tailored to your child.',
+    backgroundImage: require('@/assets/images/onboarding/slide2.png'),
+    image: require('@/assets/images/onboarding/slide2.png'),
+    buttonText: 'Next',
   },
   {
-    id: '3',
-    title: 'Track Milestones With Ease',
-    subtitle: 'Track milestones, save memories, stay confident.',
-    image: require('../../assets/images/onboarding/slide3.png'),
+    title: 'Join Our Community',
+    text: 'Connect with mums and share your parenting journey.',
+    backgroundImage: require('@/assets/images/onboarding/slide3.png'),
+    image: require('@/assets/images/onboarding/slide3.png'),
+    buttonText: 'Get Started',
   },
 ];
 
 
-/**
- * Individual slide component
- * Displays background image, pagination dots, logo, title, subtitle, and action buttons
- */
-const OnboardingSlideItem: React.FC<OnboardingSlideItemProps> = ({ 
-  slide, 
-  currentIndex, 
-  totalSlides,
-  onSelectSlide,
+interface OnboardingProps {
+  onComplete?: () => void;
+}
+
+interface SlideContentProps {
+  slide: OnboardingSlide;
+  isLastSlide: boolean;
+  onNext: () => void;
+  onSkip: () => void;
+  onLogin: () => void;
+}
+
+const SlideContent: React.FC<SlideContentProps> = ({
+  slide,
+  isLastSlide,
   onNext,
   onSkip,
   onLogin,
-  onSignUp 
 }) => {
-  // Determine if we're on the last slide
-  const isLastSlide = currentIndex === totalSlides - 1;
-
   return (
     <ImageBackground
-      source={slide.image}
+      source={slide.backgroundImage}
       style={styles.slideContainer}
-      resizeMode="cover"
+      imageStyle={styles.backgroundImage}
     >
-      {/* Content container positioned at bottom */}
-      <View style={styles.contentContainer}>
-        {/* Pagination dots - positioned above logo */}
-        <View style={styles.paginationContainer}>
-          {Array.from({ length: totalSlides }).map((_, index) => (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={`Go to slide ${index + 1}`}
-              onPress={() => onSelectSlide(index)}
-              key={index}
-              activeOpacity={0.8}
-            >
-              <View
-                style={[
-                  styles.dot,
-                  index === currentIndex
-                    ? styles.dotActive
-                    : styles.dotInactive,
-                ]}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
+      <View style={styles.overlay} />
 
-        {/* NORA Logo */}
-        <Image
-          source={require('../../assets/images/logo-horizontal.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        {/* Title */}
-        <Text style={styles.title}>{slide.title}</Text>
-
-        {/* Subtitle */}
-        <Text style={styles.subtitle}>{slide.subtitle}</Text>
+      <View style={styles.topContent}>
+        <Text style={styles.logoText}>Mum Mentor AI</Text>
       </View>
 
-      {/* Bottom controls container (buttons) */}
-      <View style={styles.controlsContainer}>
-        {/* Primary action button (Next or Log in) */}
+      <View style={styles.imageWrapper}>
+        <Image source={slide.image} style={styles.heroImage} resizeMode="contain" />
+      </View>
+
+      <View style={styles.bottomSheet}>
+        <Text style={styles.title}>{slide.title}</Text>
+        <Text style={styles.description}>{slide.text}</Text>
+
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={isLastSlide ? onLogin : onNext}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={isLastSlide ? 'Log in to your account' : 'Go to next slide'}
+          activeOpacity={0.9}
         >
-          <Text style={styles.primaryButtonText}>
-            {isLastSlide ? 'Log in' : 'Next'}
-          </Text>
+          <Text style={styles.primaryButtonText}>{slide.buttonText}</Text>
         </TouchableOpacity>
 
-        {/* Secondary action button (Skip or Sign Up) */}
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={isLastSlide ? onSignUp : onSkip}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={isLastSlide ? 'Sign up for a new account' : 'Skip to last slide'}
-        >
-          <Text style={styles.secondaryButtonText}>
-            {isLastSlide ? 'Sign Up' : 'Skip'}
-          </Text>
-        </TouchableOpacity>
+        {!isLastSlide && (
+          <TouchableOpacity style={styles.secondaryButton} onPress={onSkip}>
+            <Text style={styles.secondaryButtonText}>Skip</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ImageBackground>
   );
 };
 
-
-
-export default function OnboardingSlides() {
-
-  // Track current active slide index (0, 1, or 2)
+const OnboardingScreen: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  // Animated values for swipe gestures
   const translateX = useSharedValue(0);
-  const opacity = useSharedValue(1);
 
-  /**
-   * Handle "Next" button press
-   * Advances to the next slide
-   */
   const handleNext = () => {
-    if (currentIndex < ONBOARDING_SLIDES.length - 1) {
-      // Animate transition
-      opacity.value = withTiming(0, { duration: 200 }, () => {
-        runOnJS(setCurrentIndex)(currentIndex + 1);
-        opacity.value = withTiming(1, { duration: 200 });
-      });
+    if (currentIndex < SLIDES.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      translateX.value = withSpring(0);
+    } else {
+      handleLogin();
     }
   };
 
-  /**
-   * Handle going to previous slide
-   */
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      // Animate transition
-      opacity.value = withTiming(0, { duration: 200 }, () => {
-        runOnJS(setCurrentIndex)(currentIndex - 1);
-        opacity.value = withTiming(1, { duration: 200 });
-      });
-    }
-  };
-
-  /**
-   * Handle "Skip" button press
-   * Jumps directly to the last slide (slide 3)
-   */
   const handleSkip = () => {
-    opacity.value = withTiming(0, { duration: 200 }, () => {
-      runOnJS(setCurrentIndex)(ONBOARDING_SLIDES.length - 1);
-      opacity.value = withTiming(1, { duration: 200 });
-    });
+    setCurrentIndex(SLIDES.length - 1);
+    translateX.value = withSpring(0);
   };
 
-  /**
-   * Handle "Log in" button press
-   */
   const handleLogin = () => {
-    router.push('./(auth)/SignInScreen');
+    onComplete?.();
+    router.replace('/(auth)/sign-in');
   };
 
-  /**
-   * Handle "Sign Up" button press
-   */
-  const handleSignUp = () => {
-    router.push('./(auth)/SignUpScreen');
-  };
-
-  /**
-   * Pan gesture for swipe navigation
-   */
   const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      // Update translateX based on gesture movement
+    .onChange((event) => {
       translateX.value = event.translationX;
     })
     .onEnd((event) => {
-      const swipeThreshold = 50; // Minimum swipe distance in pixels
-      const velocity = event.velocityX;
-
-      // Determine if swipe was strong enough
-      if (Math.abs(event.translationX) > swipeThreshold || Math.abs(velocity) > 500) {
-        if (event.translationX < 0 && currentIndex < ONBOARDING_SLIDES.length - 1) {
-          // Swipe left -> Next slide
-          translateX.value = withSpring(0);
-          runOnJS(handleNext)();
-        } else if (event.translationX > 0 && currentIndex > 0) {
-          // Swipe right -> Previous slide
-          translateX.value = withSpring(0);
-          runOnJS(handlePrevious)();
-        } else {
-          // Reset position if swipe not valid
-          translateX.value = withSpring(0);
-        }
-      } else {
-        // Reset position if swipe too weak
-        translateX.value = withSpring(0);
+      if (event.translationX < -50 && currentIndex < SLIDES.length - 1) {
+        runOnJS(setCurrentIndex)(currentIndex + 1);
+      } else if (event.translationX > 50 && currentIndex > 0) {
+        runOnJS(setCurrentIndex)(currentIndex - 1);
       }
+      translateX.value = withSpring(0);
     });
 
-  // --- RENDER ---
+  const animatedSlideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
-  // Get the current slide to display
-  const currentSlide = ONBOARDING_SLIDES[currentIndex];
-
-  // Animated style for slide transitions
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
+  const currentSlide = SLIDES[currentIndex];
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.container, animatedStyle]}>
-        {/* Render only the current slide */}
-        <OnboardingSlideItem
-          slide={currentSlide}
-          currentIndex={currentIndex}
-          totalSlides={ONBOARDING_SLIDES.length}
-          onSelectSlide={setCurrentIndex}
-          onNext={handleNext}
-          onSkip={handleSkip}
-          onLogin={handleLogin}
-          onSignUp={handleSignUp}
-        />
-      </Animated.View>
-    </GestureDetector>
-  );
-}
+    <View style={styles.container}>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={[styles.slideWrapper, animatedSlideStyle]}>
+          <SlideContent
+            slide={currentSlide}
+            isLastSlide={currentIndex === SLIDES.length - 1}
+            onNext={handleNext}
+            onSkip={handleSkip}
+            onLogin={handleLogin}
+          />
+        </Animated.View>
+      </GestureDetector>
 
-// STYLES
+      <View style={styles.pagination}>
+        {SLIDES.map((slide, index) => (
+          <View
+            key={slide.id}
+            style={[
+              styles.dot,
+              index === currentIndex && styles.dotActive,
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
+export default OnboardingScreen;
 
 const styles = StyleSheet.create({
-  // Main container - fills entire screen
   container: {
     flex: 1,
     backgroundColor: colors.backgroundMain,
   },
 
-  // Individual slide container - stretches to fill available space
+  slideWrapper: {
+    flex: 1,
+  },
+
   slideContainer: {
     flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: vs(60),
+    paddingBottom: vs(24),
+    justifyContent: 'space-between',
+  },
+
+  backgroundImage: {
+    resizeMode: 'cover',
+  },
+
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+
+  topContent: {
+    alignItems: 'center',
+  },
+
+  logoText: {
+    ...typography.labelLarge,
+    color: colors.textWhite,
+  },
+
+  imageWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: vs(16),
+  },
+
+  heroImage: {
     width: '100%',
     height: '100%',
-    justifyContent: 'flex-end', // Push content to bottom
   },
 
-  // Content container at bottom of each slide
-  contentContainer: {
+  bottomSheet: {
+    backgroundColor: colors.backgroundMain,
+    borderRadius: rbr(24),
     paddingHorizontal: spacing.lg,
-    paddingBottom: vs(180), // Space for controls at bottom
-    alignItems: 'center',
+    paddingVertical: vs(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
   },
 
-  // Pagination dots container - positioned above logo
-  paginationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ms(12),
-    marginBottom: vs(24),
-  },
-
-  // Individual pagination dot
-  dot: {
-    width: ms(16),
-    height: ms(6),
-    borderRadius: rbr(8),
-  },
-
-  // Active dot styling
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: ms(32), // Longer to indicate active
-  },
-
-  // Inactive dot styling
-  dotInactive: {
-    backgroundColor: colors.secondaryLight,
-    width: ms(16),
-  },
-
-  // NORA logo styling
-  logo: {
-    width: ms(100),
-    height: vs(40),
-    marginBottom: vs(24),
-  },
-
-  // Slide title styling
   title: {
     ...typography.heading2,
     color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: vs(12),
+    marginBottom: vs(8),
   },
 
-  // Slide subtitle styling
-  subtitle: {
-    ...typography.bodyMedium,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    lineHeight: rfs(24),
-    paddingHorizontal: spacing.md,
-    bottom: vs(8),
+  description: {
+    ...typography.bodySmall,
+    color: colors.textGrey1,
+    marginBottom: vs(24),
   },
 
-  // Bottom controls container (buttons)
-  controlsContainer: {
-    position: 'absolute',
-    bottom: vs(40),
-    left: 0,
-    right: 0,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: vs(32),
-    alignItems: 'center',
-  },
-
-  // Primary button (Next / Log in)
   primaryButton: {
     width: '100%',
+    paddingVertical: vs(12),
+    borderRadius: rbr(999),
     backgroundColor: colors.primary,
-    paddingVertical: vs(14),
-    borderRadius: rbr(8),
     alignItems: 'center',
-    marginBottom: vs(10),
+    marginBottom: vs(8),
   },
 
-  // Primary button text
   primaryButtonText: {
     ...typography.buttonText,
     color: colors.textWhite,
   },
 
-  // Secondary button (Skip / Sign Up)
   secondaryButton: {
     width: '100%',
     paddingVertical: vs(8),
     alignItems: 'center',
   },
 
-  // Secondary button text
   secondaryButtonText: {
     ...typography.labelMedium,
     color: colors.primary,
+  },
+
+  pagination: {
+    position: 'absolute',
+    bottom: vs(16),
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+
+  dot: {
+    width: ms(8),
+    height: ms(8),
+    borderRadius: rbr(4),
+    backgroundColor: colors.secondaryLight,
+  },
+
+  dotActive: {
+    width: ms(16),
+    backgroundColor: colors.primary,
   },
 });
