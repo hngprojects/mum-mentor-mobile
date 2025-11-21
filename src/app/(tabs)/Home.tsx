@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -63,23 +64,29 @@ const HeaderIconButton = ({
 
 const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
   async function listUserTasks() {
+    setIsLoadingTasks(true); // start loading
     try {
       const response = await fetchTasks();
-      setTasks(response.data.details);
+      setTasks(response.data.details || []);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoadingTasks(false); // end loading
     }
   }
+
   // --- NEW STATES FOR TWO MODALS ---
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   // ---------------------------------
 
-  const handleTaskCreated = () => {
+  const handleTaskCreated = async () => {
     setIsFormModalVisible(false); // 1. Close the form modal
     setIsSuccessModalVisible(true); // 2. Open the success modal
+    await listUserTasks();
   };
 
   const handleSuccessDone = () => {
@@ -177,12 +184,14 @@ const Home = () => {
             </TouchableOpacity>
           </View>
 
-          {tasks?.length === 0 ? (
+          {isLoadingTasks ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : tasks.length === 0 ? (
             <View style={styles.taskCard}>
               <Image source={taskIcon} style={styles.taskIcon} />
               <Text style={styles.taskEmptyTitle}>No task added yet</Text>
               <Text style={styles.taskEmptySubtitle}>
-                {"Your today\u2019s task will be displayed here"}
+                {"Your today's task will be displayed here"}
               </Text>
               <SecondaryButton
                 title="Add Task"
@@ -191,7 +200,7 @@ const Home = () => {
               />
             </View>
           ) : (
-            <ListTasks tasks={tasks} callback={fetchTasks} />
+            <ListTasks tasks={tasks} callback={listUserTasks} />
           )}
         </View>
       </ScrollView>

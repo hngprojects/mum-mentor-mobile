@@ -1,4 +1,4 @@
-import { deleteTask } from "@/src/core/services/tasksService";
+import { deleteTask, toggleTaskStatus } from "@/src/core/services/tasksService";
 import React, { useState } from "react";
 import {
   Alert,
@@ -12,9 +12,9 @@ import {
 import PrimaryButton from "./PrimaryButton";
 import SecondaryButton from "./SecondaryButton";
 
-const trashIcon = require("../../assets/images/trash.svg");
-const tickChecked = require("../../assets/images/tick-square-checked.svg");
-const tickUnchecked = require("../../assets/images/tick-square-unchecked.svg");
+const trashIcon = require("../../assets/images/trash.png");
+const tickChecked = require("../../assets/images/tick-square-checked.png");
+const tickUnchecked = require("../../assets/images/tick-square.png");
 const successIcon = require("../../assets/images/success-icon.png");
 
 const ListTasks = ({
@@ -26,17 +26,17 @@ const ListTasks = ({
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
 
   const [isLoadingDelete, setIsLoadingDelete] = useState(false);
 
   const handleDeleteTask = async () => {
-    if (!taskToDelete) return;
+    if (!selectedTask) return;
 
     setIsLoadingDelete(true);
 
     try {
-      await deleteTask(taskToDelete);
+      await deleteTask(selectedTask);
 
       setShowDeleteConfirm(false);
 
@@ -48,11 +48,22 @@ const ListTasks = ({
       Alert.alert("Error", "Failed to delete task. Try again.");
     } finally {
       setIsLoadingDelete(false);
-      setTaskToDelete(null);
+      setSelectedTask(null);
     }
   };
-  const toggleTaskCompletion = (taskId: string) => {
-    console.log("Toggle task completion for ID:", taskId);
+
+  const handleToggleStatus = async (taskId: string, status: string) => {
+    setIsLoadingDelete(true);
+    const newStatus = status === "completed" ? false : true;
+    try {
+      await toggleTaskStatus(taskId, newStatus);
+      await callback(); // Only runs if toggleTaskStatus succeeds
+    } catch (err) {
+      console.error("Update error:", err);
+      Alert.alert("Error", "Failed to update task. Try again.");
+    } finally {
+      setIsLoadingDelete(false);
+    }
   };
 
   return (
@@ -63,7 +74,7 @@ const ListTasks = ({
             {/* Checkbox */}
             <TouchableOpacity
               style={styles.checkboxContainer}
-              onPress={() => toggleTaskCompletion(task.id)}
+              onPress={() => handleToggleStatus(task.id, task.status)}
             >
               <View>
                 {task.status === "completed" ? (
@@ -98,7 +109,7 @@ const ListTasks = ({
             {/* Delete Icon */}
             <TouchableOpacity
               onPress={() => {
-                setTaskToDelete(task.id);
+                setSelectedTask(task.id);
                 setShowDeleteConfirm(true);
               }}
             >

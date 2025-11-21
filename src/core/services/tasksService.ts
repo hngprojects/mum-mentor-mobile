@@ -23,6 +23,28 @@ export async function fetchTasks(params?: {
   }
 }
 
+export async function createTask({
+  name,
+  description,
+  due_date,
+}: {
+  name: string;
+  description: string;
+  due_date: string;
+}) {
+  try {
+    const response = await apiClient.patch(`${TASKS_ENDPOINT}`, {
+      name,
+      description,
+      due_date,
+    });
+    return response.data;
+  } catch (error) {
+    console.debug("Error creating task:", error);
+    return null;
+  }
+}
+
 // --- Delete Task by ID ---
 export async function deleteTask(taskId: string) {
   try {
@@ -30,6 +52,19 @@ export async function deleteTask(taskId: string) {
     return response.data;
   } catch (error) {
     console.debug("Error deleting task:", error);
+    return null;
+  }
+}
+
+export async function toggleTaskStatus(taskId: string, status: boolean) {
+  try {
+    const response = await apiClient.patch(
+      `${TASKS_ENDPOINT}/${taskId}/status`,
+      { completed: status }
+    );
+    return response.data;
+  } catch (error) {
+    console.debug("Error updating task:", error);
     return null;
   }
 }
