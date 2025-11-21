@@ -88,6 +88,8 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
   );
 };
 
+export default SuccessModal;
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
