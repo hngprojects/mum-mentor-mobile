@@ -3,7 +3,7 @@ name: Build Android Release
 
 on:
  push:
-   branches:
+   branches:sdfds
      - main
      - staging
  pull_request:
