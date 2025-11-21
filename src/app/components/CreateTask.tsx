@@ -124,15 +124,19 @@ const CreateTaskForm: React.FC<{
         onPress={handleDatePicker}
         style={taskStyles.dateInputWrapper}
       >
-        <CustomInput
-          label="Due Date"
-          placeholder="Select Date"
-          value={dueDate ? dueDate.toLocaleDateString() : "Select Date"} // Format date properly
-          onChangeText={() => {}}
-          iconName="calendar-number"
-          isValid={!!dueDate}
-          editable={false} // Prevent keyboard from showing
-        />
+        <View pointerEvents="none">
+          {" "}
+          {/* Add this wrapper */}
+          <CustomInput
+            label="Due Date"
+            placeholder="Select Date"
+            value={dueDate ? dueDate.toLocaleDateString() : "Select Date"}
+            onChangeText={() => {}}
+            iconName="calendar-number"
+            isValid={!!dueDate}
+            editable={false}
+          />
+        </View>
       </TouchableOpacity>
 
       <View style={taskStyles.descriptionWrapper}>

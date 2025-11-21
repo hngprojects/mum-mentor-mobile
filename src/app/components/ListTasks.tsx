@@ -1,4 +1,5 @@
 import { deleteTask, toggleTaskStatus } from "@/src/core/services/tasksService";
+import { format, parseISO } from "date-fns";
 import React, { useState } from "react";
 import {
   Alert,
@@ -103,7 +104,9 @@ const ListTasks = ({
               >
                 {task.name}
               </Text>
-              <Text style={styles.taskDateTime}>{task.due_date}</Text>
+              <Text style={styles.taskDateTime}>
+                {format(parseISO(task.due_date), "yyyy-MM-dd h:mma")}
+              </Text>
             </View>
 
             {/* Delete Icon */}
