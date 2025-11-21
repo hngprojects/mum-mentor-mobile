@@ -50,11 +50,10 @@ const quickActions: {
   },
 ];
 
-
-
 const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isAppAction, setIsAppAction] = useState(false);
 
   async function listUserTasks() {
     setIsLoadingTasks(true); // start loading
@@ -174,7 +173,7 @@ const Home = () => {
             </TouchableOpacity>
           </View>
 
-          {isLoadingTasks ? (
+          {isLoadingTasks && !isAppAction ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : tasks.length === 0 ? (
             <View style={styles.taskCard}>
@@ -190,7 +189,11 @@ const Home = () => {
               />
             </View>
           ) : (
-            <ListTasks tasks={tasks} callback={listUserTasks} />
+            <ListTasks
+              tasks={tasks}
+              callback={listUserTasks}
+              setAppAction={() => setIsAppAction(true)}
+            />
           )}
         </View>
       </ScrollView>

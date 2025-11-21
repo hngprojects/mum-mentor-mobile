@@ -18,6 +18,7 @@ import SecondaryButton from "../components/SecondaryButton";
 import { createTask } from "@/src/core/services/tasksService";
 import { colors } from "../../core/styles/index";
 import { ms } from "../../core/styles/scaling";
+import DatePickerInput from "./DatePickerInput";
 const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
 const typography = {
   heading3: { fontSize: 20, fontFamily: "System" },
@@ -127,14 +128,12 @@ const CreateTaskForm: React.FC<{
         <View pointerEvents="none">
           {" "}
           {/* Add this wrapper */}
-          <CustomInput
+          <DatePickerInput
             label="Due Date"
-            placeholder="Select Date"
             value={dueDate ? dueDate.toLocaleDateString() : "Select Date"}
-            onChangeText={() => {}}
-            iconName="calendar-number"
-            isValid={!!dueDate}
-            editable={false}
+            // isValid={!!dueDate}
+            placeholder="Select Date"
+            onDateChange={(date) => handleDateConfirm(new Date(date))}
           />
         </View>
       </TouchableOpacity>
