@@ -32,16 +32,17 @@ export async function createTask({
   description: string;
   due_date: string;
 }) {
-  try {
-    const response = await apiClient.post(`${TASKS_ENDPOINT}`, {
-      name,
-      description,
-      due_date,
-    });
+  const response = await apiClient.post(`${TASKS_ENDPOINT}`, {
+    name,
+    description,
+    due_date,
+  });
+
+  if (response.status >= 200 && response.status < 300) {
     return response.data;
-  } catch (error) {
-    console.debug("Error creating task:", error);
-    return null;
+  } else {
+    // throw error if response status is not 2xx
+    throw new Error(response.data?.message || "Failed to create task");
   }
 }
 

@@ -89,24 +89,20 @@ const CreateTaskForm: React.FC<{
     setIsCreating(true);
     try {
       await createTask({
-        name: taskName.trim(),
-        description: description.trim() || "",
+        name: taskName,
+        description,
         due_date: dueDate.toISOString(),
       });
 
-      // Reset form
       setTaskName("");
       setDescription("");
       setDueDate(null);
 
-      // Call success callback
-      onTaskCreated();
+      onTaskCreated(); // only runs if API call succeeds
     } catch (error) {
-      console.error("Create task error:", error);
-      Alert.alert("Error", "Failed to create task. Please try again.");
-    } finally {
-      setIsCreating(false);
+      Alert.alert("Error", "Failed to create task");
     }
+    setIsCreating(false);
   };
 
   const handleDatePicker = () => {
