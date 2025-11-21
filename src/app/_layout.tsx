@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
-import { Stack, Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { AuthProvider, useAuth } from '../core/services/authContext'; // Adjust path if needed
-import { useAssetLoading } from '../core/utils/assetsLoading'; // Adjust path if needed
-import { colors } from '../core/styles/index'; // Adjust path if needed
+import React, { useEffect } from "react";
+import { Stack, Redirect } from "expo-router";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+import { AuthProvider, useAuth } from "../core/services/authContext";
+import { useAssetLoading } from "../core/utils/assetsLoading";
+import { colors } from "../core/styles/index";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,21 +25,19 @@ function RootLayoutContent() {
     );
   }
 
-  // --- Unauthenticated users ---
   if (!user) {
     return (
-      <Stack>
-        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(auth)" />
         <Redirect href="/(onboarding)" />
       </Stack>
     );
   }
 
-  // --- Authenticated users ---
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
       <Redirect href="/(tabs)/Home" />
     </Stack>
   );
@@ -46,17 +45,19 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutContent />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <RootLayoutContent />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.backgroundMain,
   },
 });

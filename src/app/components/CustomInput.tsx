@@ -21,6 +21,9 @@ const icons: Record<string, any> = {
   "mail-outline": require('../../assets/images/mail.png'),
   "person-outline": require('../../assets/images/user.png'),
   "lock-outline": require('../../assets/images/lock.png'),
+  "calendar-outline": require('../../assets/images/calendar.png'),
+  "calendar-number": require('../../assets/images/calendar-num.png'),
+  "gender-outline": require('../../assets/images/gender.png'),
 };
 
 // --- TYPES ---
