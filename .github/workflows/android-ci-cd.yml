@@ -21,7 +21,7 @@ env:
 jobs:
   build-android:
     name: Build Android APK
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, hng-13-runner]
     outputs:
       apk-name: ${{ steps.build.outputs.apk-name }}
       environment: ${{ steps.vars.outputs.environment }}

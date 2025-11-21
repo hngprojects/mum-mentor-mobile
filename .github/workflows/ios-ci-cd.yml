@@ -39,8 +39,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      - name: Ensure EAS CLI available and debug Node/npm
+        run: |
+          echo "== node/npm versions =="
+          node -v
+          npm -v
+          echo "== npx version (if available) =="
+          npx --version || true
+          # Try to run eas via npx first; if that fails, install globally with unsafe-perm
+          if npx --yes eas --version 2>/dev/null; then
+            echo "eas available via npx"
+          else
+            echo "eas not available via npx, attempting global install"
+            npm config set unsafe-perm true
+            npm install -g eas-cli || true
+            eas --version || true
+          fi
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
