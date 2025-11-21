@@ -15,7 +15,7 @@ on:
         options: [staging, production]
 
 env:
-  NODE_VERSION: '18'  # Expo works best with Node 18
+  NODE_VERSION: '18'
 
 jobs:
   validate-expo-setup:
@@ -42,24 +42,24 @@ jobs:
     - name: Validate Expo project structure
       id: expo-validation
       run: |
-        echo "🔍 Validating Expo project structure..."
+        echo "Validating Expo project structure..."
         
         # Check critical Expo files
-        test -f package.json && echo "✅ package.json exists" || echo "❌ package.json missing"
-        test -f app.json && echo "✅ app.json exists" || echo "❌ app.json missing"
-        test -f eas.json && echo "✅ eas.json exists" || echo "❌ eas.json missing"
-        test -f tsconfig.json && echo "✅ tsconfig.json exists" || echo "❌ tsconfig.json missing"
+        test -f package.json && echo "PASS: package.json exists" || echo "FAIL: package.json missing"
+        test -f app.json && echo "PASS: app.json exists" || echo "FAIL: app.json missing"
+        test -f eas.json && echo "PASS: eas.json exists" || echo "FAIL: eas.json missing"
+        test -f tsconfig.json && echo "PASS: tsconfig.json exists" || echo "FAIL: tsconfig.json missing"
         
         # Check Expo-specific directories
-        test -d src && echo "✅ src directory exists" || echo "❌ src directory missing"
-        test -d src/app && echo "✅ src/app directory exists" || echo "❌ src/app directory missing"
-        test -d plugins && echo "✅ plugins directory exists" || echo "❌ plugins directory missing"
+        test -d src && echo "PASS: src directory exists" || echo "FAIL: src directory missing"
+        test -d src/app && echo "PASS: src/app directory exists" || echo "FAIL: src/app directory missing"
+        test -d plugins && echo "PASS: plugins directory exists" || echo "FAIL: plugins directory missing"
         
         # Extract project ID from app.json
         if [ -f "app.json" ]; then
           PROJECT_ID=$(node -e "console.log(require('./app.json').expo.extra?.eas?.projectId || 'NOT_FOUND')")
           echo "project-id=$PROJECT_ID" >> $GITHUB_OUTPUT
-          echo "📋 Expo Project ID: $PROJECT_ID"
+          echo "Expo Project ID: $PROJECT_ID"
         else
           echo "project-id=NOT_FOUND" >> $GITHUB_OUTPUT
         fi
@@ -67,10 +67,10 @@ jobs:
         # Set validation result
         if [ -f "package.json" ] && [ -f "app.json" ] && [ -f "eas.json" ] && [ -d "src" ] && [ -d "plugins" ]; then
           echo "valid=true" >> $GITHUB_OUTPUT
-          echo "✅ All Expo project files present"
+          echo "PASS: All Expo project files present"
         else
           echo "valid=false" >> $GITHUB_OUTPUT
-          echo "❌ Missing critical Expo files"
+          echo "FAIL: Missing critical Expo files"
         fi
 
     - name: Setup Node.js
@@ -81,15 +81,15 @@ jobs:
 
     - name: Install dependencies
       run: |
-        echo "📦 Installing dependencies..."
+        echo "Installing dependencies..."
         npm ci
-        echo "✅ Dependencies installed successfully"
+        echo "Dependencies installed successfully"
 
     - name: Validate Expo configuration
       run: |
-        echo "🔧 Validating Expo configuration..."
+        echo "Validating Expo configuration..."
         npx expo config --non-interactive
-        echo "✅ Expo configuration is valid"
+        echo "Expo configuration is valid"
 
   test-expo-android-build:
     name: Test Expo Android Build
@@ -110,30 +110,32 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Setup EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
+    - name: Setup EAS CLI
+      run: |
+        echo "Installing EAS CLI..."
+        npm install -g @expo/eas-cli
+        echo "EAS CLI version: $(eas --version)"
 
     - name: Validate Android build configuration
       run: |
-        echo "🤖 Expo Android Build Simulation"
-        echo "=================================="
+        echo "Expo Android Build Simulation"
+        echo "=============================="
         echo "Environment: ${{ needs.validate-expo-setup.outputs.environment }}"
         echo "Expo Project ID: ${{ needs.validate-expo-setup.outputs.project-id }}"
-        echo "EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' && '✅ SET' || '❌ MISSING' }}"
+        echo "EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' && 'SET' || 'MISSING' }}"
         
-        # Check EAS Android configuration
-        npx eas build:configure
-        echo "✅ EAS Android configuration ready"
+        # Configure EAS build
+        echo "Configuring EAS build..."
+        eas build:configure --non-interactive
         
-        # Validate build profile
-        npx eas build:list --platform android --non-interactive --limit=1 || echo "No previous builds (this is OK)"
+        # Check available build profiles
+        echo "Available build profiles:"
+        node -e "console.log(JSON.stringify(require('./eas.json').build, null, 2))" || echo "Could not read eas.json build profiles"
         
         # Simulate build command
-        echo "🚀 Build command that would run:"
+        echo "Build command that would run:"
         echo "eas build --platform android --profile ${{ needs.validate-expo-setup.outputs.environment }} --non-interactive --wait"
+        echo "Android build simulation completed successfully"
 
     - name: Create Android build manifest
       run: |
@@ -146,11 +148,12 @@ jobs:
           "status": "ready_for_build",
           "timestamp": "$(date -u -Iseconds)",
           "buildCommand": "eas build --platform android --profile ${{ needs.validate-expo-setup.outputs.environment }} --non-interactive",
-          "artifacts": ["apk", "aab"]
+          "artifacts": ["apk", "aab"],
+          "easCliVersion": "$(eas --version)"
         }
         EOF
         
-        echo "📱 Android build simulation manifest created"
+        echo "Android build simulation manifest created"
 
     - name: Upload Android simulation artifact
       uses: actions/upload-artifact@v4
@@ -178,34 +181,36 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Setup EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
+    - name: Setup EAS CLI
+      run: |
+        echo "Installing EAS CLI..."
+        npm install -g @expo/eas-cli
+        echo "EAS CLI version: $(eas --version)"
 
     - name: Validate iOS build environment
       run: |
-        echo "🍎 Expo iOS Build Simulation"
-        echo "============================="
+        echo "Expo iOS Build Simulation"
+        echo "=========================="
         echo "Environment: ${{ needs.validate-expo-setup.outputs.environment }}"
         echo "Expo Project ID: ${{ needs.validate-expo-setup.outputs.project-id }}"
-        echo "EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' && '✅ SET' || '❌ MISSING' }}"
+        echo "EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' && 'SET' || 'MISSING' }}"
         
         # Check macOS environment
         echo "macOS Version: $(sw_vers -productVersion)"
         echo "Xcode Select: $(xcode-select -p)"
         
-        # Check EAS iOS configuration
-        npx eas build:configure
-        echo "✅ EAS iOS configuration ready"
+        # Configure EAS build
+        echo "Configuring EAS build..."
+        eas build:configure --non-interactive
         
-        # Validate build profile
-        npx eas build:list --platform ios --non-interactive --limit=1 || echo "No previous builds (this is OK)"
+        # Check available build profiles
+        echo "Available build profiles:"
+        node -e "console.log(JSON.stringify(require('./eas.json').build, null, 2))" || echo "Could not read eas.json build profiles"
         
         # Simulate build command
-        echo "🚀 Build command that would run:"
+        echo "Build command that would run:"
         echo "eas build --platform ios --profile ${{ needs.validate-expo-setup.outputs.environment }} --non-interactive --wait"
+        echo "iOS build simulation completed successfully"
 
     - name: Create iOS build manifest
       run: |
@@ -218,11 +223,12 @@ jobs:
           "status": "ready_for_build",
           "timestamp": "$(date -u -Iseconds)",
           "buildCommand": "eas build --platform ios --profile ${{ needs.validate-expo-setup.outputs.environment }} --non-interactive",
-          "artifacts": ["ipa", "simulator"]
+          "artifacts": ["ipa", "simulator"],
+          "easCliVersion": "$(eas --version)"
         }
         EOF
         
-        echo "📱 iOS build simulation manifest created"
+        echo "iOS build simulation manifest created"
 
     - name: Upload iOS simulation artifact
       uses: actions/upload-artifact@v4
@@ -246,38 +252,38 @@ jobs:
 
     - name: Create Expo-specific summary
       run: |
-        echo "## 🚀 Expo Mobile CI/CD Pipeline Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## Expo Mobile CI/CD Pipeline Test Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Expo Project Structure Validation:**" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ package.json: Present" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ app.json: Present" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ eas.json: Present" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ src/ directory: Present" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ plugins/ directory: Present" >> $GITHUB_STEP_SUMMARY
-        echo "- 📋 Project ID: ${{ needs.validate-expo-setup.outputs.project-id }}" >> $GITHUB_STEP_SUMMARY
+        echo "- package.json: Present" >> $GITHUB_STEP_SUMMARY
+        echo "- app.json: Present" >> $GITHUB_STEP_SUMMARY
+        echo "- eas.json: Present" >> $GITHUB_STEP_SUMMARY
+        echo "- src/ directory: Present" >> $GITHUB_STEP_SUMMARY
+        echo "- plugins/ directory: Present" >> $GITHUB_STEP_SUMMARY
+        echo "- Project ID: ${{ needs.validate-expo-setup.outputs.project-id }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        echo "### 📊 Build Simulation Results" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Simulation Results" >> $GITHUB_STEP_SUMMARY
         echo "| Platform | Status | Environment |" >> $GITHUB_STEP_SUMMARY
         echo "|----------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
         echo "| Android | ${{ needs.test-expo-android-build.result }} | ${{ needs.validate-expo-setup.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
         echo "| iOS | ${{ needs.test-expo-ios-build.result }} | ${{ needs.validate-expo-setup.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        echo "### 🔑 Required Setup" >> $GITHUB_STEP_SUMMARY
-        echo "- EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' && '✅ SET' || '❌ MISSING - Get from https://expo.dev/settings/access-tokens' }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Required Setup" >> $GITHUB_STEP_SUMMARY
+        echo "- EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' && 'SET' || 'MISSING - Get from https://expo.dev/settings/access-tokens' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        echo "### 🎯 Next Steps for Production" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps for Production" >> $GITHUB_STEP_SUMMARY
         if [[ "${{ needs.validate-expo-setup.result }}" == "success" && "${{ needs.test-expo-android-build.result }}" == "success" && "${{ needs.test-expo-ios-build.result }}" == "success" ]]; then
-          echo "✅ **Expo Pipeline Validation PASSED**" >> $GITHUB_STEP_SUMMARY
+          echo "SUCCESS: Expo Pipeline Validation PASSED" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "To activate real builds, merge to main/staging and ensure:" >> $GITHUB_STEP_SUMMARY
-          echo "1. ✅ EXPO_TOKEN secret is set in GitHub" >> $GITHUB_STEP_SUMMARY
-          echo "2. ✅ Apple Developer Account is linked to EAS" >> $GITHUB_STEP_SUMMARY
-          echo "3. ✅ Google Play Account is linked to EAS" >> $GITHUB_STEP_SUMMARY
+          echo "1. EXPO_TOKEN secret is set in GitHub" >> $GITHUB_STEP_SUMMARY
+          echo "2. Apple Developer Account is linked to EAS" >> $GITHUB_STEP_SUMMARY
+          echo "3. Google Play Account is linked to EAS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Real build commands:**" >> $GITHUB_STEP_SUMMARY
+          echo "Real build commands:" >> $GITHUB_STEP_SUMMARY
           echo "```bash" >> $GITHUB_STEP_SUMMARY
           echo "# Android" >> $GITHUB_STEP_SUMMARY
           echo "eas build --platform android --profile ${{ needs.validate-expo-setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
@@ -286,9 +292,9 @@ jobs:
           echo "eas build --platform ios --profile ${{ needs.validate-expo-setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "```" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ **Pipeline validation needs fixes**" >> $GITHUB_STEP_SUMMARY
+          echo "FAILED: Pipeline validation needs fixes" >> $GITHUB_STEP_SUMMARY
           echo "Check the job logs above for specific issues with your Expo project structure." >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Expo CLI Version:** $(npx expo --version 2>/dev/null || echo 'Not installed')" >> $GITHUB_STEP_SUMMARY
-        echo "**Test completed at:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "Expo CLI Version: $(npx expo --version 2>/dev/null || echo 'Not installed')" >> $GITHUB_STEP_SUMMARY
+        echo "Test completed at: $(date -u)" >> $GITHUB_STEP_SUMMARY
