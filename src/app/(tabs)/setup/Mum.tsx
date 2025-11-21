@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import { colors, spacing, typography } from '@/src/core/styles';
 import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
-import AddGoalModal from '../components/AddGoalModal';
-import EditGoalModal from '../components/EditGoalModal';
-import CustomInput from '../components/CustomInput';
-import PrimaryButton from '../components/PrimaryButton';
+import AddGoalModal from '../../components/AddGoalModal';
+import EditGoalModal from '../../components/EditGoalModal';
+import CustomInput from '../../components/CustomInput';
+import PrimaryButton from '../../components/PrimaryButton';
 import { router } from 'expo-router';
 
 const momStatuses: string[] = ['Pregnant', 'New Mom', 'Toddler Mom', 'Mixed'];
@@ -58,7 +58,7 @@ const MomSetupScreen: React.FC = () => {
   };
 
   const handleAddGoal = () => {
-    if (!newGoal.trim()) return;
+      if (!newGoal.trim()) return;
 
     setGoals([...goals, newGoal]);
     setCustomGoals([...customGoals, newGoal]); // Track as custom goal
@@ -105,7 +105,7 @@ const MomSetupScreen: React.FC = () => {
   };
 
   const nextPage = () => {
-    router.push('/childSetupScreen')
+    router.push('./childSetupScreen')
   }
 
   return (
@@ -384,3 +384,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+
+
+
+
+
+
+

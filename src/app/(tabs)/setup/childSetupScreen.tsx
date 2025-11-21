@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
-import ChildSetupItem, { ChildData } from '../components/ChildSetupItem';
+import ChildSetupItem, { ChildData } from '../../components/ChildSetupItem';
 import { colors, typography } from '@/src/core/styles';
 import { ms, vs } from '@/src/core/styles/scaling';
-import PrimaryButton from '../components/PrimaryButton';
-import { SuccessModal, useSuccessModal } from '../components/SucessModal';
-import SecondaryButton from '../components/SecondaryButton';
+import PrimaryButton from '../../components/PrimaryButton';
+import { SuccessModal, useSuccessModal } from '../../components/SucessModal';
+import SecondaryButton from '../../components/SecondaryButton';
 
 const SetupScreen = () => {
   const [children, setChildren] = useState<ChildData[]>([
@@ -62,7 +62,7 @@ const SetupScreen = () => {
         message=""
         iconComponent={
           <Image
-            source={require('../../assets/images/success-icon.png')}
+            source={require('../../../assets/images/success-icon.png')}
            
           />
         }
