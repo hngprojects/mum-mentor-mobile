@@ -215,12 +215,23 @@ export async function googleAuth(payload: {
   id_token: string;
   device_id: string;
   device_name: string;
-}): Promise<MessageResponse> {
-  const response = await apiClient.patch<MessageResponse>(
+}): Promise<AuthTokenData> {
+  const response = await apiClient.post<LoginAPIResponse>(
     "/api/v1/google/login",
     payload
   );
-  return response.data;
+  const tokenData = response.data.data;
+  const token = tokenData?.access_token;
+
+  if (token && token.length > 0) {
+    await setAuthToken(token);
+    console.log("Google auth successful. Token stored.");
+  } else {
+    console.error("Google auth response missing access_token:", response.data);
+    throw new Error("API response missing access token.");
+  }
+
+  return tokenData;
 }
 
 export async function getGoogleUser(): Promise<MessageResponse> {
