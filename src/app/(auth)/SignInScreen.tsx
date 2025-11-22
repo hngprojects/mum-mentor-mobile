@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { AxiosError } from 'axios';
-// FIX: Import StatusBar component
 import { StatusBar } from 'expo-status-bar';
 
 // --- Imports from Core Components and Styles (Adjust path as needed) ---
@@ -68,8 +67,6 @@ export default function SignInScreen() {
       // 1. CALL THE LOGIN SERVICE
       const loginPayload = { email:email.toLowerCase(), password };
       
-      // FIX: Call the login function without assigning the unused return value
-      // The login function handles the token saving internally upon success.
       await login(loginPayload); 
 
       // 2. SUCCESS NAVIGATION
@@ -77,10 +74,13 @@ export default function SignInScreen() {
       router.replace('/(tabs)/Home'); 
 
     } catch (error) {
+      // The error is successfully caught here.
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;
       
-      console.error("Login API Error:", statusCode, axiosError.response?.data);
+      // FIX: Changed console.error to console.warn.
+      // This prevents the red error overlay box in development for expected API failures (like 401).
+      console.warn("Login API Failure (Expected):", statusCode, axiosError.response?.data);
 
       // 3. ERROR HANDLING based on API responses
       if (statusCode === 401 || statusCode === 404) {
@@ -89,14 +89,17 @@ export default function SignInScreen() {
           email: 'The Email Address is incorrect or user not found.',
           password: 'The Password is incorrect.',
         });
+        setGeneralError(null); // Clear general error if we are using field-specific errors
         
       } else if (statusCode === 422) {
         // Handle Validation Errors (e.g., password too short)
         setGeneralError('Validation failed. Check input formats.');
+        setErrors({});
 
       } else {
         // Catch-all for 500 or network errors
         setGeneralError('An unexpected error occurred. Please try again.');
+        setErrors({});
       }
     } finally {
       setIsLoading(false);
@@ -119,7 +122,6 @@ export default function SignInScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* FIX: Set the status bar style to dark content for a light screen background */}
       <StatusBar style="dark" /> 
       
       <ScrollView contentContainerStyle={styles.container}>
