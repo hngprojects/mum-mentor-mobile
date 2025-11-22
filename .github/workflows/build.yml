@@ -15,6 +15,14 @@ on:
 jobs:
  build:
    name: Build Android APK
+   # Only run this job for:
+   # - push to main or staging
+   # - workflow_dispatch (manual run)
+   # - pull_request where the base branch is main or staging
+   if: >-
+     (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'staging')) ||
+     github.event_name == 'workflow_dispatch' ||
+     (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'staging'))
    runs-on: ubuntu-latest
 
    steps:
