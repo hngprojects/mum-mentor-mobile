@@ -1,10 +1,11 @@
-import { Stack } from "expo-router";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-export default function OnboardingLayout() {
+const queryClient = new QueryClient();
+
+export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }} />
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+        <RootLayout /> 
+    </QueryClientProvider>
   );
 }
