@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { Stack, Redirect } from "expo-router";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import * as SplashScreen from "expo-splash-screen";
-import { AuthProvider, useAuth } from "../core/services/authContext";
-import { useAssetLoading } from "../core/utils/assetsLoading";
-import { colors } from "../core/styles/index";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { Redirect, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AuthProvider, useAuth } from "../core/services/authContext";
+import { colors } from "../core/styles/index";
+import { useAssetLoading } from "../core/utils/assetsLoading";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,10 +16,18 @@ SplashScreen.preventAutoHideAsync();
 // ----------------------------------------------------
 
 const ONBOARDING_KEY = "@OnboardingComplete";
+const GOOGLE_CLIENT_ID =
+  "587538345013-rfv1tk32e0r5bpeahr2oobr19qeceadn.apps.googleusercontent.com";
 
 function useOnboardingStatusLoader() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+
+  GoogleSignin.configure({
+    webClientId: GOOGLE_CLIENT_ID,
+    offlineAccess: true,
+    forceCodeForRefreshToken: true,
+  });
 
   useEffect(() => {
     const check = async () => {
@@ -44,7 +53,8 @@ function useOnboardingStatusLoader() {
 function RootLayoutContent() {
   const isLoaded = useAssetLoading();
   const { user, isSessionLoading } = useAuth();
-  const { onboardingComplete, isCheckingOnboarding } = useOnboardingStatusLoader();
+  const { onboardingComplete, isCheckingOnboarding } =
+    useOnboardingStatusLoader();
 
   // Hide splash only when EVERYTHING is ready
   useEffect(() => {
@@ -70,7 +80,7 @@ function RootLayoutContent() {
       return (
         <>
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(onboarding)"  />
+            <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(auth)" />
           </Stack>
           <Redirect href="/(auth)/SignInScreen" />

@@ -203,3 +203,20 @@ export async function changePassword(
   );
   return response.data;
 }
+
+export async function googleAuth(payload: {
+  id_token: string;
+  device_id: string;
+  device_name: string;
+}): Promise<MessageResponse> {
+  const response = await apiClient.patch<MessageResponse>(
+    "/api/v1/google/login",
+    payload
+  );
+  return response.data;
+}
+
+export async function getGoogleUser(): Promise<MessageResponse> {
+  const response = await apiClient.post<MessageResponse>("/api/v1/google/user");
+  return response.data;
+}
