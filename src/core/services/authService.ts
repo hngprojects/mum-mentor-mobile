@@ -46,8 +46,8 @@ export interface EmailPayload {
 }
 
 export interface ResetPasswordPayload {
-  verification_token: string;
-  password: string;
+  token: string;
+  new_password: string;
   confirm_password: string;
 }
 
@@ -168,8 +168,16 @@ export async function verifyValue(
       throw new Error("Invalid verification type provided.");
     }
 
-    const response = await apiClient.post<AuthTokenData>(apiUrl, requestBody);
-    const token = response.data.access_token;
+    const response = await apiClient.post<{
+      data: TokenResponse;
+      message: string;
+      status: string;
+      status_code: number;
+    }>(apiUrl, requestBody);
+
+    // FIXED: Access token is inside response.data.data
+    const tokenData = response.data.data;
+    const token = tokenData?.access_token;
 
     if (token && token.length > 0) {
       await setAuthToken(token);
@@ -178,12 +186,11 @@ export async function verifyValue(
       console.warn("Verification returned no access token:", response.data);
     }
 
-    return { success: true, data: response.data };
+    return { success: true, data: tokenData };
   } catch (error) {
     return { success: false, error: error as AxiosError<ApiErrorResponse> };
   }
 }
-
 export async function resetPassword(
   payload: ResetPasswordPayload
 ): Promise<MessageResponse> {
@@ -219,4 +226,18 @@ export async function googleAuth(payload: {
 export async function getGoogleUser(): Promise<MessageResponse> {
   const response = await apiClient.post<MessageResponse>("/api/v1/google/user");
   return response.data;
+}
+export async function logoutUser(): Promise<MessageResponse> {
+  try {
+    const response = await apiClient.post<MessageResponse>(
+      "/api/v1/auth/logout"
+    );
+    // Remove token from storage after successful API logout
+    await removeAuthToken();
+    return response.data;
+  } catch (error) {
+    // Even if API call fails, remove token locally
+    await removeAuthToken();
+    throw error as AxiosError<ApiErrorResponse>;
+  }
 }

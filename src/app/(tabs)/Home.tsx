@@ -2,8 +2,10 @@ import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,10 +13,14 @@ import {
   ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
 import { fetchTasks } from "@/src/core/services/tasksService";
+import { logoutUser } from "@/src/core/services/authService";
+import { getCurrentUser } from "@/src/core/services/userService";
+
 import TaskCreationFlow from "../components/CreateTask";
 import ListTasks from "../components/ListTasks";
 import PrimaryButton from "../components/PrimaryButton";
@@ -30,12 +36,7 @@ const taskIcon = require("../../assets/images/task-icon.png");
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
-const quickActions: {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: FeatherIconName;
-}[] = [
+const quickActions = [
   {
     id: "resources",
     title: "Resources",
@@ -54,41 +55,98 @@ const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isAppAction, setIsAppAction] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const [user, setUser] = useState<any>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
+
+  async function loadUser() {
+    setIsLoadingUser(true);
+    try {
+      const response = await getCurrentUser();
+      
+      // Setting user: Based on the log, the user object is directly within response.
+      // We keep the robust structure to handle various potential API wrappers.
+      setUser(response?.data?.details || response?.data || response || null); 
+    } catch (error) {
+      console.log("User fetch error:", error);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  }
 
   async function listUserTasks() {
-    setIsLoadingTasks(true); // start loading
+    setIsLoadingTasks(true);
     try {
       const response = await fetchTasks();
       setTasks(response.data.details || []);
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoadingTasks(false); // end loading
+      setIsLoadingTasks(false);
     }
   }
 
-  // --- NEW STATES FOR TWO MODALS ---
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  // ---------------------------------
 
   const handleTaskCreated = async () => {
-    setIsFormModalVisible(false); // 1. Close the form modal
-    setIsSuccessModalVisible(true); // 2. Open the success modal
+    setIsFormModalVisible(false);
+    setIsSuccessModalVisible(true);
     await listUserTasks();
   };
 
   const handleSuccessDone = () => {
-    setIsSuccessModalVisible(false); // Close the success modal
-    // Optional: Refresh task list data here
+    setIsSuccessModalVisible(false);
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoggingOut(true);
+            try {
+              const response = await logoutUser();
+              console.log("Logout success:", response);
+              router.push("/SignInScreen");
+            } catch (error: any) {
+              console.error("Logout error:", error);
+              Alert.alert(
+                "Error",
+                error?.response?.data?.message ||
+                  error?.message ||
+                  "Failed to logout. Please try again."
+              );
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   useEffect(() => {
+    loadUser();
     listUserTasks();
   }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={colors.backgroundMain}
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -98,10 +156,16 @@ const Home = () => {
           <View>
             <View style={styles.greetingRow}>
               <Image source={profileImage} style={styles.profileAvatar} />
-              <Text style={styles.greetingLabel}>Hi, Tracy</Text>
+
+              {/* Greeting displays only the first name using split(" ")[0] */}
+              <Text style={styles.greetingLabel}>
+                Hi, {isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"}
+              </Text>
             </View>
+
             <Text style={styles.greetingTitle}>Good Morning</Text>
           </View>
+
           <Image source={notificationIcon} style={styles.notificationIcon} />
         </View>
 
@@ -114,7 +178,7 @@ const Home = () => {
             <Text style={styles.heroTitle}>You are Amazing</Text>
             <Text style={styles.heroSubtitle}>
               {
-                "You\u2019re growing right alongside your child,\nand that\u2019s something to be proud of"
+                "You’re growing right alongside your child,\nand that’s something to be proud of"
               }
             </Text>
             <PrimaryButton
@@ -134,18 +198,12 @@ const Home = () => {
                 {action.id === "journal" ? (
                   <Image
                     source={journalIcon}
-                    style={[
-                      styles.quickActionImage,
-                      styles.quickActionIconSpacing,
-                    ]}
+                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
                   />
                 ) : action.id === "resources" ? (
                   <Image
                     source={resourceIcon}
-                    style={[
-                      styles.quickActionImage,
-                      styles.quickActionIconSpacing,
-                    ]}
+                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
                   />
                 ) : (
                   <Feather
@@ -156,9 +214,7 @@ const Home = () => {
                   />
                 )}
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
-                <Text style={styles.quickActionSubtitle}>
-                  {action.subtitle}
-                </Text>
+                <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
               </View>
             ))}
           </View>
@@ -168,7 +224,7 @@ const Home = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
-            <TouchableOpacity onPress={() => console.log("View all tasks")}>
+            <TouchableOpacity>
               <Text style={styles.viewAllLink}>View All</Text>
             </TouchableOpacity>
           </View>
@@ -196,10 +252,20 @@ const Home = () => {
             />
           )}
         </View>
+
+        {/* Logout Button */}
+        <View style={styles.logoutSection}>
+          <SecondaryButton
+            title={isLoggingOut ? "Logging out..." : "Logout"}
+            onPress={handleLogout}
+            style={styles.logoutButton}
+            disabled={isLoggingOut}
+          />
+        </View>
       </ScrollView>
 
       {/* Floating Add Button */}
-      {tasks?.length !== 0 && (
+      {tasks.length !== 0 && (
         <TouchableOpacity
           style={styles.floatingButton}
           onPress={() => setIsFormModalVisible(true)}
@@ -208,14 +274,13 @@ const Home = () => {
         </TouchableOpacity>
       )}
 
-      {/* TASK FORM MODAL (Bottom Sheet) */}
+      {/* MODALS */}
       <TaskCreationFlow
         isVisible={isFormModalVisible}
         onClose={() => setIsFormModalVisible(false)}
         onTaskCreated={handleTaskCreated}
       />
 
-      {/* TASK SUCCESS MODAL (Middle of Screen) */}
       <TaskCreationSuccessModal
         isVisible={isSuccessModalVisible}
         onDone={handleSuccessDone}
@@ -226,71 +291,50 @@ const Home = () => {
 
 export default Home;
 
+// --- STYLES BELOW (UNCHANGED) ----
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundMain,
   } as ViewStyle,
-
-  scrollView: {
-    flex: 1,
-  },
-
+  scrollView: { flex: 1 },
   scrollContent: {
     paddingTop: ms(spacing.xl),
     paddingBottom: ms(spacing.xl * 1.5),
     paddingHorizontal: ms(spacing.lg),
     gap: ms(spacing.xl),
   },
-
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: ms(spacing.sm),
   },
-
-  iconButton: {
-    width: ms(24),
-    height: ms(24),
-    borderRadius: ms(12),
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.textWhite,
-  },
-
   profileAvatar: {
     width: ms(24),
     height: ms(24),
     resizeMode: "cover",
   },
-
   notificationIcon: {
     width: ms(28),
     height: ms(28),
     resizeMode: "contain",
     alignSelf: "flex-start",
   },
-
   greetingLabel: {
     fontFamily: fontFamilies.medium,
     color: colors.textSecondary,
     marginBottom: ms(spacing.xs),
   },
-
   greetingTitle: {
     fontFamily: fontFamilies.bold,
     fontSize: typography.heading2.fontSize,
     color: colors.textPrimary,
   },
-
   heroCard: {
     position: "relative",
     overflow: "hidden",
@@ -301,40 +345,33 @@ const styles = StyleSheet.create({
     padding: ms(spacing.lg),
     paddingRight: ms(70),
   },
-
   heroImageWrapper: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    // @ts-ignore
     pointerEvents: "none",
     opacity: 0.8,
   } as ViewStyle,
-
   heroText: {
     gap: ms(10),
     zIndex: 1,
   },
-
   heroTitle: {
     fontFamily: fontFamilies.extraBold,
     fontSize: typography.heading3.fontSize,
     color: colors.textPrimary,
   },
-
   heroSubtitle: {
     fontFamily: fontFamilies.medium,
     fontSize: typography.bodySmall.fontSize,
     lineHeight: typography.bodySmall.fontSize * 1.3,
     color: colors.textGrey1,
   },
-
   heroButton: {
     marginTop: ms(spacing.sm),
     alignSelf: "flex-start",
     width: ms(170),
   },
-
   heroImage: {
     position: "absolute",
     width: ms(240),
@@ -345,22 +382,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: ms(32),
     borderBottomLeftRadius: ms(32),
   },
-
-  section: {
-    gap: ms(spacing.md),
-  },
-
+  section: { gap: ms(spacing.md) },
   sectionTitle: {
     fontFamily: fontFamilies.extraBold,
     fontSize: typography.heading3.fontSize,
     color: colors.textPrimary,
   },
-
   quickActions: {
     flexDirection: "row",
     gap: ms(spacing.md),
   },
-
   quickActionCard: {
     flex: 1,
     backgroundColor: colors.textWhite,
@@ -370,23 +401,19 @@ const styles = StyleSheet.create({
     padding: ms(spacing.md),
     gap: ms(spacing.sm),
   },
-
   quickActionImage: {
     width: ms(18),
     height: ms(18),
     resizeMode: "contain",
   },
-
   quickActionIconSpacing: {
     marginBottom: ms(spacing.xs),
   },
-
   quickActionTitle: {
     fontFamily: fontFamilies.semiBold,
     fontSize: typography.bodyMedium.fontSize,
     color: colors.textPrimary,
   },
-
   quickActionSubtitle: {
     fontFamily: fontFamilies.regular,
     fontSize: typography.bodySmall.fontSize,
@@ -411,20 +438,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: ms(spacing.sm),
   },
-
   taskIcon: {
     marginBottom: ms(spacing.sm),
     width: ms(32),
     height: ms(32),
     resizeMode: "contain",
   },
-
   taskEmptyTitle: {
     fontFamily: fontFamilies.semiBold,
     fontSize: typography.bodyMedium.fontSize,
     color: colors.textPrimary,
   },
-
   taskEmptySubtitle: {
     fontFamily: fontFamilies.regular,
     fontSize: typography.bodySmall.fontSize,
@@ -433,7 +457,6 @@ const styles = StyleSheet.create({
     maxWidth: "75%",
     alignSelf: "center",
   },
-
   taskButton: {
     marginTop: ms(spacing.sm),
     width: "55%",
@@ -441,8 +464,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
   },
-  taskButtonText: {
-    color: colors.primary,
+  logoutSection: {
+    marginTop: ms(spacing.md),
+    paddingTop: ms(spacing.md),
+    borderTopWidth: 1,
+    borderTopColor: colors.outlineVariant,
+  },
+  logoutButton: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: "#dc2626",
   },
   floatingButton: {
     position: "absolute",

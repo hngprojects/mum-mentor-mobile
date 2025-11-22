@@ -2,14 +2,12 @@ import apiClient from "./apiClient";
 
 const TASKS_ENDPOINT = "/api/v1/tasks";
 
-// --- Fetch Tasks with Optional Query Params ---
 export async function fetchTasks(params?: {
   page?: number;
   per_page?: number;
   task_status?: string;
 }) {
   const query: Record<string, any> = {};
-
   if (params?.page) query.page = params.page;
   if (params?.per_page) query.per_page = params.per_page;
   if (params?.task_status) query.task_status = params.task_status;
@@ -41,7 +39,6 @@ export async function createTask({
   if (response.status >= 200 && response.status < 300) {
     return response.data;
   } else {
-    // throw error if response status is not 2xx
     throw new Error(response.data?.message || "Failed to create task");
   }
 }
@@ -67,12 +64,10 @@ export async function updateTask({
   if (response.status >= 200 && response.status < 300) {
     return response.data;
   } else {
-    // throw error if response status is not 2xx
     throw new Error(response.data?.message || "Failed to update task");
   }
 }
 
-// --- Delete Task by ID ---
 export async function deleteTask(taskId: string) {
   try {
     const response = await apiClient.delete(`${TASKS_ENDPOINT}/${taskId}`);

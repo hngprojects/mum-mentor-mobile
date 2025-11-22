@@ -27,7 +27,7 @@ const TabLayout = () => {
         tabBarStyle: {
           borderTopColor: colors.outlineVariant,
           backgroundColor: colors.textWhite,
-          height: vs(120),
+          height: vs(80),
         },
         tabBarIcon: ({ focused }) => {
           const icon = TAB_ICONS[route.name as keyof typeof TAB_ICONS];
