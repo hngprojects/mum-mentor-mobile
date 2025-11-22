@@ -1,3 +1,5 @@
+// src/screens/MomSetupScreen.tsx
+
 import React, { useState } from 'react';
 import {
   View,
@@ -5,14 +7,16 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
-  StyleSheet
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { colors, spacing, typography } from '@/src/core/styles';
 import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
-import AddGoalModal from '../../components/AddGoalModal';
-import EditGoalModal from '../../components/EditGoalModal';
-import CustomInput from '../../components/CustomInput';
-import PrimaryButton from '../../components/PrimaryButton';
+import AddGoalModal from '../components/AddGoalModal';
+import EditGoalModal from '../components/EditGoalModal';
+import CustomInput from '../components/CustomInput';
+import PrimaryButton from '../components/PrimaryButton';
 import { router } from 'expo-router';
 
 const momStatuses: string[] = ['Pregnant', 'New Mom', 'Toddler Mom', 'Mixed'];
@@ -105,12 +109,21 @@ const MomSetupScreen: React.FC = () => {
   };
 
   const nextPage = () => {
-    router.push('./childSetupScreen')
+    router.push('/setup/childSetupScreen')
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
+      >
 
         <Text style={styles.header}>Set Up</Text>
 
@@ -264,20 +277,30 @@ const MomSetupScreen: React.FC = () => {
             />
           </View>
         </View>
+        
         <PrimaryButton
           title="Next"
           onPress={nextPage}
         />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 export default MomSetupScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.backgroundMain },
-  scrollView: { flex: 1, paddingHorizontal: 20 },
+  container: { 
+    flex: 1, 
+    backgroundColor: colors.backgroundMain 
+  },
+  scrollView: { 
+    flex: 1, 
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: vs(40),
+  },
   header: {
     ...typography.heading1,
     color: colors.textPrimary,
@@ -323,7 +346,10 @@ const styles = StyleSheet.create({
     ...typography.labelMedium, 
     color: colors.textGrey1 
   },
-  chipTextSelected: { color: '#111827', fontWeight: '500' },
+  chipTextSelected: { 
+    color: colors.textPrimary, 
+    fontWeight: '500' 
+  },
   actionButtons: {
     position: 'absolute',
     right: 4,
@@ -384,10 +410,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-
-
-
-
-
-

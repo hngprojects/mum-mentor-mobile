@@ -1,55 +1,465 @@
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Link } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { colors, fontFamilies, spacing, typography } from "../../core/styles";
+import { ms } from "../../core/styles/scaling";
 
-export default function HomeScreen() {
+import { fetchTasks } from "@/src/core/services/tasksService";
+import TaskCreationFlow from "../components/CreateTask";
+import ListTasks from "../components/ListTasks";
+import PrimaryButton from "../components/PrimaryButton";
+import SecondaryButton from "../components/SecondaryButton";
+import TaskCreationSuccessModal from "../components/TaskSuccess";
+
+const heroImage = require("../../assets/images/home-image.png");
+const profileImage = require("../../assets/images/profile-image.png");
+const notificationIcon = require("../../assets/images/notification.png");
+const resourceIcon = require("../../assets/images/resource-icon.png");
+const journalIcon = require("../../assets/images/journal-icon.png");
+const taskIcon = require("../../assets/images/task-icon.png");
+
+type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
+
+const quickActions: {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: FeatherIconName;
+}[] = [
+  {
+    id: "resources",
+    title: "Resources",
+    subtitle: "Track your daily Activity with ease",
+    icon: "book",
+  },
+  {
+    id: "journal",
+    title: "Journal",
+    subtitle: "Write about what you like to remember later",
+    icon: "book-open",
+  },
+];
+
+const Home = () => {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isAppAction, setIsAppAction] = useState(false);
+
+  async function listUserTasks() {
+    setIsLoadingTasks(true); // start loading
+    try {
+      const response = await fetchTasks();
+      setTasks(response.data.details || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingTasks(false); // end loading
+    }
+  }
+
+  // --- NEW STATES FOR TWO MODALS ---
+  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  // ---------------------------------
+
+  const handleTaskCreated = async () => {
+    setIsFormModalVisible(false); // 1. Close the form modal
+    setIsSuccessModalVisible(true); // 2. Open the success modal
+    await listUserTasks();
+  };
+
+  const handleSuccessDone = () => {
+    setIsSuccessModalVisible(false); // Close the success modal
+    // Optional: Refresh task list data here
+  };
+
+  useEffect(() => {
+    listUserTasks();
+  }, []);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Home</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Top Bar */}
+        <View style={styles.topBar}>
+          <View>
+            <View style={styles.greetingRow}>
+              <Image source={profileImage} style={styles.profileAvatar} />
+              <Text style={styles.greetingLabel}>Hi, Tracy</Text>
+            </View>
+            <Text style={styles.greetingTitle}>Good Morning</Text>
+          </View>
+          <Image source={notificationIcon} style={styles.notificationIcon} />
+        </View>
 
-      <View style={styles.buttonContainer}>
-        <Link href="/(tabs)/setup/childSetupScreen" asChild>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Go to Child Setup</Text>
-          </TouchableOpacity>
-        </Link>
+        {/* Hero Section */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroImageWrapper}>
+            <Image source={heroImage} style={styles.heroImage} />
+          </View>
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>You are Amazing</Text>
+            <Text style={styles.heroSubtitle}>
+              {
+                "You\u2019re growing right alongside your child,\nand that\u2019s something to be proud of"
+              }
+            </Text>
+            <PrimaryButton
+              title="Chat with Nora AI"
+              onPress={() => {}}
+              style={styles.heroButton}
+            />
+          </View>
+        </View>
 
-        <Link href="/(tabs)/setup/Mum" asChild>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Go to Mum Setup</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActions}>
+            {quickActions.map((action) => (
+              <View key={action.id} style={styles.quickActionCard}>
+                {action.id === "journal" ? (
+                  <Image
+                    source={journalIcon}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
+                  />
+                ) : action.id === "resources" ? (
+                  <Image
+                    source={resourceIcon}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
+                  />
+                ) : (
+                  <Feather
+                    name={action.icon}
+                    size={18}
+                    color={colors.primary}
+                    style={styles.quickActionIconSpacing}
+                  />
+                )}
+                <Text style={styles.quickActionTitle}>{action.title}</Text>
+                <Text style={styles.quickActionSubtitle}>
+                  {action.subtitle}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Task Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
+            <TouchableOpacity onPress={() => console.log("View all tasks")}>
+              <Text style={styles.viewAllLink}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {isLoadingTasks && !isAppAction ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : tasks.length === 0 ? (
+            <View style={styles.taskCard}>
+              <Image source={taskIcon} style={styles.taskIcon} />
+              <Text style={styles.taskEmptyTitle}>No task added yet</Text>
+              <Text style={styles.taskEmptySubtitle}>
+                {"Your today's task will be displayed here"}
+              </Text>
+              <SecondaryButton
+                title="Add Task"
+                onPress={() => setIsFormModalVisible(true)}
+                style={styles.taskButton}
+              />
+            </View>
+          ) : (
+            <ListTasks
+              tasks={tasks}
+              callback={listUserTasks}
+              setAppAction={() => setIsAppAction(true)}
+            />
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Floating Add Button */}
+      {tasks?.length !== 0 && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setIsFormModalVisible(true)}
+        >
+          <Text style={styles.floatingButtonText}>+</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* TASK FORM MODAL (Bottom Sheet) */}
+      <TaskCreationFlow
+        isVisible={isFormModalVisible}
+        onClose={() => setIsFormModalVisible(false)}
+        onTaskCreated={handleTaskCreated}
+      />
+
+      {/* TASK SUCCESS MODAL (Middle of Screen) */}
+      <TaskCreationSuccessModal
+        isVisible={isSuccessModalVisible}
+        onDone={handleSuccessDone}
+      />
     </SafeAreaView>
   );
-}
+};
+
+export default Home;
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
+    backgroundColor: colors.backgroundMain,
+  } as ViewStyle,
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingTop: ms(spacing.xl),
+    paddingBottom: ms(spacing.xl * 1.5),
+    paddingHorizontal: ms(spacing.lg),
+    gap: ms(spacing.xl),
+  },
+
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  greetingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: ms(spacing.sm),
+  },
+
+  iconButton: {
+    width: ms(24),
+    height: ms(24),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.textWhite,
+  },
+
+  profileAvatar: {
+    width: ms(24),
+    height: ms(24),
+    resizeMode: "cover",
+  },
+
+  notificationIcon: {
+    width: ms(28),
+    height: ms(28),
+    resizeMode: "contain",
+    alignSelf: "flex-start",
+  },
+
+  greetingLabel: {
+    fontFamily: fontFamilies.medium,
+    color: colors.textSecondary,
+    marginBottom: ms(spacing.xs),
+  },
+
+  greetingTitle: {
+    fontFamily: fontFamilies.bold,
+    fontSize: typography.heading2.fontSize,
+    color: colors.textPrimary,
+  },
+
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    backgroundColor: colors.textWhite,
+    borderRadius: ms(16),
+    borderWidth: 0.5,
+    borderColor: colors.outline,
+    padding: ms(spacing.lg),
+    paddingRight: ms(70),
+  },
+
+  heroImageWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    // @ts-ignore
+    pointerEvents: "none",
+    opacity: 0.8,
+  } as ViewStyle,
+
+  heroText: {
+    gap: ms(10),
+    zIndex: 1,
+  },
+
+  heroTitle: {
+    fontFamily: fontFamilies.extraBold,
+    fontSize: typography.heading3.fontSize,
+    color: colors.textPrimary,
+  },
+
+  heroSubtitle: {
+    fontFamily: fontFamilies.medium,
+    fontSize: typography.bodySmall.fontSize,
+    lineHeight: typography.bodySmall.fontSize * 1.3,
+    color: colors.textGrey1,
+  },
+
+  heroButton: {
+    marginTop: ms(spacing.sm),
+    alignSelf: "flex-start",
+    width: ms(170),
+  },
+
+  heroImage: {
+    position: "absolute",
+    width: ms(240),
+    height: ms(200),
+    top: -ms(17),
+    right: -ms(20),
+    resizeMode: "cover",
+    borderTopLeftRadius: ms(32),
+    borderBottomLeftRadius: ms(32),
+  },
+
+  section: {
+    gap: ms(spacing.md),
+  },
+
+  sectionTitle: {
+    fontFamily: fontFamilies.extraBold,
+    fontSize: typography.heading3.fontSize,
+    color: colors.textPrimary,
+  },
+
+  quickActions: {
+    flexDirection: "row",
+    gap: ms(spacing.md),
+  },
+
+  quickActionCard: {
+    flex: 1,
+    backgroundColor: colors.textWhite,
+    borderRadius: ms(spacing.lg),
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    padding: ms(spacing.md),
+    gap: ms(spacing.sm),
+  },
+
+  quickActionImage: {
+    width: ms(18),
+    height: ms(18),
+    resizeMode: "contain",
+  },
+
+  quickActionIconSpacing: {
+    marginBottom: ms(spacing.xs),
+  },
+
+  quickActionTitle: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: typography.bodyMedium.fontSize,
+    color: colors.textPrimary,
+  },
+
+  quickActionSubtitle: {
+    fontFamily: fontFamilies.regular,
+    fontSize: typography.bodySmall.fontSize,
+    color: colors.textSecondary,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  viewAllLink: {
+    fontSize: 14,
+    textDecorationLine: "underline",
+  },
+  taskCard: {
+    backgroundColor: colors.textWhite,
+    borderRadius: ms(spacing.lg),
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    padding: ms(spacing.lg),
+    alignItems: "center",
+    gap: ms(spacing.sm),
+  },
+
+  taskIcon: {
+    marginBottom: ms(spacing.sm),
+    width: ms(32),
+    height: ms(32),
+    resizeMode: "contain",
+  },
+
+  taskEmptyTitle: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: typography.bodyMedium.fontSize,
+    color: colors.textPrimary,
+  },
+
+  taskEmptySubtitle: {
+    fontFamily: fontFamilies.regular,
+    fontSize: typography.bodySmall.fontSize,
+    color: colors.textSecondary,
+    textAlign: "center",
+    maxWidth: "75%",
+    alignSelf: "center",
+  },
+
+  taskButton: {
+    marginTop: ms(spacing.sm),
+    width: "55%",
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  taskButtonText: {
+    color: colors.primary,
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 30,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 100,
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    elevation: 12,
+    zIndex: 999,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "600",
-    marginBottom: 30,
-  },
-  buttonContainer: {
-    width: "100%",
-    alignItems: "center",
-    gap: 15,
-  },
-  button: {
-    width: "80%",
-    backgroundColor: "#4A90E2",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  buttonText: {
+  floatingButtonText: {
     color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 25,
+    marginTop: -3,
   },
 });

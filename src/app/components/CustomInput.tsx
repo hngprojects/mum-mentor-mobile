@@ -1,29 +1,29 @@
 // src/app/components/ui/CustomInput.tsx
 
-import React, { useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
 import {
-  TextInput,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  KeyboardTypeOptions,
   Image,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+  KeyboardTypeOptions,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 // --- IMPORTS FROM CORE UTILITIES ---
-import { colors, typography, spacing } from '../../core/styles/index';
-import { ms, rfs } from '../../core/styles/scaling';
+import { colors, spacing, typography } from "../../core/styles/index";
+import { ms, rfs } from "../../core/styles/scaling";
 
 // --- ICON MAPPING (for custom PNG icons) ---
 const icons: Record<string, any> = {
-  "mail-outline": require('../../assets/images/mail.png'),
-  "person-outline": require('../../assets/images/user.png'),
-  "lock-outline": require('../../assets/images/lock.png'),
-  "calendar-outline": require('../../assets/images/calendar.png'),
-  "calendar-number": require('../../assets/images/calendar-num.png'),
-  "gender-outline": require('../../assets/images/gender.png'),
+  "mail-outline": require("../../assets/images/mail.png"),
+  "person-outline": require("../../assets/images/user.png"),
+  "lock-outline": require("../../assets/images/lock.png"),
+  "calendar-outline": require("../../assets/images/calendar.png"),
+  "calendar-number": require("../../assets/images/calendar-num.png"),
+  "gender-outline": require("../../assets/images/gender.png"),
 };
 
 // --- TYPES ---
@@ -40,6 +40,9 @@ interface CustomInputProps {
   isPassword?: boolean;
   isValid?: boolean;
   inputRef?: React.RefObject<TextInput>;
+  multiline?: boolean;
+  editable?: boolean;
+  defaultValue?: string;
 }
 
 // --- COMPONENT ---
@@ -48,7 +51,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   placeholder,
   value,
   onChangeText,
-  keyboardType = 'default',
+  keyboardType = "default",
   secureTextEntry = false,
   iconName,
   isError = false,
@@ -56,6 +59,9 @@ const CustomInput: React.FC<CustomInputProps> = ({
   isPassword = false,
   isValid = false,
   inputRef,
+  multiline,
+  editable = true,
+  defaultValue,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(!isPassword);
@@ -73,7 +79,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      width: '100%',
+      width: "100%",
       marginBottom: ms(spacing.md),
     },
     label: {
@@ -83,8 +89,8 @@ const CustomInput: React.FC<CustomInputProps> = ({
       marginBottom: ms(spacing.xs),
     },
     inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       borderWidth: 1,
       borderColor: borderColor,
       borderRadius: ms(10),
@@ -101,7 +107,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
       width: rfs(20),
       height: rfs(20),
       marginRight: ms(spacing.sm),
-      resizeMode: 'contain',
+      resizeMode: "contain",
     },
     input: {
       flex: 1,
@@ -125,7 +131,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   });
 
   const togglePasswordVisibility = () => {
-    setIsPasswordVisible(prev => !prev);
+    setIsPasswordVisible((prev) => !prev);
   };
 
   return (
@@ -150,6 +156,9 @@ const CustomInput: React.FC<CustomInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           autoCapitalize="none"
+          multiline={multiline}
+          editable={editable}
+          defaultValue={defaultValue}
         />
 
         <View style={styles.passwordToggle}>
@@ -159,7 +168,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons
-                name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
+                name={isPasswordVisible ? "eye-outline" : "eye-off-outline"}
                 size={rfs(20)}
                 color={colors.textGrey2}
               />
@@ -168,7 +177,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
 
           {showValidationIcon && (
             <Ionicons
-              name={isError ? 'close-circle' : 'checkmark-circle'}
+              name={isError ? "close-circle" : "checkmark-circle"}
               size={rfs(20)}
               color={isError ? colors.error : colors.primary}
               style={styles.validationIcon}

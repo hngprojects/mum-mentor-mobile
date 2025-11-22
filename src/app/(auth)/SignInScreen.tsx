@@ -66,7 +66,7 @@ export default function SignInScreen() {
 
     try {
       // 1. CALL THE LOGIN SERVICE
-      const loginPayload = { email, password };
+      const loginPayload = { email:email.toLowerCase(), password };
       
       // FIX: Call the login function without assigning the unused return value
       // The login function handles the token saving internally upon success.

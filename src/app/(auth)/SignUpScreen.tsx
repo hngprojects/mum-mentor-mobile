@@ -80,7 +80,7 @@ export default function SignUpScreen() {
 
     const payload: RegisterPayload = { 
       full_name: fullName, 
-      email: email, 
+      email: email.toLowerCase(), 
       password: password,
       confirm_password: confirmPassword
     };
