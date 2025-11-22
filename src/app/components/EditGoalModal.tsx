@@ -11,8 +11,8 @@ import {
   Animated,
   TouchableWithoutFeedback
 } from 'react-native';
-import { colors, typography } from '@/core/styles';
-import { rbr, ms, vs } from '@/core/styles/scaling';
+import { colors, typography } from '../../core/styles/index';
+import { rbr, ms, vs } from '../../core/styles/scaling';
 
 interface EditGoalModalProps {
   visible: boolean;

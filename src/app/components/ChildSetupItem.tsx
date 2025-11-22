@@ -6,8 +6,8 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import { ms, rh, rw } from '@/core/styles/scaling';
-import { colors, spacing, typography } from '@/core/styles';
+import { ms, rh, rw } from '../../core/styles/scaling';
+import { colors, spacing, typography } from '../../core/styles/index';
 import CustomInput from './CustomInput';
 
 interface ChildSetupItemProps {

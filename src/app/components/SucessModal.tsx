@@ -1,5 +1,5 @@
-import { colors, typography } from '@/core/styles';
-import { ms, rfs, vs } from '@/core/styles/scaling';
+import { colors, typography } from '../../core/styles/index';
+import { ms, rfs, vs } from '../../core/styles/scaling';
 import React from 'react';
 import {
   View,
