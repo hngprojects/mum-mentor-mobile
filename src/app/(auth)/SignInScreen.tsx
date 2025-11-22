@@ -21,7 +21,8 @@ import { colors, typography, spacing } from '../../core/styles/index';
 import { ms, rfs } from '../../core/styles/scaling';
 
 // --- API Service Import ---
-import { login, ApiErrorResponse } from '../../core/services/authService'; 
+import { login, ApiErrorResponse } from '../../core/services/authService';
+import { signInWithGoogle } from '../../core/services/googleAuthService'; 
 
 
 export default function SignInScreen() {
@@ -29,6 +30,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
 
@@ -116,6 +118,37 @@ export default function SignInScreen() {
     router.replace('/(auth)/SignUpScreen');
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setErrors({});
+    setGeneralError(null);
+
+    try {
+      const result = await signInWithGoogle();
+
+      if (result.success && result.data) {
+        Alert.alert("Welcome!", "Successfully signed in with Google.");
+        router.replace('/(tabs)/Home');
+      } else {
+        // Handle sign-in failure
+        const errorMessage = result.error || 'Failed to sign in with Google';
+
+        // Don't show error for user cancellation
+        if (errorMessage !== 'Sign-in was cancelled') {
+          setGeneralError(errorMessage);
+          Alert.alert("Sign-In Failed", errorMessage);
+        }
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setGeneralError(errorMessage);
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
 
   return (
     <KeyboardAvoidingView
@@ -190,18 +223,24 @@ export default function SignInScreen() {
 
           {/* Social Login Buttons (Google / Apple) */}
           <View style={styles.socialButtonsContainer}>
-              <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Google Login')}>
-                <Image 
-                  source={require('../../assets/images/google.png')} 
-                  style={styles.socialButtonImage} 
+              <TouchableOpacity
+                style={[styles.socialButton, isGoogleLoading && styles.socialButtonDisabled]}
+                onPress={handleGoogleSignIn}
+                disabled={isGoogleLoading}
+              >
+                <Image
+                  source={require('../../assets/images/google.png')}
+                  style={styles.socialButtonImage}
                   resizeMode="contain"
                 />
-                <Text style={styles.socialButtonText}>Google</Text>
+                <Text style={styles.socialButtonText}>
+                  {isGoogleLoading ? 'Signing in...' : 'Google'}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} onPress={() => Alert.alert('Apple Login')}>
-                <Image 
-                  source={require('../../assets/images/apple.png')} 
-                  style={styles.socialButtonImage} 
+                <Image
+                  source={require('../../assets/images/apple.png')}
+                  style={styles.socialButtonImage}
                   resizeMode="contain"
                 />
                 <Text style={styles.socialButtonText}>Apple</Text>
@@ -296,5 +335,8 @@ const styles = StyleSheet.create({
         fontSize: rfs(typography.bodyMedium.fontSize),
         fontFamily: typography.bodyMedium.fontFamily,
         color: colors.textPrimary,
+    },
+    socialButtonDisabled: {
+        opacity: 0.6,
     }
   });

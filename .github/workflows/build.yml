@@ -98,36 +98,46 @@ jobs:
          retention-days: 30
          if-no-files-found: error
 
-#      - name: Upload APK to Appetize.io
-#        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
-#        run: |
-#          RESPONSE=$(curl -X POST "https://${{ secrets.APPETIZE_API_TOKEN }}@api.appetize.io/v1/apps" \
-#            -F "file=@android/app/build/outputs/apk/release/MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk" \
-#            -F "platform=android" \
-#            -F "note=Build from ${{ github.ref_name }} - v${{ steps.version.outputs.version }} (${{ steps.version.outputs.short_sha }})")
+     - name: Upload APK to Appetize.io
+       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+       env:
+         APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+       run: |
+         # ensure jq is available (required to parse response)
+         if ! command -v jq >/dev/null; then
+           sudo apt-get update && sudo apt-get install -y jq
+         fi
+
+         APK_PATH="android/app/build/outputs/apk/release/MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk"
+         if [ ! -f "$APK_PATH" ]; then
+           echo "APK not found at $APK_PATH"
+           exit 1
+         fi
+
+         RESPONSE=$(curl -s -X POST "https://$APPETIZE_API_TOKEN@api.appetize.io/v1/apps" \
+           -F "file=@${APK_PATH}" \
+           -F "platform=android" \
+           -F "note=Build from ${{ github.ref_name }} - v${{ steps.version.outputs.version }} (${{ steps.version.outputs.short_sha }})")
+
+         echo "Appetize Response: $RESPONSE"
+         PUBLIC_KEY=$(echo "$RESPONSE" | jq -r '.publicKey // empty')
+         if [ -z "$PUBLIC_KEY" ]; then
+           echo "Appetize upload failed. Response: $RESPONSE"
+           exit 1
+         fi
+
+         APP_URL="https://appetize.io/app/$PUBLIC_KEY"
+
+         echo "### 📱 Appetize.io Preview" >> $GITHUB_STEP_SUMMARY
+         echo "**App URL:** $APP_URL" >> $GITHUB_STEP_SUMMARY
+         echo "**Public Key:** $PUBLIC_KEY" >> $GITHUB_STEP_SUMMARY
+         echo "**Version:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+         echo "**Commit:** ${{ steps.version.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+
+         echo "appetize_url=$APP_URL" >> $GITHUB_OUTPUT
+         echo "appetize_public_key=$PUBLIC_KEY" >> $GITHUB_OUTPUT
 #
-#          echo "Appetize Response: $RESPONSE"
-#          PUBLIC_KEY=$(echo $RESPONSE | jq -r '.publicKey')
-#          APP_URL="https://appetize.io/app/$PUBLIC_KEY"
-#
-#          echo "### 📱 Appetize.io Preview" >> $GITHUB_STEP_SUMMARY
-#          echo "**App URL:** $APP_URL" >> $GITHUB_STEP_SUMMARY
-#          echo "**Public Key:** $PUBLIC_KEY" >> $GITHUB_STEP_SUMMARY
-#          echo "**Version:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-#          echo "**Commit:** ${{ steps.version.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
-#
-#          echo "appetize_url=$APP_URL" >> $GITHUB_OUTPUT
-#          echo "appetize_public_key=$PUBLIC_KEY" >> $GITHUB_OUTPUT
-#
-#      - name: Upload APK to Google Drive
-#        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-#        uses: logickoder/google-drive-upload@v1
-#        with:
-#          credentials: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
-#          folder_id: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-#          filename: MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk
-#          filepath: android/app/build/outputs/apk/release/MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk
-#          overwrite: true
+    
 
      - name: Build Summary
        if: always()
@@ -144,9 +154,9 @@ jobs:
          echo "" >> $GITHUB_STEP_SUMMARY
          echo "### ✅ Upload Locations" >> $GITHUB_STEP_SUMMARY
          echo "- 📦 GitHub Artifacts" >> $GITHUB_STEP_SUMMARY
-         if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+         if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/staging" ]; then
            echo "- 📱 Appetize.io" >> $GITHUB_STEP_SUMMARY
-           echo "- 📁 Google Drive" >> $GITHUB_STEP_SUMMARY
+           # Google Drive upload removed from workflow
          fi
 
      - name: Comment on PR

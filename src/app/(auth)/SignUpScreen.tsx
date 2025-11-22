@@ -25,7 +25,8 @@ import { rfs, ms } from '../../core/styles/scaling'
 
 // --- API Service and Types ---
 // CRITICAL FIX: Import the ApiErrorResponse and RegisterPayload types to handle the contract safely
-import { register, RegisterPayload, ApiErrorResponse } from '../../core/services/authService'; 
+import { register, RegisterPayload, ApiErrorResponse } from '../../core/services/authService';
+import { signInWithGoogle } from '../../core/services/googleAuthService'; 
 
 
 // --- Constants for Validation ---
@@ -38,6 +39,7 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isAgreed, setIsAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // --- Client-Side Validation Logic (Simplified) ---
@@ -143,6 +145,34 @@ export default function SignUpScreen() {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    setIsGoogleLoading(true);
+    setErrors({});
+
+    try {
+      const result = await signInWithGoogle();
+
+      if (result.success && result.data) {
+        Alert.alert("Welcome!", "Successfully signed up with Google.");
+        router.replace('/(tabs)/Home');
+      } else {
+        // Handle sign-up failure
+        const errorMessage = result.error || 'Failed to sign up with Google';
+
+        // Don't show error for user cancellation
+        if (errorMessage !== 'Sign-in was cancelled') {
+          Alert.alert("Sign-Up Failed", errorMessage);
+        }
+      }
+    } catch (error: any) {
+      console.error('Google Sign-Up Error:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
   const styles = StyleSheet.create({
     container: {
       flexGrow: 1,
@@ -226,6 +256,9 @@ export default function SignUpScreen() {
       fontSize: rfs(typography.bodyMedium.fontSize),
       fontFamily: typography.bodyMedium.fontFamily,
       color: colors.textPrimary,
+    },
+    socialButtonDisabled: {
+      opacity: 0.6,
     },
   });
 
@@ -334,20 +367,26 @@ export default function SignUpScreen() {
 
               {/* Social Login Buttons */}
               <View style={styles.socialButtonsContainer}>
-                {/* FIX: Use Image asset for Google icon */}
-                <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Google Login')}>
-                  <Image 
-                    source={require('../../assets/images/google.png')} 
-                    style={styles.socialButtonImage} 
+                {/* Google Sign-Up Button */}
+                <TouchableOpacity
+                  style={[styles.socialButton, isGoogleLoading && styles.socialButtonDisabled]}
+                  onPress={handleGoogleSignUp}
+                  disabled={isGoogleLoading}
+                >
+                  <Image
+                    source={require('../../assets/images/google.png')}
+                    style={styles.socialButtonImage}
                     resizeMode="contain"
                   />
-                  <Text style={styles.socialButtonText}>Google</Text>
+                  <Text style={styles.socialButtonText}>
+                    {isGoogleLoading ? 'Signing up...' : 'Google'}
+                  </Text>
                 </TouchableOpacity>
-                {/* FIX: Use Image asset for Apple icon */}
+                {/* Apple Sign-Up Button */}
                 <TouchableOpacity style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} onPress={() => Alert.alert('Apple Login')}>
-                  <Image 
-                    source={require('../../assets/images/apple.png')} 
-                    style={styles.socialButtonImage} 
+                  <Image
+                    source={require('../../assets/images/apple.png')}
+                    style={styles.socialButtonImage}
                     resizeMode="contain"
                   />
                   <Text style={styles.socialButtonText}>Apple</Text>
