@@ -305,7 +305,7 @@ export default function SignUpScreen() {
                 </TouchableOpacity>
                 <Text style={styles.agreementText}>
                   I agree to all the{' '}
-                  <Text style={styles.termsLink} onPress={() => Alert.alert('Terms & Conditions')}>
+                  <Text style={styles.termsLink} onPress={() => router.push('/TermsAndConditions')}>
                     Terms & Conditions
                   </Text>
                 </Text>

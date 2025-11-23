@@ -36,7 +36,14 @@ const taskIcon = require("../../assets/images/task-icon.png");
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
-const quickActions = [
+type QuickAction = {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: FeatherIconName;
+};
+
+const quickActions: QuickAction[] = [
   {
     id: "resources",
     title: "Resources",
@@ -51,6 +58,27 @@ const quickActions = [
   },
 ];
 
+/**
+ * Get greeting based on current time of day
+ * Morning: 5:00 AM - 11:59 AM
+ * Afternoon: 12:00 PM - 4:59 PM
+ * Evening: 5:00 PM - 8:59 PM
+ * Night: 9:00 PM - 4:59 AM
+ */
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  
+  if (hour >= 5 && hour < 12) {
+    return "Good Morning";
+  } else if (hour >= 12 && hour < 17) {
+    return "Good Afternoon";
+  } else if (hour >= 17 && hour < 21) {
+    return "Good Evening";
+  } else {
+    return "Good Night";
+  }
+};
+
 const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -60,14 +88,15 @@ const Home = () => {
   const [user, setUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
 
+  const [greeting, setGreeting] = useState<string>(getGreeting());
+
   async function loadUser() {
     setIsLoadingUser(true);
     try {
       const response = await getCurrentUser();
       
-      // Setting user: Based on the log, the user object is directly within response.
-      // We keep the robust structure to handle various potential API wrappers.
-      setUser(response?.data?.details || response?.data || response || null); 
+      // Set user directly from response
+      setUser(response || null); 
     } catch (error) {
       console.log("User fetch error:", error);
     } finally {
@@ -139,10 +168,17 @@ const Home = () => {
   useEffect(() => {
     loadUser();
     listUserTasks();
+
+    // Update greeting every minute in case the time period changes
+    const greetingInterval = setInterval(() => {
+      setGreeting(getGreeting());
+    }, 60000); // Check every minute
+
+    return () => clearInterval(greetingInterval);
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={colors.backgroundMain}
@@ -163,7 +199,7 @@ const Home = () => {
               </Text>
             </View>
 
-            <Text style={styles.greetingTitle}>Good Morning</Text>
+            <Text style={styles.greetingTitle}>{greeting}</Text>
           </View>
 
           <Image source={notificationIcon} style={styles.notificationIcon} />
@@ -178,7 +214,7 @@ const Home = () => {
             <Text style={styles.heroTitle}>You are Amazing</Text>
             <Text style={styles.heroSubtitle}>
               {
-                "You’re growing right alongside your child,\nand that’s something to be proud of"
+                "You're growing right alongside your child,\nand that's something to be proud of"
               }
             </Text>
             <PrimaryButton
@@ -291,7 +327,7 @@ const Home = () => {
 
 export default Home;
 
-// --- STYLES BELOW (UNCHANGED) ----
+// --- STYLES BELOW ----
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -374,13 +410,11 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     position: "absolute",
-    width: ms(240),
-    height: ms(200),
-    top: -ms(17),
-    right: -ms(20),
+    width: "100%",
+    height: "100%",
+    top: 0,
+    right: 0,
     resizeMode: "cover",
-    borderTopLeftRadius: ms(32),
-    borderBottomLeftRadius: ms(32),
   },
   section: { gap: ms(spacing.md) },
   sectionTitle: {
@@ -461,7 +495,7 @@ const styles = StyleSheet.create({
     marginTop: ms(spacing.sm),
     width: "55%",
     backgroundColor: "transparent",
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.primary,
   },
   logoutSection: {
@@ -472,7 +506,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: "transparent",
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: "#dc2626",
   },
   floatingButton: {

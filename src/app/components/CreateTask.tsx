@@ -9,9 +9,8 @@ import {
   TouchableOpacity,
   View,
   ViewStyle,
-  KeyboardAvoidingView,
-  ScrollView,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import CustomInput from "../components/CustomInput";
 import PrimaryButton from "../components/PrimaryButton";
@@ -163,8 +162,12 @@ const CreateTaskForm: React.FC<{
   const handleDateCancel = () => setIsDatePickerVisible(false);
 
   return (
-    <ScrollView 
+    <KeyboardAwareScrollView
       style={taskStyles.formContainer}
+      contentContainerStyle={taskStyles.formContentContainer}
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={20}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
@@ -232,7 +235,7 @@ const CreateTaskForm: React.FC<{
         onConfirm={handleDateConfirm}
         onCancel={handleDateCancel}
       />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -249,26 +252,20 @@ const CreateTaskFormModal: React.FC<CreateTaskFormModalProps> = ({
       visible={isVisible}
       onRequestClose={onClose}
     >
-      <TouchableOpacity
-        style={taskStyles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={taskStyles.keyboardAvoidingView}
-        >
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-            <View style={taskStyles.modalContent}>
-              <CreateTaskForm
-                onCancel={onClose}
-                onTaskCreated={onTaskCreated}
-                initData={initData}
-              />
-            </View>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </TouchableOpacity>
+      <View style={taskStyles.modalOverlay}>
+        <TouchableOpacity
+          style={taskStyles.modalBackdrop}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <View style={taskStyles.modalContent}>
+          <CreateTaskForm
+            onCancel={onClose}
+            onTaskCreated={onTaskCreated}
+            initData={initData}
+          />
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -277,13 +274,17 @@ export default CreateTaskFormModal;
 
 // --- STYLES ---
 const taskStyles = StyleSheet.create({
-  keyboardAvoidingView: {
-    width: "100%",
-  } as ViewStyle,
-
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
+  } as ViewStyle,
+
+  modalBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   } as ViewStyle,
 
@@ -292,12 +293,16 @@ const taskStyles = StyleSheet.create({
     borderTopLeftRadius: ms(12),
     borderTopRightRadius: ms(12),
     paddingHorizontal: ms(spacing.md),
-    paddingBottom: ms(spacing.md),
     width: "100%",
+    maxHeight: "90%",
   } as ViewStyle,
 
   formContainer: {
     paddingTop: 10,
+  } as ViewStyle,
+
+  formContentContainer: {
+    paddingBottom: Platform.OS === 'ios' ? ms(spacing.xl) : ms(spacing.lg),
   } as ViewStyle,
 
   formTitle: {
