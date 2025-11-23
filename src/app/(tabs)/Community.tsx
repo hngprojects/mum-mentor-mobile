@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   modalPostButtonDisabled: {
-    color: colors.textGrey3,
+    color: colors.textGrey2,
   },
   modalBody: {
     flex: 1,
