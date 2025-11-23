@@ -217,7 +217,11 @@ const Community: React.FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => openOptionsForPost(item.id)}>
+        <TouchableOpacity
+          onPress={() => openOptionsForPost(item.id)}
+          accessibilityRole="button"
+          accessibilityLabel="Post options"
+        >
           <Text style={styles.moreText}>•••</Text>
         </TouchableOpacity>
       </View>
