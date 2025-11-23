@@ -286,7 +286,12 @@ const Community: React.FC = () => {
         )}
 
         {/* Floating create button */}
-        <TouchableOpacity style={styles.fab} onPress={openCreateModal}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={openCreateModal}
+          accessibilityRole="button"
+          accessibilityLabel="Create new post"
+        >
           <Text style={styles.fabText}>＋</Text>
         </TouchableOpacity>
       </View>
