@@ -7,7 +7,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 // Replace these with your actual Google OAuth credentials
 // Get them from: https://console.cloud.google.com/
-const GOOGLE_WEB_CLIENT_ID= "http://587538345013nh2kq2orvuqin2jaenbuhj868hk3i274.apps.googleusercontent.com";
+const GOOGLE_WEB_CLIENT_ID='177967447276-tsh54rjdsp3dl0u7aho6sg6l38vap45c.apps.googleusercontent.com';
 const GOOGLE_IOS_CLIENT_ID = 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com';
 const GOOGLE_ANDROID_CLIENT_ID = "587538345013-rfv1tk32e0r5bpeahr2oobr19qeceadn.apps.googleusercontent.com";
 

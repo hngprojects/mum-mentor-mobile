@@ -47,15 +47,25 @@ interface CreateTaskFormModalProps {
 
 const CustomDatePicker: React.FC<{
   isVisible: boolean;
+  mode: "date" | "time";
   onConfirm: (date: Date) => void;
   onCancel: () => void;
-}> = ({ isVisible, onConfirm, onCancel }) => {
+  date?: Date;
+}> = ({ isVisible, mode, onConfirm, onCancel, date }) => {
   if (Platform.OS === "web") {
     return isVisible ? (
       <input
-        type="date"
+        type={mode}
+        defaultValue={date ? (mode === "date" ? date.toISOString().split('T')[0] : date.toTimeString().slice(0, 5)) : undefined}
         onChange={(e) => {
-          onConfirm(new Date(e.target.value));
+          if (mode === "date") {
+            onConfirm(new Date(e.target.value));
+          } else {
+            const [hours, minutes] = e.target.value.split(':');
+            const newDate = date ? new Date(date) : new Date();
+            newDate.setHours(parseInt(hours), parseInt(minutes));
+            onConfirm(newDate);
+          }
         }}
         onBlur={onCancel}
         style={{ display: "block" }}
@@ -67,7 +77,8 @@ const CustomDatePicker: React.FC<{
   return (
     <DateTimePickerModal
       isVisible={isVisible}
-      mode="date"
+      mode={mode}
+      date={date}
       onConfirm={onConfirm}
       onCancel={onCancel}
     />
@@ -84,7 +95,11 @@ const CreateTaskForm: React.FC<{
   const [dueDate, setDueDate] = useState<Date | null>(
     initData?.due_date ? new Date(initData.due_date) : null
   );
+  const [dueTime, setDueTime] = useState<Date | null>(
+    initData?.due_date ? new Date(initData.due_date) : null
+  );
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   // Update form when initData changes
@@ -92,18 +107,43 @@ const CreateTaskForm: React.FC<{
     if (initData) {
       setTaskName(initData.name || "");
       setDescription(initData.description || "");
-      setDueDate(initData.due_date ? new Date(initData.due_date) : null);
+      const date = initData.due_date ? new Date(initData.due_date) : null;
+      setDueDate(date);
+      setDueTime(date);
     } else {
       // Reset form if no initData (creating new task)
       setTaskName("");
       setDescription("");
       setDueDate(null);
+      setDueTime(null);
     }
   }, [initData]);
+
+  const combineDateAndTime = () => {
+    if (!dueDate) return null;
+    
+    const combined = new Date(dueDate);
+    if (dueTime) {
+      combined.setHours(dueTime.getHours());
+      combined.setMinutes(dueTime.getMinutes());
+      combined.setSeconds(0);
+      combined.setMilliseconds(0);
+    } else {
+      // Default to 9:00 AM if no time is set
+      combined.setHours(9, 0, 0, 0);
+    }
+    return combined;
+  };
 
   const handleCreateTask = async () => {
     if (!taskName.trim() || !dueDate) {
       Alert.alert("Error", "Task name and due date are required");
+      return;
+    }
+
+    const finalDateTime = combineDateAndTime();
+    if (!finalDateTime) {
+      Alert.alert("Error", "Invalid date/time");
       return;
     }
 
@@ -112,12 +152,13 @@ const CreateTaskForm: React.FC<{
       await createTask({
         name: taskName,
         description,
-        due_date: dueDate.toISOString(),
+        due_date: finalDateTime.toISOString(),
       });
 
       setTaskName("");
       setDescription("");
       setDueDate(null);
+      setDueTime(null);
 
       onTaskCreated();
     } catch (error) {
@@ -132,18 +173,25 @@ const CreateTaskForm: React.FC<{
       return;
     }
 
+    const finalDateTime = combineDateAndTime();
+    if (!finalDateTime) {
+      Alert.alert("Error", "Invalid date/time");
+      return;
+    }
+
     setIsCreating(true);
     try {
       await updateTask({
         id: initData.id,
         name: taskName,
         description,
-        due_date: dueDate.toISOString(),
+        due_date: finalDateTime.toISOString(),
       });
 
       setTaskName("");
       setDescription("");
       setDueDate(null);
+      setDueTime(null);
 
       onTaskCreated();
     } catch (error) {
@@ -153,13 +201,29 @@ const CreateTaskForm: React.FC<{
   };
 
   const handleDatePicker = () => setIsDatePickerVisible(true);
+  const handleTimePicker = () => setIsTimePickerVisible(true);
 
   const handleDateConfirm = (date: Date) => {
     setDueDate(date);
     setIsDatePickerVisible(false);
   };
 
+  const handleTimeConfirm = (time: Date) => {
+    setDueTime(time);
+    setIsTimePickerVisible(false);
+  };
+
   const handleDateCancel = () => setIsDatePickerVisible(false);
+  const handleTimeCancel = () => setIsTimePickerVisible(false);
+
+  const formatTime = (date: Date | null) => {
+    if (!date) return "Select Time";
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
 
   return (
     <KeyboardAwareScrollView
@@ -202,6 +266,21 @@ const CreateTaskForm: React.FC<{
         </View>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={handleTimePicker}
+        style={taskStyles.timeInputWrapper}
+      >
+        <View pointerEvents="none">
+          <DatePickerInput
+            label="Due Time"
+            value={formatTime(dueTime)}
+            placeholder="Select Time"
+            onDateChange={() => {}}
+          />
+        </View>
+      </TouchableOpacity>
+
       <View style={taskStyles.descriptionWrapper}>
         <CustomInput
           label="Description (optional)"
@@ -232,8 +311,18 @@ const CreateTaskForm: React.FC<{
 
       <CustomDatePicker
         isVisible={isDatePickerVisible}
+        mode="date"
         onConfirm={handleDateConfirm}
         onCancel={handleDateCancel}
+        date={dueDate || undefined}
+      />
+
+      <CustomDatePicker
+        isVisible={isTimePickerVisible}
+        mode="time"
+        onConfirm={handleTimeConfirm}
+        onCancel={handleTimeCancel}
+        date={dueTime || new Date()}
       />
     </KeyboardAwareScrollView>
   );
@@ -314,6 +403,11 @@ const taskStyles = StyleSheet.create({
   } as TextStyle,
 
   dateInputWrapper: {
+    marginBottom: ms(spacing.xs),
+    marginTop: ms(spacing.xs),
+  } as ViewStyle,
+
+  timeInputWrapper: {
     marginBottom: ms(spacing.xs),
     marginTop: ms(spacing.xs),
   } as ViewStyle,

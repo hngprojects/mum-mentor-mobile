@@ -260,7 +260,7 @@ const Home = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => { router.push('../components/TaskPage')}}>
               <Text style={styles.viewAllLink}>View All</Text>
             </TouchableOpacity>
           </View>
