@@ -202,7 +202,9 @@ const Home = () => {
             <Text style={styles.greetingTitle}>{greeting}</Text>
           </View>
 
-          <Image source={notificationIcon} style={styles.notificationIcon} />
+          <TouchableOpacity onPress={() => router.push('../notifications')}>
+            <Image source={notificationIcon} style={styles.notificationIcon} />
+          </TouchableOpacity>
         </View>
 
         {/* Hero Section */}
