@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,12 +14,11 @@ import {
   ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
-import { fetchTasks } from "@/src/core/services/tasksService";
 import { logoutUser } from "@/src/core/services/authService";
+import { fetchTasks } from "@/src/core/services/tasksService";
 import { getCurrentUser } from "@/src/core/services/userService";
 
 import TaskCreationFlow from "../components/CreateTask";
@@ -230,7 +230,15 @@ const Home = () => {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
             {quickActions.map((action) => (
-              <View key={action.id} style={styles.quickActionCard}>
+              <TouchableOpacity 
+                key={action.id} 
+                style={styles.quickActionCard}
+                onPress={() => {
+                  if (action.id === 'journal') {
+                    router.push('/Journal');
+                  }
+                }}
+              >
                 {action.id === "journal" ? (
                   <Image
                     source={journalIcon}
@@ -251,7 +259,7 @@ const Home = () => {
                 )}
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
                 <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
