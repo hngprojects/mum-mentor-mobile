@@ -10,12 +10,12 @@ import {
   Clipboard,
   Alert,
 } from "react-native";
-import { ChatWelcome } from "../../components/chat/chat-Welcome";
-import { ChatMessage } from "../../components/chat/chat-Message";
-import { ChatInput } from "../../components/chat/chat-Input";
-import { MessageActions } from "../../components/chat/message-Action";
-import { TypingIndicator } from "../../components/chat/typing-Indicator";
-import { HistoryEmptyState } from "../../components/chat/history-Empty-State";
+import { ChatWelcome } from "../components/chat/chat-Welcome";
+import { ChatMessage } from "../components/chat/chat-Message";
+import { ChatInput } from "../components/chat/chat-Input";
+import { MessageActions } from "../components/chat/message-Action";
+import { TypingIndicator } from "../components/chat/typing-Indicator";
+import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { colors } from "@/src/core/styles";
 import { s, vs, rfs } from "@/src/core/styles/scaling";
 
@@ -193,7 +193,7 @@ export default function ChatScreen() {
           style={styles.backTouchable}
         >
           <Image
-            source={require("../../assets/images/ai-chat/Line-arrow-left.png")}
+            source={require("../assets/images/ai-chat/Line-arrow-left.png")}
             style={styles.backButton}
           />
         </TouchableOpacity>
@@ -206,7 +206,7 @@ export default function ChatScreen() {
 
         <TouchableOpacity onPress={() => setShowHistoryEmpty(true)}>
           <Image
-            source={require("../../assets/images/ai-chat/menu.png")}
+            source={require("../assets/images/ai-chat/menu.png")}
             style={styles.menuButton}
           />
         </TouchableOpacity>
