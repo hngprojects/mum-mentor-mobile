@@ -1,57 +1,58 @@
 {
- "expo": {
-   "name": "MumMentor",
-   "slug": "MumMentorMobile",
-   "version": "1.0.0",
-   "orientation": "portrait",
-   "icon": "@/src/assets/images/logo.png",
-   "scheme": "mummentor",
-   "userInterfaceStyle": "automatic",
-   "newArchEnabled": true,
-   "ios": {
-     "supportsTablet": true
-   },
-   "android": {
-     "adaptiveIcon": {
-       "backgroundColor": "#E6F4FE",
-       "foregroundImage": "./src/assets/images/logo.png"
-     },
-     "edgeToEdgeEnabled": true,
-     "predictiveBackGestureEnabled": false,
-     "package": "com.hng.mummentor"
-   },
-   "web": {
-     "output": "static",
-     "favicon": "./assets/images/favicon.png"
-   },
-   "plugins": [
-     "expo-router",
-     [
-       "expo-splash-screen",
-       {
-         "image": "./src/assets/images/logo.png",
-         "imageWidth": 200,
-         "resizeMode": "contain",
-         "backgroundColor": "#F9C1CC"
-       }
-     ],
-     "./plugins/withGradleProperties.js",
-     [
-       "./plugins/withReleaseKeystore.js",
-       {
-         "keystoreFile": "keystore.jks"
-       }
-     ]
-   ],
-   "experiments": {
-     "typedRoutes": true,
-     "reactCompiler": true
-   },
-   "extra": {
-     "router": {},
-     "eas": {
-       "projectId": "eb49307c-ac6d-4ddb-b0d5-c2e51a067520"
-     }
-   }
- }
+  "expo": {
+    "name": "MumMentor",
+    "slug": "MumMentorMobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "@/src/assets/images/logo.png",
+    "scheme": "mummentor",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./src/assets/images/logo.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hng.mummentor"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/assets/images/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F9C1CC"
+        }
+      ],
+      "./plugins/withGradleProperties.js",
+      [
+        "./plugins/withReleaseKeystore.js",
+        {
+          "keystoreFile": "keystore.jks"
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eb49307c-ac6d-4ddb-b0d5-c2e51a067520"
+      }
+    }
+  }
 }

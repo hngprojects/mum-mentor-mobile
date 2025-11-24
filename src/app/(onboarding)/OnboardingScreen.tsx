@@ -18,6 +18,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Interface for each onboarding slide
@@ -176,6 +177,17 @@ export default function OnboardingSlides() {
   const opacity = useSharedValue(1);
 
   /**
+   * Mark onboarding as complete and save to AsyncStorage
+   */
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem('@OnboardingComplete', 'true');
+    } catch (error) {
+      console.error('Failed to save onboarding status:', error);
+    }
+  };
+
+  /**
    * Handle "Next" button press
    * Advances to the next slide
    */
@@ -215,15 +227,19 @@ export default function OnboardingSlides() {
 
   /**
    * Handle "Log in" button press
+   * Marks onboarding as complete before navigating
    */
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    await completeOnboarding();
     router.push('./(auth)/SignInScreen');
   };
 
   /**
    * Handle "Sign Up" button press
+   * Marks onboarding as complete before navigating
    */
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
+    await completeOnboarding();
     router.push('./(auth)/SignUpScreen');
   };
 

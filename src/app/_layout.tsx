@@ -13,7 +13,6 @@ SplashScreen.preventAutoHideAsync();
 // ----------------------------------------------------
 // ONBOARDING STORAGE LOGIC
 // ----------------------------------------------------
-
 const ONBOARDING_KEY = "@OnboardingComplete";
 
 function useOnboardingStatusLoader() {
@@ -30,7 +29,6 @@ function useOnboardingStatusLoader() {
       }
       setIsCheckingOnboarding(false);
     };
-
     check();
   }, []);
 
@@ -40,7 +38,6 @@ function useOnboardingStatusLoader() {
 // ----------------------------------------------------
 // MAIN ROOT LAYOUT CONTENT
 // ----------------------------------------------------
-
 function RootLayoutContent() {
   const isLoaded = useAssetLoading();
   const { user, isSessionLoading } = useAuth();
@@ -67,10 +64,11 @@ function RootLayoutContent() {
   // ----------------------------------------------------
   if (!user) {
     if (onboardingComplete) {
+      // User has completed onboarding before, go to sign in
       return (
         <>
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(onboarding)"  />
+            <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(auth)" />
           </Stack>
           <Redirect href="/(auth)/SignInScreen" />
@@ -78,6 +76,7 @@ function RootLayoutContent() {
       );
     }
 
+    // User has NOT completed onboarding, show onboarding
     return (
       <>
         <Stack screenOptions={{ headerShown: false }}>
@@ -105,7 +104,6 @@ function RootLayoutContent() {
 // ----------------------------------------------------
 // EXPORT ROOT LAYOUT WRAPPER
 // ----------------------------------------------------
-
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -119,7 +117,6 @@ export default function RootLayout() {
 // ----------------------------------------------------
 // STYLES
 // ----------------------------------------------------
-
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,

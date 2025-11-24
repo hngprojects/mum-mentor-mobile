@@ -1,5 +1,5 @@
+// ListTasks.tsx - Updated with style guide
 import { deleteTask, toggleTaskStatus } from "@/src/core/services/tasksService";
-import { format, parseISO } from "date-fns";
 import React, { useState } from "react";
 import {
   Alert,
@@ -7,16 +7,16 @@ import {
   Modal,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import CreateTaskFormModal from "./CreateTask";
 import PrimaryButton from "./PrimaryButton";
 import SecondaryButton from "./SecondaryButton";
+import TaskListItem from "./TaskListItem";
+import { colors, typography, spacing, fontFamilies } from "../../core/styles/index";
+import { ms, rfs } from "../../core/styles/scaling";
 
 const trashIcon = require("../../assets/images/trash.png");
-const tickChecked = require("../../assets/images/tick-square-checked.png");
-const tickUnchecked = require("../../assets/images/tick-square.png");
 const successIcon = require("../../assets/images/success-icon.png");
 
 const ListTasks = ({
@@ -25,14 +25,15 @@ const ListTasks = ({
   setAppAction,
 }: {
   tasks: any;
-  callback: () => void;
+  callback: (taskId?: string, newStatus?: string) => void;
   setAppAction: () => void;
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-
   const [isLoadingDelete, setIsLoadingDelete] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<any>(null);
 
   const handleDeleteTask = async () => {
     if (!selectedTask) return;
@@ -41,11 +42,9 @@ const ListTasks = ({
 
     try {
       await deleteTask(selectedTask);
-
       setShowDeleteConfirm(false);
-
       setShowDeleteSuccess(true);
-      await callback();
+      callback();
     } catch (err) {
       console.error("Delete error:", err);
       Alert.alert("Error", "Failed to delete task. Try again.");
@@ -56,83 +55,38 @@ const ListTasks = ({
   };
 
   const handleToggleStatus = async (taskId: string, status: string) => {
-    setIsLoadingDelete(true);
-    const newStatus = status === "completed" ? false : true;
+    const newStatus = status === "completed" ? "pending" : "completed";
+    
+    callback(taskId, newStatus);
+    
     try {
-      await toggleTaskStatus(taskId, newStatus);
-      await callback(); // Only runs if toggleTaskStatus succeeds
+      await toggleTaskStatus(taskId, newStatus === "completed");
     } catch (err) {
       console.error("Update error:", err);
       Alert.alert("Error", "Failed to update task. Try again.");
-    } finally {
-      setIsLoadingDelete(false);
+      callback();
     }
   };
 
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<any>(null);
-
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <View style={styles.taskListContainer}>
         {tasks?.map((task: any) => (
-          <View key={task.id} style={styles.taskItem}>
-            {/* Checkbox */}
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => handleToggleStatus(task.id, task.status)}
-            >
-              <View>
-                {task.status === "completed" ? (
-                  <Image
-                    source={tickChecked}
-                    style={{ width: 24, height: 24 }}
-                  />
-                ) : (
-                  <Image
-                    source={tickUnchecked}
-                    style={{ width: 24, height: 24 }}
-                  />
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {/* Task Content - Make it clickable for pending tasks */}
-            <TouchableOpacity
-              style={styles.taskContent}
-              onPress={() => {
-                if (task.status === "pending") {
-                  setTaskToEdit(task);
-                  setIsEditModalVisible(true);
-                }
-              }}
-              disabled={task.status === "completed"}
-            >
-              <Text
-                style={[
-                  styles.taskTitle,
-                  task.status === "completed" && styles.taskTitleCompleted,
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {task.name}
-              </Text>
-              <Text style={styles.taskDateTime}>
-                {format(parseISO(task.due_date), "yyyy-MM-dd h:mma")}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Delete Icon */}
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedTask(task.id);
-                setShowDeleteConfirm(true);
-              }}
-            >
-              <Image source={trashIcon} />
-            </TouchableOpacity>
-          </View>
+          <TaskListItem
+            key={task.id}
+            task={task}
+            onToggleStatus={handleToggleStatus}
+            onDelete={(taskId) => {
+              setSelectedTask(taskId);
+              setShowDeleteConfirm(true);
+            }}
+            onPress={() => {
+              if (task.status === "pending") {
+                setTaskToEdit(task);
+                setIsEditModalVisible(true);
+              }
+            }}
+          />
         ))}
       </View>
 
@@ -147,7 +101,7 @@ const ListTasks = ({
           <View style={styles.modalBox}>
             <Image
               source={trashIcon}
-              style={{ width: 24, height: 24, marginBottom: 10 }}
+              style={styles.trashIconImage}
             />
 
             <Text style={styles.modalTitle}>Delete Task</Text>
@@ -160,13 +114,13 @@ const ListTasks = ({
               title="Delete"
               isLoading={isLoadingDelete}
               onPress={() => handleDeleteTask()}
-              style={{ marginTop: 0 }}
+              style={styles.deleteButton}
             />
 
             <SecondaryButton
               title="Cancel"
               onPress={() => setShowDeleteConfirm(false)}
-              style={{ marginTop: 10 }}
+              style={styles.cancelButton}
             />
           </View>
         </View>
@@ -183,7 +137,7 @@ const ListTasks = ({
           <View style={styles.modalBox}>
             <Image
               source={successIcon}
-              style={{ width: 57, height: 57, marginBottom: 15 }}
+              style={styles.successIconImage}
             />
 
             <Text style={styles.modalTitle}>Task deleted successfully</Text>
@@ -191,7 +145,7 @@ const ListTasks = ({
             <PrimaryButton
               title="Done"
               onPress={() => setShowDeleteSuccess(false)}
-              style={{ marginTop: 20 }}
+              style={styles.doneButton}
             />
           </View>
         </View>
@@ -206,7 +160,7 @@ const ListTasks = ({
         onTaskCreated={() => {
           setIsEditModalVisible(false);
           setTaskToEdit(null);
-          callback(); // Refresh tasks
+          callback();
         }}
         initData={taskToEdit}
       />
@@ -217,84 +171,56 @@ const ListTasks = ({
 export default ListTasks;
 
 const styles = StyleSheet.create({
-  taskListContainer: {
-    gap: 12,
-  },
-  taskItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  checkboxContainer: {
-    marginRight: 9,
-    alignSelf: "flex-start",
-  },
-
-  taskContent: {
+  container: {
     flex: 1,
-    marginRight: 12,
   },
-  taskTitle: {
-    fontSize: 16,
-    color: "#1F1F1F",
-    marginBottom: 4,
-    textTransform: "capitalize",
-  },
-  taskTitleCompleted: {
-    textDecorationLine: "line-through",
-    color: "#999999",
-  },
-  taskDateTime: {
-    fontSize: 14,
-    color: "#6B6B6B",
-  },
-
-  addTaskButton: {
-    marginTop: 8,
+  taskListContainer: {
+    backgroundColor: colors.textWhite,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-
   modalBox: {
-    backgroundColor: "#fff",
-    padding: 24,
+    backgroundColor: colors.textWhite,
+    padding: ms(spacing.lg),
     width: "85%",
-    borderRadius: 8,
+    borderRadius: ms(8),
     alignItems: "center",
   },
-
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 8,
+  trashIconImage: {
+    width: ms(24),
+    height: ms(24),
+    marginBottom: ms(spacing.sm),
   },
-
+  modalTitle: {
+    fontSize: rfs(typography.heading3.fontSize),
+    fontFamily: fontFamilies.semiBold,
+    color: colors.textPrimary,
+    marginBottom: ms(spacing.xs),
+  },
   modalSubtitle: {
     textAlign: "center",
-    fontSize: 14,
-    wordWrap: "nowrap",
-    color: "#3A3A3A",
-    marginBottom: 20,
+    fontSize: rfs(typography.bodySmall.fontSize),
+    fontFamily: fontFamilies.regular,
+    color: colors.textGrey1,
+    marginBottom: ms(spacing.md),
+    lineHeight: rfs(20),
   },
-
-  successIconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#E5F9EC",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 15,
+  successIconImage: {
+    width: ms(57),
+    height: ms(57),
+    marginBottom: ms(spacing.md),
+  },
+  deleteButton: {
+    marginTop: 0,
+  },
+  cancelButton: {
+    marginTop: ms(spacing.sm),
+  },
+  doneButton: {
+    marginTop: ms(spacing.md),
   },
 });

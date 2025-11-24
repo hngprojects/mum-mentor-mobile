@@ -20,6 +20,12 @@ export interface LoginAPIResponse {
   status_code: number;
 }
 
+export interface GoogleAuthResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+}
+
 export type TokenResponse = AuthTokenData;
 
 export interface RegisterPayload {
@@ -33,6 +39,12 @@ export interface RegisterPayload {
 export interface LoginPayload {
   email: string;
   password: string;
+}
+
+export interface GoogleAuthPayload {
+  id_token: string;
+  device_id?: string;
+  device_name?: string;
 }
 
 export interface VerificationPayload {
@@ -123,6 +135,43 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
     throw error as AxiosError<ApiErrorResponse> | Error;
   }
 }
+
+/**
+ * Google Authentication
+ * Sends Google ID token to backend for verification and login
+ */
+export async function loginWithGoogle(
+  payload: GoogleAuthPayload
+): Promise<GoogleAuthResponse> {
+  try {
+    const response = await apiClient.post<GoogleAuthResponse>(
+      "/api/v1/google/login",
+      payload
+    );
+    
+    const token = response.data.access_token;
+
+    if (token && token.length > 0) {
+      await setAuthToken(token);
+
+      // Verify token was actually stored
+      const storedToken = await getAuthToken();
+      console.log("Google auth token verification - stored:", storedToken ? "YES" : "NO");
+
+      if (!storedToken) {
+        console.error("CRITICAL: Token was not stored despite no errors!");
+      }
+    } else {
+      console.error("Google login response missing access_token:", response.data);
+      throw new Error("API response missing access token.");
+    }
+
+    return response.data;
+  } catch (error) {
+    throw error as AxiosError<ApiErrorResponse> | Error;
+  }
+}
+
 export async function logout(): Promise<void> {
   await removeAuthToken();
 }
@@ -175,7 +224,6 @@ export async function verifyValue(
       status_code: number;
     }>(apiUrl, requestBody);
 
-    // FIXED: Access token is inside response.data.data
     const tokenData = response.data.data;
     const token = tokenData?.access_token;
 
@@ -191,6 +239,7 @@ export async function verifyValue(
     return { success: false, error: error as AxiosError<ApiErrorResponse> };
   }
 }
+
 export async function resetPassword(
   payload: ResetPasswordPayload
 ): Promise<MessageResponse> {
@@ -216,11 +265,9 @@ export async function logoutUser(): Promise<MessageResponse> {
     const response = await apiClient.post<MessageResponse>(
       "/api/v1/auth/logout"
     );
-    // Remove token from storage after successful API logout
     await removeAuthToken();
     return response.data;
   } catch (error) {
-    // Even if API call fails, remove token locally
     await removeAuthToken();
     throw error as AxiosError<ApiErrorResponse>;
   }
