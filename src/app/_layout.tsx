@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Stack, Redirect } from "expo-router";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import * as SplashScreen from "expo-splash-screen";
-import { AuthProvider, useAuth } from "../core/services/authContext";
-import { useAssetLoading } from "../core/utils/assetsLoading";
-import { colors } from "../core/styles/index";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Redirect, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AuthProvider, useAuth } from "../core/services/authContext";
+import { colors } from "../core/styles/index";
+import { useAssetLoading } from "../core/utils/assetsLoading";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -95,6 +95,7 @@ function RootLayoutContent() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="resources" />
       </Stack>
       <Redirect href="/(tabs)/Home" />
     </>
