@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { setAuthToken, removeAuthToken, getAuthToken } from './authStorage';
 import { getCurrentUser, UserProfile } from './userService';
 import { router } from 'expo-router';
+// Import the login function directly from authService
+import { login as apiLogin } from './authService'; 
+
 
 // --- CONTEXT TYPES ---
 interface AuthContextType {
@@ -34,13 +37,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       try {
         const storedToken = await getAuthToken();
         if (storedToken) {
-          const profile = await getCurrentUser();
+          // getCurrentUser relies on the token being available in storage, 
+          // which is loaded by the interceptor.
+          const profile = await getCurrentUser(); 
           if (profile) {
             setUser(profile);
             console.log('Session restored successfully.');
           } else {
             console.warn('Stored token rejected or expired. Cleaning up.');
-            await removeAuthToken();
+            await removeAuthToken(); 
             setUser(null);
           }
         }
@@ -57,14 +62,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   // --- 2. Sign In ---
   const signIn = async (email: string, password: string) => {
     try {
-      const { access_token } = await import('./authService').then(module => module.login({ email, password }));
-      await setAuthToken(access_token);
-
+      // 1. Call login. The internal `authService.login` function is responsible for 
+      //    calling the API, retrieving the token, and storing it via `setAuthToken`.
+      //    We rely entirely on that function to manage storage.
+      await apiLogin({ email, password }); 
+      
+      // 2. Immediately validate the newly stored token by fetching the profile.
+      //    The apiClient interceptor will now successfully grab the token stored by apiLogin.
       const profile = await getCurrentUser();
+      
       if (profile) {
         setUser(profile);
       } else {
-        throw new Error('Failed to fetch user profile after login.');
+        // If profile fetch fails, it means the stored token is invalid, 
+        // so we must clean up and throw an error.
+        await removeAuthToken();
+        throw new Error('Failed to fetch user profile after successful login.');
       }
     } catch (error) {
       console.error('Sign-in failed:', error);
