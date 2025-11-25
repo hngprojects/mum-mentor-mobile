@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  KeyboardAvoidingView, 
-  Platform,
+import { AxiosError } from 'axios';
+import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  ActivityIndicator
+  View
 } from 'react-native';
-import { router } from 'expo-router';
-import { AxiosError } from 'axios';
-import { StatusBar } from 'expo-status-bar';
 
 // --- Imports from Core Components and Styles ---
-import CustomInput from '../components/CustomInput'; 
-import PrimaryButton from '../components/PrimaryButton';
-import { colors, typography, spacing } from '../../core/styles/index';
+import { colors, spacing, typography } from '../../core/styles/index';
 import { ms, rfs } from '../../core/styles/scaling';
+import CustomInput from '../components/CustomInput';
+import PrimaryButton from '../components/PrimaryButton';
 
 // --- API Service Import ---
-import { login, loginWithGoogle, ApiErrorResponse } from '../../core/services/authService'; 
-import { useGoogleAuth, parseGoogleIdToken } from '../../core/services/googleAuthservice';
+import { ApiErrorResponse, login, loginWithGoogle } from '../../core/services/authService';
 import { getDeviceInfo } from '../../core/services/deviceInfoHelper';
+import { signInWithGoogle } from '../../core/services/googleSignInService';
 
 export default function SignInScreen() {
   // --- Local State Management ---
@@ -34,22 +34,6 @@ export default function SignInScreen() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
-
-  // --- Google Auth Hook ---
-  const { request, response, promptAsync } = useGoogleAuth();
-
-  // --- Handle Google Auth Response ---
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      if (authentication?.idToken) {
-        handleGoogleLogin(authentication.idToken);
-      }
-    } else if (response?.type === 'error') {
-      console.error('Google auth error:', response.error);
-      Alert.alert('Google Sign In Failed', 'Unable to complete Google sign in.');
-    }
-  }, [response]);
 
   // --- Validation Logic (Client-Side Check) ---
   const validate = () => {
@@ -114,12 +98,21 @@ export default function SignInScreen() {
   };
 
   // --- Handle Google Login ---
-  const handleGoogleLogin = async (idToken: string) => {
+  const handleGooglePress = async () => {
     setIsGoogleLoading(true);
     setErrors({});
     setGeneralError(null);
 
     try {
+      // Sign in with Google and get ID token
+      const googleAuthResult = await signInWithGoogle();
+
+      if (!googleAuthResult) {
+        throw new Error('Google sign-in was cancelled or failed');
+      }
+
+      const { idToken, user: googleUser } = googleAuthResult;
+
       // Get device information
       const deviceInfo = await getDeviceInfo();
       
@@ -130,33 +123,33 @@ export default function SignInScreen() {
         device_name: deviceInfo.device_name,
       });
 
-      // Parse user info for display (optional)
-      const userInfo = parseGoogleIdToken(idToken);
-      
       Alert.alert(
         "Welcome Back!", 
-        userInfo ? `Signed in as ${userInfo.name}` : "Google login successful."
+        `Signed in as ${googleUser.name}`
       );
       
       router.replace('/(tabs)/Home');
 
-    } catch (error) {
-      const axiosError = error as AxiosError<ApiErrorResponse>;
-      console.error("Google login API error:", axiosError.response?.data);
+    } catch (error: any) {
+      console.error("Google login error:", error);
       
-      setGeneralError('Google sign in failed. Please try again.');
+      let errorMessage = 'Google sign in failed. Please try again.';
+      
+      if (error.message === 'Google sign-in was cancelled or failed') {
+        errorMessage = 'Google sign-in was cancelled';
+      } else if (error.code === 'SIGN_IN_CANCELLED') {
+        errorMessage = 'Sign-in cancelled';
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        errorMessage = 'Google Play Services not available';
+      } else if (error.isAxiosError) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+      }
+      
+      Alert.alert('Error', errorMessage);
+      setGeneralError(errorMessage);
     } finally {
       setIsGoogleLoading(false);
-    }
-  };
-
-  // --- Trigger Google Sign In ---
-  const handleGooglePress = async () => {
-    try {
-      await promptAsync();
-    } catch (error) {
-      console.error('Error triggering Google sign in:', error);
-      Alert.alert('Error', 'Failed to start Google sign in');
     }
   };
 
@@ -224,7 +217,7 @@ export default function SignInScreen() {
             title="Log In"
             onPress={handleLogin}
             isLoading={isLoading}
-            disabled={!email || !password || isLoading}
+            disabled={!email || !password || isLoading || isGoogleLoading}
           />
 
           {/* Don't have an account */}
@@ -245,7 +238,7 @@ export default function SignInScreen() {
             <TouchableOpacity 
               style={styles.socialButton} 
               onPress={handleGooglePress}
-              disabled={!request || isGoogleLoading}
+              disabled={isGoogleLoading || isLoading}
             >
               {isGoogleLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -264,6 +257,7 @@ export default function SignInScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} 
               onPress={() => Alert.alert('Apple Login', 'Coming soon!')}
+              disabled={isLoading || isGoogleLoading}
             >
               <Image 
                 source={require('../../assets/images/apple.png')} 

@@ -1,6 +1,6 @@
+import { makeRedirectUri } from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
 
 // Complete the auth session for web
 WebBrowser.maybeCompleteAuthSession();
@@ -8,7 +8,7 @@ WebBrowser.maybeCompleteAuthSession();
 // Replace these with your actual Google OAuth credentials
 // Get them from: https://console.cloud.google.com/
 const GOOGLE_WEB_CLIENT_ID='177967447276-tsh54rjdsp3dl0u7aho6sg6l38vap45c.apps.googleusercontent.com';
-const GOOGLE_IOS_CLIENT_ID = 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_IOS_CLIENT_ID = '177967447276-9ncqmgbbs4rq2i3r682e91npjss49ir4.apps.googleusercontent.com';
 const GOOGLE_ANDROID_CLIENT_ID = "587538345013-rfv1tk32e0r5bpeahr2oobr19qeceadn.apps.googleusercontent.com";
 
 export interface GoogleAuthResult {
