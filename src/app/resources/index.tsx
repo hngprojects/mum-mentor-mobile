@@ -105,15 +105,21 @@ const ResourcesScreen: React.FC = () => {
 
         {/* Resource sections or empty state */}
         {hasResults ? (
-          filteredSections.map((section) => (
-            <ResourceSection
-              key={section.id}
-              title={section.title}
-              resources={section.resources}
-              onPressViewAll={() => handleViewAll(section.id)}
-              style={styles.sectionSpacing}
-            />
-          ))
+          filteredSections.map((section) => {
+            const displayedResources = searchQuery
+              ? section.resources
+              : section.resources.slice(0, 2);
+
+            return (
+              <ResourceSection
+                key={section.id}
+                title={section.title}
+                resources={displayedResources}
+                onPressViewAll={() => handleViewAll(section.id)}
+                style={styles.sectionSpacing}
+              />
+            );
+          })
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No resources found</Text>
