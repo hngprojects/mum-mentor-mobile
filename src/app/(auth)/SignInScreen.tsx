@@ -1,3 +1,5 @@
+// src/screens/(auth)/SignInScreen.tsx
+
 import { AxiosError } from "axios";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -32,6 +34,10 @@ import {
   parseGoogleIdToken,
   useGoogleAuth,
 } from "../../core/services/googleAuthservice";
+
+// --- Setup Hook Import ---
+import { useSetup } from "../../core/hooks/setupContext";
+import { setupStorage } from "../../core/services/setupStorageService";
 
 export default function SignInScreen() {
   // --- Local State Management ---
@@ -97,8 +103,19 @@ export default function SignInScreen() {
       const loginPayload = { email: email.toLowerCase(), password };
       await login(loginPayload);
 
-      Alert.alert("Welcome Back!", "Login successful.");
-      router.replace("/(tabs)/Home");
+      // Refresh setup data and check if setup is completed
+      await refreshSetupData();
+      const isSetupDone = await setupStorage.isSetupCompleted();
+
+      if (!isSetupDone) {
+        // First time user - redirect to setup
+        Alert.alert("Welcome!", "Let's set up your profile.");
+        router.replace("/setup/Mum");
+      } else {
+        // Returning user - go to home
+        Alert.alert("Welcome Back!", "Login successful.");
+        router.replace("/(tabs)/Home");
+      }
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;
@@ -151,12 +168,20 @@ export default function SignInScreen() {
       // Parse user info for display (optional)
       const userInfo = parseGoogleIdToken(idToken);
 
-      Alert.alert(
-        "Welcome Back!",
-        userInfo ? `Signed in as ${userInfo.name}` : "Google login successful."
-      );
-
-      router.replace("/(tabs)/Home");
+      if (!isSetupDone) {
+        // First time Google user - redirect to setup
+        Alert.alert("Welcome!", "Let's personalize your experience.");
+        router.replace("/setup/Mum");
+      } else {
+        // Returning Google user - go to home
+        Alert.alert(
+          "Welcome Back!",
+          userInfo
+            ? `Signed in as ${userInfo.name}`
+            : "Google login successful."
+        );
+        router.replace("/(tabs)/Home");
+      }
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Google login API error:", axiosError.response?.data);
