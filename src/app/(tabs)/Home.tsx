@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StatusBar,
@@ -17,7 +16,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
-import { logoutUser } from "@/src/core/services/authService";
 import { fetchTasks } from "@/src/core/services/tasksService";
 import { getCurrentUser } from "@/src/core/services/userService";
 
@@ -83,7 +81,6 @@ const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isAppAction, setIsAppAction] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [user, setUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
@@ -129,42 +126,6 @@ const Home = () => {
     setIsSuccessModalVisible(false);
   };
 
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            setIsLoggingOut(true);
-            try {
-              const response = await logoutUser();
-              console.log("Logout success:", response);
-              router.push("/SignInScreen");
-            } catch (error: any) {
-              console.error("Logout error:", error);
-              Alert.alert(
-                "Error",
-                error?.response?.data?.message ||
-                  error?.message ||
-                  "Failed to logout. Please try again."
-              );
-            } finally {
-              setIsLoggingOut(false);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
   useEffect(() => {
     loadUser();
     listUserTasks();
@@ -190,22 +151,26 @@ const Home = () => {
         {/* Top Bar */}
         <View style={styles.topBar}>
           <View>
-            <View style={styles.greetingRow}>
-              <Image source={profileImage} style={styles.profileAvatar} />
+            <TouchableOpacity
+              onPress={() => router.push("/profile/ProfileScreen")}
+            >
+              <View style={styles.greetingRow}>
+                <Image source={profileImage} style={styles.profileAvatar} />
 
-              {/* Greeting displays only the first name using split(" ")[0] */}
-              <Text style={styles.greetingLabel}>
-                Hi,{" "}
-                {isLoadingUser
-                  ? "..."
-                  : user?.full_name?.split(" ")[0] || "User"}
-              </Text>
-            </View>
+                {/* Greeting displays only the first name using split(" ")[0] */}
+                <Text style={styles.greetingLabel}>
+                  Hi,{" "}
+                  {isLoadingUser
+                    ? "..."
+                    : user?.full_name?.split(" ")[0] || "User"}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
             <Text style={styles.greetingTitle}>{greeting}</Text>
           </View>
 
-          <TouchableOpacity onPress={() => router.push("../profile")}>
+          <TouchableOpacity onPress={() => router.push("../notifications")}>
             <Image source={notificationIcon} style={styles.notificationIcon} />
           </TouchableOpacity>
         </View>
@@ -313,16 +278,6 @@ const Home = () => {
               setAppAction={() => setIsAppAction(true)}
             />
           )}
-        </View>
-
-        {/* Logout Button */}
-        <View style={styles.logoutSection}>
-          <SecondaryButton
-            title={isLoggingOut ? "Logging out..." : "Logout"}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-            disabled={isLoggingOut}
-          />
         </View>
       </ScrollView>
 

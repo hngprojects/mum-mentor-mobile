@@ -1,15 +1,14 @@
-import { colors, typography } from '@/src/core/styles';
-import { ms, rfs, vs } from '@/src/core/styles/scaling';
-import React from 'react';
+import { colors, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import React from "react";
 import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
   Animated,
-  Image,
-} from 'react-native';
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface SuccessModalProps {
   visible: boolean;
@@ -20,11 +19,11 @@ interface SuccessModalProps {
   iconComponent?: React.ReactNode;
 }
 
-export const SuccessModal: React.FC<SuccessModalProps> = ({
+const SuccessModal: React.FC<SuccessModalProps> = ({
   visible,
-  title = 'Set Up Successful',
+  title = "Set Up Successful",
   message,
-  buttonText = 'Done',
+  buttonText = "Done",
   onClose,
   iconComponent,
 }) => {
@@ -93,9 +92,9 @@ export default SuccessModal;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: ms(24),
   },
   modalContainer: {
@@ -103,10 +102,10 @@ const styles = StyleSheet.create({
     borderRadius: ms(16),
     paddingVertical: vs(40),
     paddingHorizontal: ms(24),
-    width: '100%',
+    width: "100%",
     maxWidth: ms(400),
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -119,40 +118,40 @@ const styles = StyleSheet.create({
     marginBottom: vs(24),
   },
   successIconWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   successIconOuter: {
     width: ms(80),
     height: ms(80),
     borderRadius: ms(40),
     backgroundColor: colors.successLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   successIconInner: {
     width: ms(64),
     height: ms(64),
     borderRadius: ms(32),
     backgroundColor: colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkmark: {
     fontSize: rfs(32),
     color: colors.textWhite,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   title: {
     ...typography.heading2,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(32),
   },
   message: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(24),
   },
   button: {
@@ -160,8 +159,8 @@ const styles = StyleSheet.create({
     paddingVertical: vs(16),
     paddingHorizontal: ms(48),
     borderRadius: ms(8),
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   buttonText: {
     ...typography.buttonText,

@@ -1,26 +1,26 @@
 // src/screens/ChangePasswordScreen.tsx
 
+import { colors, typography } from "@/src/core/styles";
+import { ms, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import React, { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { colors, typography } from '@/src/core/styles';
-import { ms, vs, rbr } from '@/src/core/styles/scaling';
-import CustomInput from '../components/CustomInput';
-import PrimaryButton from '../components/PrimaryButton';
+} from "react-native";
+import CustomInput from "../components/CustomInput";
+import PrimaryButton from "../components/PrimaryButton";
 
 const ChangePassword = () => {
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +31,8 @@ const ChangePassword = () => {
 
   const isPasswordStrong = validatePasswordStrength(newPassword);
   const isConfirmPasswordStrong = validatePasswordStrength(confirmNewPassword);
-  const passwordsMatch = newPassword === confirmNewPassword && newPassword.length > 0;
+  const passwordsMatch =
+    newPassword === confirmNewPassword && newPassword.length > 0;
 
   const handleChangePassword = async () => {
     // Reset errors
@@ -41,19 +42,20 @@ const ChangePassword = () => {
     const newErrors: { [key: string]: string } = {};
 
     if (!oldPassword) {
-      newErrors.oldPassword = 'Old password is required';
+      newErrors.oldPassword = "Old password is required";
     }
 
     if (!newPassword) {
-      newErrors.newPassword = 'New password is required';
+      newErrors.newPassword = "New password is required";
     } else if (!isPasswordStrong) {
-      newErrors.newPassword = 'Password too weak, must be at least 8 characters';
+      newErrors.newPassword =
+        "Password too weak, must be at least 8 characters";
     }
 
     if (!confirmNewPassword) {
-      newErrors.confirmNewPassword = 'Please confirm your password';
+      newErrors.confirmNewPassword = "Please confirm your password";
     } else if (newPassword !== confirmNewPassword) {
-      newErrors.confirmNewPassword = 'Passwords do not match';
+      newErrors.confirmNewPassword = "Passwords do not match";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -65,12 +67,12 @@ const ChangePassword = () => {
     setIsLoading(true);
     try {
       // Your API call here
-      console.log('Changing password...');
+      console.log("Changing password...");
       // await changePasswordAPI(oldPassword, newPassword);
       // router.back(); // or navigate to success screen
     } catch (error) {
-      console.error('Error changing password:', error);
-      setErrors({ general: 'Failed to change password' });
+      console.error("Error changing password:", error);
+      setErrors({ general: "Failed to change password" });
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +81,7 @@ const ChangePassword = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.header}>
         <TouchableOpacity
@@ -181,8 +183,8 @@ const ChangePassword = () => {
                   />
                   <Text style={styles.weakPasswordText}>
                     {!passwordsMatch
-                      ? 'Passwords do not match'
-                      : 'Password too weak, must be at least 8 characters'}
+                      ? "Passwords do not match"
+                      : "Password too weak, must be at least 8 characters"}
                   </Text>
                 </>
               ) : (
@@ -227,9 +229,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: ms(20),
     paddingTop: vs(50),
     paddingBottom: vs(16),
@@ -238,8 +240,8 @@ const styles = StyleSheet.create({
   backButton: {
     width: ms(40),
     height: ms(40),
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    justifyContent: "center",
+    alignItems: "flex-start",
   },
   headerTitle: {
     ...typography.heading2,
@@ -261,8 +263,8 @@ const styles = StyleSheet.create({
     marginBottom: vs(8),
   },
   strengthIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     // marginTop: vs(6),
     marginBottom: vs(12),
   },
@@ -271,7 +273,7 @@ const styles = StyleSheet.create({
   },
   weakPasswordText: {
     ...typography.bodySmall,
-    color: '#F59E0B',
+    color: "#F59E0B",
     flex: 1,
   },
   strongPasswordText: {

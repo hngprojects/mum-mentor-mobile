@@ -1,4 +1,5 @@
 // screens/ProfileScreen.tsx
+import { logoutUser } from "@/src/core/services/authService";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -12,9 +13,11 @@ import {
   View,
 } from "react-native";
 import EditProfileModal from "./EditProfileScreen";
+import LogoutModal from "./LogoutModal";
 
 export default function ProfileScreen({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
 
   const user = {
     name: "Tracy Michaels",
@@ -26,6 +29,15 @@ export default function ProfileScreen({ navigation }: any) {
     id: 1,
     name: "Child's info",
     description: "Manage your baby's profile, age, and key details.",
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      router.replace("/(auth)/SignInScreen");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
@@ -82,7 +94,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.menuItemWrapper}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => navigation.navigate("DataPrivacy")}
+              onPress={() => router.push("/profile/DataPrivacyScreen")}
             >
               <Feather name="shield" size={20} color="#666" />
               <View style={styles.menuTextContainer}>
@@ -96,7 +108,7 @@ export default function ProfileScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => navigation.navigate("AccountSetup")}
+              onPress={() => router.push("/profile/ChangePasswordScreen")}
             >
               <Feather name="settings" size={20} color="#666" />
               <View style={styles.menuTextContainer}>
@@ -135,7 +147,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.menuItemWrapper}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => navigation.navigate("About")}
+              onPress={() => router.push("/profile/AboutScreen")}
             >
               <Feather name="info" size={20} color="#666" />
               <View style={styles.menuTextContainer}>
@@ -147,7 +159,10 @@ export default function ProfileScreen({ navigation }: any) {
               <Feather name="chevron-right" size={20} color="#999" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setShowLogout(true)}
+            >
               <Feather name="log-out" size={20} color="#E63946" />
               <View style={styles.menuTextContainer}>
                 <Text style={[styles.menuTitle, { color: "#E63946" }]}>
@@ -167,6 +182,12 @@ export default function ProfileScreen({ navigation }: any) {
       <EditProfileModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
+      />
+
+      <LogoutModal
+        visible={showLogout}
+        onCancel={() => setShowLogout(false)}
+        onConfirm={handleLogout}
       />
     </SafeAreaView>
   );

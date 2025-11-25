@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
-import ChildSetupItem, { ChildData } from '../components/ChildSetupItem';
-import { colors, typography } from '@/src/core/styles';
-import { ms, vs } from '@/src/core/styles/scaling';
-import PrimaryButton from '../components/PrimaryButton';
-import { SuccessModal, useSuccessModal } from '../components/SucessModal';
-import SecondaryButton from '../components/SecondaryButton';
-import { router } from 'expo-router';
+import { colors, typography } from "@/src/core/styles";
+import { ms, vs } from "@/src/core/styles/scaling";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import ChildSetupItem, { ChildData } from "../components/ChildSetupItem";
+import PrimaryButton from "../components/PrimaryButton";
+import SecondaryButton from "../components/SecondaryButton";
+import { SuccessModal, useSuccessModal } from "../components/SuccessModal";
 
 const SetupScreen = () => {
   const [children, setChildren] = useState<ChildData[]>([
-    { fullName: '', age: '', dob: '', gender: '' },
+    { fullName: "", age: "", dob: "", gender: "" },
   ]);
 
   const addChild = () => {
-    setChildren([...children, { fullName: '', age: '', dob: '', gender: '' }]);
+    setChildren([...children, { fullName: "", age: "", dob: "", gender: "" }]);
   };
 
   const updateChild = (index: number, updatedChild: ChildData) => {
@@ -29,17 +36,18 @@ const SetupScreen = () => {
   };
 
   const canceled = () => {
-    router.back()
+    router.back();
   };
 
   const { visible, show, hide } = useSuccessModal();
 
   const isFormComplete = () => {
-    return children.every(child =>
-      child.fullName?.trim() &&
-      child.age?.trim() &&
-      child.dob?.trim() &&
-      child.gender?.trim()
+    return children.every(
+      (child) =>
+        child.fullName?.trim() &&
+        child.age?.trim() &&
+        child.dob?.trim() &&
+        child.gender?.trim()
     );
   };
 
@@ -69,8 +77,8 @@ const SetupScreen = () => {
         message=""
         iconComponent={
           <Image
-            source={require('../../assets/images/success-icon.png')}   
-            style={styles.successIcon}        
+            source={require("../../assets/images/success-icon.png")}
+            style={styles.successIcon}
           />
         }
       />
@@ -83,10 +91,7 @@ const SetupScreen = () => {
           disabled={!isFormComplete()}
         />
 
-        <SecondaryButton
-          title="Cancel"
-          onPress={canceled} 
-        />
+        <SecondaryButton title="Cancel" onPress={canceled} />
       </View>
     </View>
   );
@@ -106,12 +111,12 @@ const styles = StyleSheet.create({
   title: {
     ...typography.heading1,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: ms(60),
     marginBottom: vs(12),
   },
   addBtn: {
-    alignSelf: 'center',
+    alignSelf: "center",
     marginVertical: 20,
   },
   addBtnText: {
@@ -125,8 +130,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
     borderColor: colors.backgroundSubtle,
   },
-  successIcon:{
+  successIcon: {
     width: ms(60),
-    height: ms(60)
-  }
+    height: ms(60),
+  },
 });

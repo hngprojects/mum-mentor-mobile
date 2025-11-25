@@ -1,51 +1,51 @@
 // src/screens/DeleteAccountScreen.tsx
 
+import { colors, typography } from "@/src/core/styles";
+import { ms, rbr, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
   FlatList,
   Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import React, { useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography } from '@/src/core/styles';
-import { ms, rbr, vs } from '@/src/core/styles/scaling';
-import { router } from 'expo-router';
-import PrimaryButton from '../components/PrimaryButton';
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import PrimaryButton from "../components/PrimaryButton";
 
-const checkedIcon = require('@/src/assets/images/checkbox_checked.png');
-const uncheckedIcon = require('@/src/assets/images/checkbox_unchecked.png');
+const checkedIcon = require("@/src/assets/images/checkbox_checked.png");
+const uncheckedIcon = require("@/src/assets/images/checkbox_unchecked.png");
 
 const reasons = [
   "I don't use this account anymore",
-  'I have another account',
+  "I have another account",
   "I'm not satisfied with the service",
-  'I no longer need the app',
+  "I no longer need the app",
   "I'm taking a break",
   "I'm switching to a different platform",
   "I didn't find what I was looking for",
   "I'm worried about how my data is used",
-  'I had a security concern or issue',
-  'I want to remove my personal information',
-  'Others',
+  "I had a security concern or issue",
+  "I want to remove my personal information",
+  "Others",
 ];
 
 const DeleteAccountScreen = () => {
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
-  const [otherReason, setOtherReason] = useState('');
+  const [otherReason, setOtherReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const toggleReason = (reason: string) => {
     if (selectedReasons.includes(reason)) {
       setSelectedReasons(selectedReasons.filter((r) => r !== reason));
       // Clear other reason text if unchecking "Others"
-      if (reason === 'Others') {
-        setOtherReason('');
+      if (reason === "Others") {
+        setOtherReason("");
       }
     } else {
       setSelectedReasons([...selectedReasons, reason]);
@@ -56,15 +56,15 @@ const DeleteAccountScreen = () => {
     setIsLoading(true);
     try {
       // Your delete account API call here
-      console.log('Selected Reasons:', selectedReasons);
-      router.push('/deleteAccount/ConfirmDelete')
-      if (selectedReasons.includes('Others')) {
-        console.log('Other Reason:', otherReason);
+      console.log("Selected Reasons:", selectedReasons);
+      router.push("/profile/ConfirmDelete");
+      if (selectedReasons.includes("Others")) {
+        console.log("Other Reason:", otherReason);
       }
       // await deleteAccountAPI(selectedReasons, otherReason);
       // router.replace('/account-deleted'); // Navigate to success screen
     } catch (error) {
-      console.error('Error deleting account:', error);
+      console.error("Error deleting account:", error);
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +88,7 @@ const DeleteAccountScreen = () => {
         </TouchableOpacity>
 
         {/* Show TextArea when "Others" is selected */}
-        {item === 'Others' && isChecked && (
+        {item === "Others" && isChecked && (
           <View style={styles.textAreaContainer}>
             <TextInput
               style={styles.textArea}
@@ -107,7 +107,7 @@ const DeleteAccountScreen = () => {
   };
 
   const hasSelectedReasons = selectedReasons.length > 0;
-  const buttonTitle = hasSelectedReasons ? 'Delete' : 'Continue';
+  const buttonTitle = hasSelectedReasons ? "Delete" : "Continue";
   // const isDeleteDisabled =
   //   !hasSelectedReasons ||
   //   (selectedReasons.includes('Others') && !otherReason.trim()) ||
@@ -116,7 +116,7 @@ const DeleteAccountScreen = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
         {/* Header */}
@@ -134,8 +134,8 @@ const DeleteAccountScreen = () => {
         {/* Warning Text */}
         <View style={styles.deleteTextContainer}>
           <Text style={styles.deleteText}>
-            Deleting your account will permanently remove your data and cannot be
-            undone. Please confirm your reason before proceeding.
+            Deleting your account will permanently remove your data and cannot
+            be undone. Please confirm your reason before proceeding.
           </Text>
         </View>
 
@@ -171,9 +171,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: ms(20),
     paddingTop: vs(50),
     paddingBottom: vs(16),
@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
   backButton: {
     width: ms(40),
     height: ms(40),
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    justifyContent: "center",
+    alignItems: "flex-start",
   },
   headerTitle: {
     ...typography.heading2,
@@ -208,15 +208,15 @@ const styles = StyleSheet.create({
     paddingBottom: vs(20),
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: vs(14),
   },
   checkbox: {
     width: ms(24),
     height: ms(24),
     marginRight: ms(12),
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   label: {
     ...typography.bodyMedium,
