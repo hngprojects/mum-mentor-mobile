@@ -19,7 +19,6 @@ import { ms } from "../../core/styles/scaling";
 // --- Component Imports ---
 import EditProfileModal from "./EditProfileScreen";
 import LogoutModal from "./LogoutModal";
-import { colors, typography } from "@/src/core/styles";
 
 /**
  * @fileoverview ProfileScreen component displaying user information and settings menu.

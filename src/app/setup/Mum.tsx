@@ -72,8 +72,11 @@ const MomSetupScreen: React.FC = () => {
   const handleAddGoal = () => {
     if (!newGoal.trim()) return;
 
+    const updatedGoals = [...goals, newGoal];
+
     setGoals([...goals, newGoal]);
     setCustomGoals([...customGoals, newGoal]);
+    setSelectedGoals([...selectedGoals, newGoal]);
     setNewGoal("");
     setIsModalVisible(false);
   };
@@ -257,12 +260,6 @@ const MomSetupScreen: React.FC = () => {
 
                     {isCustomGoal && (
                       <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          style={styles.editButton}
-                          onPress={() => handleOpenEditModal(goal)}
-                        >
-                          <Text style={styles.editButtonText}>✎</Text>
-                        </TouchableOpacity>
                         
                         <TouchableOpacity
                           style={styles.deleteButton}
@@ -289,7 +286,7 @@ const MomSetupScreen: React.FC = () => {
               onAddGoal={handleAddGoal}
             />
 
-            <EditGoalModal
+            {/* <EditGoalModal
               visible={isEditModalVisible}
               onClose={() => {
                 setIsEditModalVisible(false);
@@ -299,52 +296,12 @@ const MomSetupScreen: React.FC = () => {
               goalValue={editedGoalValue}
               setGoalValue={setEditedGoalValue}
               onUpdateGoal={handleUpdateGoal}
-            />
+            /> */}
           </View>
 
           {/* Optional Setup */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Optional Set up</Text>
-
-            <Text style={styles.label}>Add Partner</Text>
-            {!showInputs ? (
-              <TouchableOpacity
-                style={styles.addPartnerButton}
-                onPress={() => setShowInputs(true)}
-              >
-                <Text style={styles.addPartnerText}>+ Add Partner</Text>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <CustomInput
-                  label="Partner's Name"
-                  placeholder="Enter Partners Name"
-                  value={partnersName}
-                  onChangeText={(text) => {
-                    setPartnersName(text);
-                    setErrors({ ...errors, partnersName: undefined });
-                  }}
-                  isError={!!errors.partnersName}
-                  errorMessage={errors.partnersName}
-                  iconName="person-outline"
-                  isValid={partnersName.trim().length > 0 && !errors.partnersName}
-                />
-                <CustomInput
-                  label="Email Address"
-                  placeholder="Enter Partner Email"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    setErrors({ ...errors, email: undefined });
-                  }}
-                  keyboardType="email-address"
-                  isError={!!errors.email}
-                  errorMessage={errors.email}
-                  iconName="mail-outline"
-                  isValid={email.includes('@') && email.length > 0 && !errors.email}
-                />
-              </>
-            )}
 
             <View style={styles.notificationRow}>
               <Text style={styles.label}>Prioritise Notifications</Text>
@@ -435,9 +392,7 @@ const styles = StyleSheet.create({
   actionButtons: {
     position: 'absolute',
     right: ms(4),
-    top: vs(4),
-    flexDirection: 'row',
-    gap: ms(4),
+    top: vs(6),
   },
   editButton: {
     width: ms(24),
@@ -453,8 +408,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   deleteButton: {
-    width: ms(24),
-    height: ms(24),
+    width: ms(20),
+    height: ms(20),
     borderRadius: ms(12),
     backgroundColor: colors.primary,
     justifyContent: 'center',
@@ -462,8 +417,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: colors.textWhite,
-    fontSize: rfs(18),
-    fontWeight: 'bold',
+    fontSize: rfs(14),
     lineHeight: rfs(20),
   },
   addChip: {
@@ -476,14 +430,6 @@ const styles = StyleSheet.create({
   addChipText: { 
     ...typography.labelMedium, 
     color: colors.textGrey1 
-  },
-  addPartnerButton: { 
-    alignSelf: 'center', 
-    marginBottom: vs(spacing.lg) 
-  },
-  addPartnerText: { 
-    ...typography.labelLarge, 
-    color: colors.primaryLight,  
   },
   notificationRow: {
     flexDirection: 'row',
