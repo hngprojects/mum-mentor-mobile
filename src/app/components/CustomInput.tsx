@@ -126,7 +126,8 @@ const CustomInput: React.FC<CustomInputProps> = ({
       marginTop: ms(spacing.xs),
     },
     passwordToggle: {
-      paddingLeft: ms(spacing.sm),
+      flexDirection: "row",
+      alignItems: "center",
     },
   });
 

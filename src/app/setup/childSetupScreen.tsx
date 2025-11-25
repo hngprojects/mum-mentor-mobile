@@ -69,7 +69,8 @@ const SetupScreen = () => {
         message=""
         iconComponent={
           <Image
-            source={require('../../assets/images/success-icon.png')}          
+            source={require('../../assets/images/success-icon.png')}   
+            style={styles.successIcon}        
           />
         }
       />
@@ -124,4 +125,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
     borderColor: colors.backgroundSubtle,
   },
+  successIcon:{
+    width: ms(60),
+    height: ms(60)
+  }
 });
