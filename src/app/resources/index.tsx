@@ -14,109 +14,45 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing, typography } from "../../core/styles";
 import { ms, rfs } from "../../core/styles/scaling";
 import CategoryTabs from "../components/resources/CategoryTabs";
-import ResourceSection, {
-  ResourceListItem,
-} from "../components/resources/ResourceSection";
+import ResourceSection from "../components/resources/ResourceSection";
 import SearchBar from "../components/resources/SearchBar";
-
-type Category = {
-  id: string;
-  label: string;
-};
-
-type ResourceSectionData = {
-  id: string;
-  title: string;
-  categoryId: string;
-  resources: ResourceListItem[];
-};
-
-const categories: Category[] = [
-  { id: "all", label: "All" },
-  { id: "parenting", label: "Parenting" },
-  { id: "selfCare", label: "Self-care" },
-  { id: "recipe", label: "Quick recipe" },
-];
-
-// Temporary demo data to mirror the design. This will be replaced by API data once available.
-const resourceSections: ResourceSectionData[] = [
-  {
-    id: "parenting-hacks",
-    title: "Parenting Hacks",
-    categoryId: "parenting",
-    resources: [
-      {
-        id: "quick-diaper",
-        title: "Quick Diaper Change",
-        description: "Use a portable changing pad and keep essentials organized.",
-        image: { uri: "" },
-      },
-      {
-        id: "soothing-crying-baby",
-        title: "Soothing a Crying Baby",
-        description: "Try swaddling, gentle rocking, or white noise to calm your baby.",
-        image: { uri: "" },
-      },
-    ],
-  },
-  {
-    id: "quick-recipes",
-    title: "Quick Recipes",
-    categoryId: "recipe",
-    resources: [
-      {
-        id: "easy-smoothie",
-        title: "Easy Smoothie",
-        description: "Whip up a vitamin-rich smoothie to keep energy levels up.",
-        image: { uri: "" },
-      },
-      {
-        id: "avocado-toast",
-        title: "Avocado Toast",
-        description: "Layer avocado on toast for a fast, filling bite.",
-        image: { uri: "" },
-      },
-    ],
-  },
-  {
-    id: "child-development",
-    title: "Child Development",
-    categoryId: "parenting",
-    resources: [
-      {
-        id: "encouraging-crawling",
-        title: "Encouraging Crawling",
-        description: "Place toys just out of reach to motivate your baby to crawl.",
-        image: { uri: "" },
-      },
-      {
-        id: "first-words",
-        title: "First Words",
-        description: "Talk to your baby often and repeat simple words to encourage speech.",
-        image: { uri: "" },
-      },
-    ],
-  },
-];
+import { categories, resourceSections } from "./data";
 
 const ResourcesScreen: React.FC = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState(categories[0].id);
 
-  const visibleSections = useMemo(() => {
-    if (activeCategoryId === "all") {
-      return resourceSections;
+  const filteredSections = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    let sections =
+      activeCategoryId === "all"
+        ? resourceSections
+        : resourceSections.filter((section) => section.categoryId === activeCategoryId);
+
+    if (!normalizedQuery) {
+      return sections;
     }
 
-    return resourceSections.filter(
-      (section) => section.categoryId === activeCategoryId,
-    );
-  }, [activeCategoryId]);
+    sections = sections
+      .map((section) => {
+        const visibleResources = section.resources.filter((resource) =>
+          `${resource.title} ${resource.description}`.toLowerCase().includes(normalizedQuery),
+        );
 
-  const handleViewAll = (_sectionTitle: string) => {
-    // TODO: Wire up navigation to category-specific list once endpoints are available.
+        return { ...section, resources: visibleResources };
+      })
+      .filter((section) => section.resources.length > 0);
+
+    return sections;
+  }, [activeCategoryId, searchQuery]);
+
+  const handleViewAll = (sectionId: string) => {
+    router.push({ pathname: "/resources/[sectionId]", params: { sectionId } });
   };
+
+  const hasResults = filteredSections.length > 0;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -126,6 +62,7 @@ const ResourcesScreen: React.FC = () => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header with back button, title, and View Saved action */}
         <View style={styles.headerRow}>
           <TouchableOpacity
             onPress={() => router.back()}
@@ -149,8 +86,14 @@ const ResourcesScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+        {/* Search bar */}
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search"
+        />
 
+        {/* Category filter tabs */}
         <View style={styles.sectionSpacing}>
           <Text style={styles.sectionLabel}>Categories</Text>
           <CategoryTabs
@@ -160,15 +103,25 @@ const ResourcesScreen: React.FC = () => {
           />
         </View>
 
-        {visibleSections.map((section) => (
-          <ResourceSection
-            key={section.id}
-            title={section.title}
-            resources={section.resources}
-            onPressViewAll={() => handleViewAll(section.title)}
-            style={styles.sectionSpacing}
-          />
-        ))}
+        {/* Resource sections or empty state */}
+        {hasResults ? (
+          filteredSections.map((section) => (
+            <ResourceSection
+              key={section.id}
+              title={section.title}
+              resources={section.resources}
+              onPressViewAll={() => handleViewAll(section.id)}
+              style={styles.sectionSpacing}
+            />
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No resources found</Text>
+            <Text style={styles.emptyDescription}>
+              Try a different search term or choose another category.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -224,6 +177,22 @@ const styles = StyleSheet.create({
     fontSize: rfs(typography.labelLarge.fontSize),
     fontFamily: typography.labelLarge.fontFamily,
     color: colors.textPrimary,
+  },
+  emptyState: {
+    gap: ms(spacing.xs),
+    paddingVertical: ms(spacing.lg),
+    alignItems: "center",
+  },
+  emptyTitle: {
+    fontSize: rfs(typography.heading3.fontSize),
+    fontFamily: typography.heading3.fontFamily,
+    color: colors.textPrimary,
+  },
+  emptyDescription: {
+    fontSize: rfs(typography.bodySmall.fontSize),
+    fontFamily: typography.bodySmall.fontFamily,
+    color: colors.textSecondary,
+    textAlign: "center",
   },
 });
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageSourcePropType, StyleSheet, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import ResourceCard from "./ResourceCard";
 import SectionHeader from "./SectionHeader";
@@ -7,17 +7,12 @@ import SectionHeader from "./SectionHeader";
 import { spacing } from "../../../core/styles";
 import { ms } from "../../../core/styles/scaling";
 
-export type ResourceListItem = {
-  id: string;
-  title: string;
-  description: string;
-  image: ImageSourcePropType;
-};
+import { ResourceListItem } from "../../resources/types";
 
 interface ResourceSectionProps {
   title: string;
   resources: ResourceListItem[];
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   onPressViewAll?: () => void;
   onPressResource?: (resourceId: string) => void;
 }
