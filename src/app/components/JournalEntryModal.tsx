@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TextStyle,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -24,7 +24,7 @@ import PrimaryButton from './PrimaryButton';
 import SecondaryButton from './SecondaryButton';
 
 interface JournalEntry {
-  id?: string;
+  id: string;
   title: string;
   date: string;
   categories: string[];

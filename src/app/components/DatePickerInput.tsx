@@ -1,16 +1,16 @@
+import { colors, typography } from '@/src/core/styles';
+import { ms, rbr, vs } from '@/src/core/styles/scaling';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import {
-  View,
+  Modal,
+  Platform,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Modal,
+  View,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography } from '@/src/core/styles';
-import { ms, vs, rbr } from '@/src/core/styles/scaling';
 
 interface DatePickerInputProps {
   label: string;

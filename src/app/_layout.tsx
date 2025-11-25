@@ -95,7 +95,11 @@ function RootLayoutContent() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+<<<<<<< HEAD
         <Stack.Screen name="Journal" />
+=======
+        <Stack.Screen name="resources" />
+>>>>>>> d3afcfcd8e642ae1b312b3762eda6939023b32e3
       </Stack>
       <Redirect href="/(tabs)/Home" />
     </>

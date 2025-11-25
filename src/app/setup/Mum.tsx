@@ -1,5 +1,3 @@
-// src/screens/MomSetupScreen.tsx
-
 import React, { useState } from 'react';
 import {
   View,
@@ -107,6 +105,23 @@ const MomSetupScreen: React.FC = () => {
     setEditingGoal("");
     setEditedGoalValue("");
   };
+
+  const isFormValid = () => {
+  // Required: Status chosen
+  if (!selectedStatus) return false;
+
+  // Required: At least one goal chosen
+  if (selectedGoals.length === 0) return false;
+
+  // Optional partner section: Only validate if inputs are visible
+  // if (showInputs) {
+  //   if (!partnersName.trim()) return false;
+  //   if (!email.trim() || !email.includes("@")) return false;
+  // }
+
+  return true;
+};
+
 
   const nextPage = () => {
     router.push('/setup/childSetupScreen')
@@ -281,6 +296,7 @@ const MomSetupScreen: React.FC = () => {
         <PrimaryButton
           title="Next"
           onPress={nextPage}
+          disabled={!isFormValid()}
         />
       </ScrollView>
     </KeyboardAvoidingView>

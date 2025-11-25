@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StatusBar,
@@ -17,7 +16,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
+<<<<<<< HEAD
 import { logoutUser } from "@/src/core/services/authService";
+=======
+>>>>>>> d3afcfcd8e642ae1b312b3762eda6939023b32e3
 import { fetchTasks } from "@/src/core/services/tasksService";
 import { getCurrentUser } from "@/src/core/services/userService";
 
@@ -67,7 +69,7 @@ const quickActions: QuickAction[] = [
  */
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  
+
   if (hour >= 5 && hour < 12) {
     return "Good Morning";
   } else if (hour >= 12 && hour < 17) {
@@ -83,7 +85,6 @@ const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isAppAction, setIsAppAction] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [user, setUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
@@ -94,9 +95,9 @@ const Home = () => {
     setIsLoadingUser(true);
     try {
       const response = await getCurrentUser();
-      
+
       // Set user directly from response
-      setUser(response || null); 
+      setUser(response || null);
     } catch (error) {
       console.log("User fetch error:", error);
     } finally {
@@ -129,42 +130,6 @@ const Home = () => {
     setIsSuccessModalVisible(false);
   };
 
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            setIsLoggingOut(true);
-            try {
-              const response = await logoutUser();
-              console.log("Logout success:", response);
-              router.push("/SignInScreen");
-            } catch (error: any) {
-              console.error("Logout error:", error);
-              Alert.alert(
-                "Error",
-                error?.response?.data?.message ||
-                  error?.message ||
-                  "Failed to logout. Please try again."
-              );
-            } finally {
-              setIsLoggingOut(false);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
   useEffect(() => {
     loadUser();
     listUserTasks();
@@ -178,7 +143,7 @@ const Home = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={colors.backgroundMain}
@@ -190,19 +155,28 @@ const Home = () => {
         {/* Top Bar */}
         <View style={styles.topBar}>
           <View>
-            <View style={styles.greetingRow}>
-              <Image source={profileImage} style={styles.profileAvatar} />
+            <TouchableOpacity
+              onPress={() => router.push("/profile/ProfileScreen")}
+            >
+              <View style={styles.greetingRow}>
+                <Image source={profileImage} style={styles.profileAvatar} />
 
-              {/* Greeting displays only the first name using split(" ")[0] */}
-              <Text style={styles.greetingLabel}>
-                Hi, {isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"}
-              </Text>
-            </View>
+                {/* Greeting displays only the first name using split(" ")[0] */}
+                <Text style={styles.greetingLabel}>
+                  Hi,{" "}
+                  {isLoadingUser
+                    ? "..."
+                    : user?.full_name?.split(" ")[0] || "User"}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
             <Text style={styles.greetingTitle}>{greeting}</Text>
           </View>
 
-          <Image source={notificationIcon} style={styles.notificationIcon} />
+          <TouchableOpacity onPress={() => router.push("../notifications")}>
+            <Image source={notificationIcon} style={styles.notificationIcon} />
+          </TouchableOpacity>
         </View>
 
         {/* Hero Section */}
@@ -230,24 +204,40 @@ const Home = () => {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
             {quickActions.map((action) => (
+<<<<<<< HEAD
               <TouchableOpacity 
                 key={action.id} 
                 style={styles.quickActionCard}
                 onPress={() => {
                   if (action.id === 'journal') {
                     router.push('/Journal');
+=======
+              <TouchableOpacity
+                key={action.id}
+                style={styles.quickActionCard}
+                activeOpacity={0.9}
+                onPress={() => {
+                  if (action.id === "resources") {
+                    router.push("/resources");
+>>>>>>> d3afcfcd8e642ae1b312b3762eda6939023b32e3
                   }
                 }}
               >
                 {action.id === "journal" ? (
                   <Image
                     source={journalIcon}
-                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
                   />
                 ) : action.id === "resources" ? (
                   <Image
                     source={resourceIcon}
-                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
                   />
                 ) : (
                   <Feather
@@ -258,7 +248,13 @@ const Home = () => {
                   />
                 )}
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
+<<<<<<< HEAD
                 <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
+=======
+                <Text style={styles.quickActionSubtitle}>
+                  {action.subtitle}
+                </Text>
+>>>>>>> d3afcfcd8e642ae1b312b3762eda6939023b32e3
               </TouchableOpacity>
             ))}
           </View>
@@ -268,7 +264,11 @@ const Home = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
-            <TouchableOpacity onPress={() => { router.push('../components/TaskPage')}}>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("../components/TaskPage");
+              }}
+            >
               <Text style={styles.viewAllLink}>View All</Text>
             </TouchableOpacity>
           </View>
@@ -295,16 +295,6 @@ const Home = () => {
               setAppAction={() => setIsAppAction(true)}
             />
           )}
-        </View>
-
-        {/* Logout Button */}
-        <View style={styles.logoutSection}>
-          <SecondaryButton
-            title={isLoggingOut ? "Logging out..." : "Logout"}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-            disabled={isLoggingOut}
-          />
         </View>
       </ScrollView>
 

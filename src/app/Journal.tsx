@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   Platform,
@@ -7,18 +8,23 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextStyle,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '../core/styles/index';
 import { ms, rfs } from '../core/styles/scaling';
+import JournalEntryCard from './components/JournalEntryCard';
 import JournalEntryModal from './components/JournalEntryModal';
 import { UploadedPhoto } from './components/PhotoUploader';
 import PrimaryButton from './components/PrimaryButton';
 
 const journalIcon = require('../assets/images/journalicon.png');
 const arrowIcon = require('../assets/images/arrow.png');
+
+const STORAGE_KEY = 'journal_entries';
 
 interface JournalEntry {
   id: string;
@@ -34,15 +40,43 @@ const JournalScreen = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const hasEntries = entries.length > 0;
 
-  const handleSaveEntry = (entry: JournalEntry) => {
+  const categories = ['All', 'Sleep', 'Memories', 'Body Recovery', 'Challenges', 'Milestone', 'Self-Care'];
+
+  // Load entries from AsyncStorage on mount
+  useEffect(() => {
+    loadEntries();
+  }, []);
+
+  const loadEntries = async () => {
+    try {
+      const storedEntries = await AsyncStorage.getItem(STORAGE_KEY);
+      if (storedEntries) {
+        setEntries(JSON.parse(storedEntries));
+      }
+    } catch (error) {
+      console.error('Error loading entries:', error);
+    }
+  };
+
+  const handleSaveEntry = async (entry: JournalEntry) => {
     setIsLoading(true);
     try {
       // Simulate API call delay
-      setTimeout(() => {
-        setEntries((prev) => [entry, ...prev]);
+      setTimeout(async () => {
+        const updatedEntries = [entry, ...entries];
+        setEntries(updatedEntries);
+        
+        // Save to AsyncStorage
+        try {
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEntries));
+        } catch (storageError) {
+          console.error('Error saving to AsyncStorage:', storageError);
+        }
+        
         setIsCreateModalVisible(false);
         setIsLoading(false);
       }, 500);
@@ -51,6 +85,10 @@ const JournalScreen = () => {
       setIsLoading(false);
     }
   };
+
+  const filteredEntries = selectedCategory === 'All' 
+    ? entries 
+    : entries.filter(entry => entry.categories.includes(selectedCategory));
 
   return (
     <>
@@ -70,13 +108,65 @@ const JournalScreen = () => {
 
           {/* Content */}
           {hasEntries ? (
-            <ScrollView 
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Journal entries will be rendered here */}
-            </ScrollView>
+            <>
+              {/* Categories Label */}
+              <Text style={styles.categoriesLabel}>Categories</Text>
+
+              {/* Category Filter Tabs */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoriesScroll}
+                contentContainerStyle={styles.categoriesContent}
+              >
+                {categories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    onPress={() => setSelectedCategory(cat)}
+                    style={styles.categoryTab}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryTabText,
+                        selectedCategory === cat && styles.categoryTabTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                    {selectedCategory === cat && (
+                      <View style={styles.categoryTabUnderline} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Journal Entries List */}
+              <ScrollView 
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {filteredEntries.length > 0 ? (
+                  filteredEntries.map((entry) => (
+                    <JournalEntryCard
+                      key={entry.id}
+                      title={entry.title}
+                      category={entry.categories[0] || 'Memories'}
+                      mood={entry.mood}
+                      thoughts={entry.thoughts}
+                      date={entry.date}
+                      photo={entry.photos[0]}
+                    />
+                  ))
+                ) : (
+                  <View style={styles.noEntriesContainer}>
+                    <Text style={styles.noEntriesText}>
+                      No entries in this category
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </>
           ) : (
             <View style={styles.emptyContainer}>
               <Image source={journalIcon} style={styles.emptyIcon} />
@@ -117,6 +207,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.textWhite,
+    flexDirection: 'column',
   },
   header: {
     flexDirection: 'row',
@@ -172,8 +263,53 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: ms(100),
+    paddingBottom: ms(10),
+    paddingHorizontal: ms(spacing.lg),
+    paddingTop: ms(spacing.md),
   },
+  categoriesLabel: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    paddingHorizontal: ms(spacing.lg),
+    marginTop: ms(spacing.md),
+    marginBottom: ms(spacing.sm),
+  } as TextStyle,
+  categoriesScroll: {
+    paddingVertical: ms(spacing.md),
+  } as ViewStyle,
+  categoriesContent: {
+    paddingHorizontal: ms(spacing.md),
+    gap: ms(spacing.sm),
+  } as ViewStyle,
+  categoryTab: {
+    alignItems: 'center',
+    paddingBottom: ms(spacing.sm),
+    width: ms(105),
+  } as ViewStyle,
+  categoryTabText: {
+    ...typography.bodyMedium,
+    color: colors.textGrey1,
+    marginBottom: ms(spacing.xs),
+    flexshrink:1,
+  } as TextStyle,
+  categoryTabTextActive: {
+    color: colors.textPrimary,
+    fontWeight: '600',
+  } as TextStyle,
+  categoryTabUnderline: {
+    height: ms(2),
+    width: ms(50),
+    backgroundColor: colors.primary,
+  } as ViewStyle,
+  noEntriesContainer: {
+    paddingVertical: ms(spacing.xl),
+    alignItems: 'center',
+  } as ViewStyle,
+  noEntriesText: {
+    ...typography.bodyMedium,
+    color: colors.textGrey1,
+  } as TextStyle,
   fabContainer: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? ms(40) : ms(30),
