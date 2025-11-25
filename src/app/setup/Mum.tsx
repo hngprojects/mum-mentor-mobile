@@ -10,7 +10,9 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { colors, spacing, typography } from '@/src/core/styles';
 import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
 import AddGoalModal from '../components/AddGoalModal';
@@ -18,6 +20,8 @@ import EditGoalModal from '../components/EditGoalModal';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { router } from 'expo-router';
+import { useSetup } from '../../core/hooks/setupContext';
+import { MomSetupData } from '@/src/core/services/setupStorageService';
 
 const momStatuses: string[] = ['Pregnant', 'New Mom', 'Toddler Mom', 'Mixed'];
 
@@ -33,9 +37,13 @@ const defaultGoals: string[] = [
 interface Errors {
   partnersName?: string;
   email?: string;
+  momStatus?: string;
+  goals?: string;
 }
 
 const MomSetupScreen: React.FC = () => {
+  const { saveMomSetup } = useSetup();
+
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
@@ -46,12 +54,14 @@ const MomSetupScreen: React.FC = () => {
   const [editingGoal, setEditingGoal] = useState<string>("");
   const [editedGoalValue, setEditedGoalValue] = useState<string>("");
   const [goals, setGoals] = useState<string[]>(defaultGoals);
-  const [customGoals, setCustomGoals] = useState<string[]>([]); // Track custom goals
+  const [customGoals, setCustomGoals] = useState<string[]>([]);
 
   const [showInputs, setShowInputs] = useState<boolean>(false);
   const [partnersName, setPartnersName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [errors, setErrors] = useState<Errors>({});
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const toggleGoal = (goal: string) => {
     if (selectedGoals.includes(goal)) {
@@ -64,18 +74,20 @@ const MomSetupScreen: React.FC = () => {
   const handleAddGoal = () => {
     if (!newGoal.trim()) return;
 
+    const updatedGoals = [...goals, newGoal];
+
     setGoals([...goals, newGoal]);
-    setCustomGoals([...customGoals, newGoal]); // Track as custom goal
+    setCustomGoals([...customGoals, newGoal]);
+    setSelectedGoals([...selectedGoals, newGoal]);
     setNewGoal("");
     setIsModalVisible(false);
   };
 
   const handleDeleteGoal = (goal: string) => {
-    // Only allow deletion of custom goals
     if (customGoals.includes(goal)) {
       setGoals(goals.filter(g => g !== goal));
       setCustomGoals(customGoals.filter(g => g !== goal));
-      setSelectedGoals(selectedGoals.filter(g => g !== goal)); // Also remove from selected
+      setSelectedGoals(selectedGoals.filter(g => g !== goal));
     }
   };
 
@@ -91,16 +103,12 @@ const MomSetupScreen: React.FC = () => {
       return;
     }
 
-    // Update in goals array
     const updatedGoals = goals.map(g => g === editingGoal ? editedGoalValue : g);
-    setGoals(updatedGoals);
-
-    // Update in custom goals array
     const updatedCustomGoals = customGoals.map(g => g === editingGoal ? editedGoalValue : g);
-    setCustomGoals(updatedCustomGoals);
-
-    // Update in selected goals if it was selected
     const updatedSelectedGoals = selectedGoals.map(g => g === editingGoal ? editedGoalValue : g);
+
+    setGoals(updatedGoals);
+    setCustomGoals(updatedCustomGoals);
     setSelectedGoals(updatedSelectedGoals);
 
     setIsEditModalVisible(false);
@@ -108,182 +116,216 @@ const MomSetupScreen: React.FC = () => {
     setEditedGoalValue("");
   };
 
-  const nextPage = () => {
-    router.push('/setup/childSetupScreen')
-  }
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
+    let isValid = true;
+
+    if (!selectedStatus) {
+      newErrors.momStatus = 'Please select a mom status';
+      isValid = false;
+    }
+
+    if (selectedGoals.length === 0) {
+      newErrors.goals = 'Please select at least one goal';
+      isValid = false;
+    }
+
+    if (showInputs) {
+      if (!partnersName.trim()) {
+        newErrors.partnersName = "Partner's name is required";
+        isValid = false;
+      }
+
+      if (!email.trim()) {
+        newErrors.email = 'Email is required';
+        isValid = false;
+      } else if (!email.includes('@')) {
+        newErrors.email = 'Please enter a valid email';
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleNext = async () => {
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please complete all required fields.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const momSetupData: MomSetupData = {
+        momStatus: selectedStatus,
+        selectedGoals: selectedGoals,
+        customGoals: customGoals,
+        notificationsEnabled: notificationsEnabled,
+      };
+
+      if (showInputs && partnersName.trim() && email.trim()) {
+        momSetupData.partner = {
+          name: partnersName.trim(),
+          email: email.trim().toLowerCase(),
+        };
+      }
+
+      await saveMomSetup(momSetupData);
+
+      router.push('/setup/childSetupScreen');
+
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save your setup. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
-      <ScrollView 
-        style={styles.scrollView} 
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.scrollContent}
+    <>
+      <StatusBar style="dark" />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.header}>Set Up</Text>
 
-        <Text style={styles.header}>Set Up</Text>
+          {/* Mom Setup Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mom Set up</Text>
 
-        {/* Mom Setup Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mom Set up</Text>
+            <Text style={styles.label}>Mom Status</Text>
+            {errors.momStatus && <Text style={styles.errorText}>{errors.momStatus}</Text>}
 
-          <Text style={styles.label}>Mom Status</Text>
-          <View style={styles.chipContainer}>
-            {momStatuses.map((status) => (
-              <TouchableOpacity
-                key={status}
-                style={[
-                  styles.chip,
-                  selectedStatus === status && styles.chipSelected
-                ]}
-                onPress={() => setSelectedStatus(status)}
-              >
-                <Text
+            <View style={styles.chipContainer}>
+              {momStatuses.map((status) => (
+                <TouchableOpacity
+                  key={status}
                   style={[
-                    styles.chipText,
-                    selectedStatus === status && styles.chipTextSelected
+                    styles.chip,
+                    selectedStatus === status && styles.chipSelected
                   ]}
+                  onPress={() => {
+                    setSelectedStatus(status);
+                    setErrors({ ...errors, momStatus: undefined });
+                  }}
                 >
-                  {status}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Goals */}
-          <Text style={styles.label}>Goals</Text>
-          <View style={styles.chipContainer}>
-            {goals.map((goal) => {
-              const isCustomGoal = customGoals.includes(goal);
-              return (
-                <View key={goal} style={styles.chipWrapper}>
-                  <TouchableOpacity
+                  <Text
                     style={[
-                      styles.chip,
-                      selectedGoals.includes(goal) && styles.chipSelected,
-                      isCustomGoal && styles.chipWithButtons
+                      styles.chipText,
+                      selectedStatus === status && styles.chipTextSelected
                     ]}
-                    onPress={() => toggleGoal(goal)}
                   >
-                    <Text
+                    {status}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Goals */}
+            <Text style={styles.label}>Goals</Text>
+            {errors.goals && <Text style={styles.errorText}>{errors.goals}</Text>}
+
+            <View style={styles.chipContainer}>
+              {goals.map((goal) => {
+                const isCustomGoal = customGoals.includes(goal);
+                return (
+                  <View key={goal} style={styles.chipWrapper}>
+                    <TouchableOpacity
                       style={[
-                        styles.chipText,
-                        selectedGoals.includes(goal) && styles.chipTextSelected
+                        styles.chip,
+                        selectedGoals.includes(goal) && styles.chipSelected,
+                        isCustomGoal && styles.chipWithButtons
                       ]}
+                      onPress={() => {
+                        toggleGoal(goal);
+                        setErrors({ ...errors, goals: undefined });
+                      }}
                     >
-                      {goal}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  {/* Edit and Delete buttons for custom goals */}
-                  {isCustomGoal && (
-                    <View style={styles.actionButtons}>
-                      <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => handleOpenEditModal(goal)}
+                      <Text
+                        style={[
+                          styles.chipText,
+                          selectedGoals.includes(goal) && styles.chipTextSelected
+                        ]}
                       >
-                        <Text style={styles.editButtonText}>✎</Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDeleteGoal(goal)}
-                      >
-                        <Text style={styles.deleteButtonText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              );
-            })}
+                        {goal}
+                      </Text>
+                    </TouchableOpacity>
 
-            <TouchableOpacity style={styles.addChip} onPress={() => setIsModalVisible(true)}>
-              <Text style={styles.addChipText}>+ Add</Text>
-            </TouchableOpacity>
-          </View>
+                    {isCustomGoal && (
+                      <View style={styles.actionButtons}>
+                        
+                        <TouchableOpacity
+                          style={styles.deleteButton}
+                          onPress={() => handleDeleteGoal(goal)}
+                        >
+                          <Text style={styles.deleteButtonText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
 
-          {/* Add Goal Modal */}
-          <AddGoalModal
-            visible={isModalVisible}
-            onClose={() => setIsModalVisible(false)}
-            newGoal={newGoal}
-            setNewGoal={setNewGoal}
-            onAddGoal={handleAddGoal}
-          />
+              <TouchableOpacity style={styles.addChip} onPress={() => setIsModalVisible(true)}>
+                <Text style={styles.addChipText}>+ Add</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Edit Goal Modal */}
-          <EditGoalModal
-            visible={isEditModalVisible}
-            onClose={() => {
-              setIsEditModalVisible(false);
-              setEditingGoal("");
-              setEditedGoalValue("");
-            }}
-            goalValue={editedGoalValue}
-            setGoalValue={setEditedGoalValue}
-            onUpdateGoal={handleUpdateGoal}
-          />
-        </View>
-
-        {/* Optional Setup Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Optional Set up</Text>
-
-          <Text style={styles.label}>Add Partner</Text>
-          {!showInputs ? (
-            <TouchableOpacity
-              style={styles.addPartnerButton}
-              onPress={() => setShowInputs(true)}
-            >
-              <Text style={styles.addPartnerText}>+ Add Partner</Text>
-            </TouchableOpacity>
-          ) : (
-            <>
-              <CustomInput
-                label="Add Partner"
-                placeholder="Enter Partners Name"
-                value={partnersName}
-                onChangeText={setPartnersName}
-                isError={!!errors.partnersName}
-                errorMessage={errors.partnersName}
-                iconName="person-outline"
-                isValid={partnersName.length > 0 && !errors.partnersName}
-              />
-              <CustomInput
-                label="Email Address"
-                placeholder="Enter Partner Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                isError={!!errors.email}
-                errorMessage={errors.email}
-                iconName="mail-outline"
-                isValid={email.includes('@') && email.length > 0 && !errors.email}
-              />
-            </>
-          )}
-
-          <View style={styles.notificationRow}>
-            <Text style={styles.label}>Prioritise Notifications</Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: colors.textGrey2, true: colors.primary }}
-              thumbColor={notificationsEnabled ? colors.secondaryExtraLight : colors.secondaryExtraLight}
+            <AddGoalModal
+              visible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              newGoal={newGoal}
+              setNewGoal={setNewGoal}
+              onAddGoal={handleAddGoal}
             />
+
+            {/* <EditGoalModal
+              visible={isEditModalVisible}
+              onClose={() => {
+                setIsEditModalVisible(false);
+                setEditingGoal("");
+                setEditedGoalValue("");
+              }}
+              goalValue={editedGoalValue}
+              setGoalValue={setEditedGoalValue}
+              onUpdateGoal={handleUpdateGoal}
+            /> */}
           </View>
-        </View>
-        
-        <PrimaryButton
-          title="Next"
-          onPress={nextPage}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          {/* Optional Setup */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Optional Set up</Text>
+
+            <View style={styles.notificationRow}>
+              <Text style={styles.label}>Prioritise Notifications</Text>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+                trackColor={{ false: colors.textGrey2, true: colors.primary }}
+                thumbColor={notificationsEnabled ? colors.secondaryExtraLight : colors.secondaryExtraLight}
+              />
+            </View>
+          </View>
+
+          <PrimaryButton
+            title="Next"
+            onPress={handleNext}
+            isLoading={isLoading}
+            disabled={isLoading}
+          />
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
@@ -294,50 +336,49 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: colors.backgroundMain 
   },
-  scrollView: { 
-    flex: 1, 
-  },
+  scrollView: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: vs(40),
+    paddingHorizontal: ms(spacing.lg),
+    paddingTop: vs(60),
+    paddingBottom: vs(spacing.xl * 2),
   },
   header: {
     ...typography.heading1,
     color: colors.textPrimary,
     textAlign: 'center',
-    marginTop: ms(60),
-    marginBottom: vs(12),
+    marginBottom: vs(spacing.xl),
   },
-  section: { marginBottom: 30 },
+  section: { marginBottom: vs(spacing.xl) },
   sectionTitle: { 
     ...typography.heading3,
     color: colors.textPrimary, 
-    marginBottom: 20 
+    marginBottom: vs(spacing.md) 
   },
   label: { 
     ...typography.labelLarge,
     color: colors.textPrimary, 
-    marginBottom: 12, 
+    marginBottom: vs(spacing.sm), 
+  },
+  errorText: {
+    ...typography.bodySmall,
+    color: colors.error,
+    marginBottom: vs(spacing.xs),
   },
   chipContainer: { 
     flexDirection: 'row', 
     flexWrap: 'wrap', 
-    gap: 10,
-    marginBottom: 12, 
+    gap: ms(spacing.sm),
+    marginBottom: vs(spacing.md), 
   },
-  chipWrapper: {
-    position: 'relative',
-  },
+  chipWrapper: { position: 'relative' },
   chip: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: vs(spacing.sm),
+    paddingHorizontal: ms(spacing.md),
     borderRadius: rbr(10),
     borderWidth: 1.2,
     borderColor: colors.outline,
   },
-  chipWithButtons: {
-    paddingRight: 64, // Make space for both edit and delete buttons
-  },
+  chipWithButtons: { paddingRight: ms(64) },
   chipSelected: {
     backgroundColor: colors.secondaryLight,
     borderColor: colors.backgroundStrong,
@@ -352,61 +393,50 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     position: 'absolute',
-    right: 4,
-    top: 4,
-    flexDirection: 'row',
-    gap: 4,
+    right: ms(4),
+    top: vs(6),
   },
   editButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: ms(24),
+    height: ms(24),
+    borderRadius: ms(12),
     backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   editButtonText: {
     color: colors.textWhite,
-    fontSize: 14,
+    fontSize: rfs(14),
     fontWeight: 'bold',
   },
   deleteButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: ms(20),
+    height: ms(20),
+    borderRadius: ms(12),
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   deleteButtonText: {
     color: colors.textWhite,
-    fontSize: 18,
-    fontWeight: 'bold',
-    lineHeight: 20,
+    fontSize: rfs(14),
+    lineHeight: rfs(20),
   },
   addChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: vs(spacing.sm),
+    paddingHorizontal: ms(spacing.md),
     borderRadius: rbr(10),
     borderWidth: 1.2,
     borderColor: colors.outline,
   },
   addChipText: { 
-     ...typography.labelMedium, 
+    ...typography.labelMedium, 
     color: colors.textGrey1 
-  },
-  addPartnerButton: { 
-    alignSelf: 'center', 
-    marginBottom: 30 
-  },
-  addPartnerText: { 
-    ...typography.labelLarge, 
-    color: colors.primaryLight,  
   },
   notificationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: vs(spacing.sm),
   },
 });

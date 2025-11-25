@@ -14,6 +14,7 @@ import { colors, spacing, typography } from '@/src/core/styles';
 import CustomInput from './CustomInput';
 import DatePickerInput from './DatePickerInput';
 import GenderDropdown from './GenderDropdown';
+import DeleteConfirmModal from './DeleteConfirmationModal';
 
 interface ChildSetupItemProps {
   index: number;
@@ -41,6 +42,9 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
     onUpdate(index, { ...childData, [key]: value });
   };
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+
   return (
     <View style={styles.container}>
       {/* HEADER */}
@@ -50,6 +54,18 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
       >
         <Text style={styles.headerText}>Child {index + 1} Set up</Text>
 
+        <View style={styles.iconRow}>
+
+        <TouchableOpacity  onPress={() => {
+          setItemToDelete(index);
+          setShowDeleteModal(true);
+        }}>
+          <Image
+            source={require('@/src/assets/images/trash.png')}
+            style={styles.deleteIcon}
+          />
+        </TouchableOpacity>
+
         <Image
           source={
             expanded
@@ -58,6 +74,7 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
           }
           style={styles.arrowIcon}
         />
+        </View>
       </TouchableOpacity>
 
       {/* EXPANDED CONTENT */}
@@ -97,13 +114,21 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
               value={childData.gender}
               onValueChange={(gender) => handleChange('gender', gender)}
             />
-            <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-              <Text style={styles.deleteText}>Remove Child</Text>
-            </TouchableOpacity>
           </View>
         </>
       )}
+      <DeleteConfirmModal
+        visible={showDeleteModal}
+        title={`Delete Child Setup ${index + 1}`}
+        message="Are you sure you want to delete this child setup?"
+        onCancel={() => setShowDeleteModal(false)}
+        onDelete={() => {
+          onDelete();             
+          setShowDeleteModal(false); 
+        }}
+      />
     </View>
+    
   );
 };
 
@@ -131,6 +156,18 @@ const styles = StyleSheet.create({
     height: rh(6),
     resizeMode: 'contain',
   },
+  iconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.lg,
+  },
+
+  deleteIcon: {
+    width: 20,
+    height: 20,
+    tintColor: colors.error,
+  },
+
   divider: {
     height: rh(0.1),
     backgroundColor: colors.backgroundSubtle,
@@ -138,15 +175,5 @@ const styles = StyleSheet.create({
   },
   form: {
     padding: ms(spacing.md),
-  },
-  deleteBtn: {
-    marginTop: ms(12),
-    alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  deleteText: {
-    ...typography.labelMedium,
-    color: colors.primary,
   },
 });
