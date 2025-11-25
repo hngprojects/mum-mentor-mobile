@@ -12,6 +12,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// --- Style Imports ---
+import { colors, fontFamilies, spacing, typography } from "../../core/styles";
+import { ms } from "../../core/styles/scaling";
+
 // --- Component Imports ---
 import EditProfileModal from "./EditProfileScreen";
 import LogoutModal from "./LogoutModal";
@@ -29,13 +33,13 @@ export default function ProfileScreen({ navigation }: any) {
   // --- Mock Data (Replace with real data fetch/context) ---
   const user = {
     name: "Tracy Michaels",
-    role: "New mom",
+    role: "New mum",
     image: "https://i.pravatar.cc/150?img=5",
   };
 
   const child = {
     id: 1,
-    name: "Child's info",
+    name: "Child's Info",
     description: "Manage your baby's profile, age, and key details.",
   };
 
@@ -56,12 +60,17 @@ export default function ProfileScreen({ navigation }: any) {
 
   // --- Render ---
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
+        {/* Header with Back Button */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Feather name="arrow-left" size={24} color="#000" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Feather name="arrow-left" size={ms(24)} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
         </View>
@@ -99,7 +108,9 @@ export default function ProfileScreen({ navigation }: any) {
               accessibilityLabel="Manage child's profile details"
             >
               <View style={styles.childInfo}>
-                <Feather name="user" size={20} color="#666" />
+                <View style={styles.iconContainer}>
+                  <Feather name="user" size={ms(20)} color={colors.textPrimary} />
+                </View>
                 <View style={styles.childTextContainer}>
                   <Text style={styles.childName}>{child.name}</Text>
                   <Text style={styles.childDescription}>
@@ -107,7 +118,7 @@ export default function ProfileScreen({ navigation }: any) {
                   </Text>
                 </View>
               </View>
-              <Feather name="chevron-right" size={20} color="#999" />
+              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
             </TouchableOpacity>
           </View>
         </View>
@@ -122,28 +133,30 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => router.push("/profile/DataPrivacyScreen")}
               accessibilityRole="button"
             >
-              <Feather name="shield" size={20} color="#666" />
+              <View style={styles.iconContainer}>
+                <Feather name="shield" size={ms(20)} color={colors.textPrimary} />
+              </View>
               <View style={styles.menuTextContainer}>
                 <Text style={styles.menuTitle}>Data & Privacy</Text>
-                <Text style={styles.menuSubtitle}>Manage your personal data</Text>
+                <Text style={styles.menuSubtitle}>Control what you share</Text>
               </View>
-              <Feather name="chevron-right" size={20} color="#999" />
+              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
             </TouchableOpacity>
 
             {/* Password */}
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemBottom]}
-              onPress={() => router.push("/profile/ChangePasswordScreen")}
+              onPress={() => router.push("./ChangePasswordScreen")}
               accessibilityRole="button"
             >
-              <Feather name="lock" size={20} color="#666" />
+              <View style={styles.iconContainer}>
+                <Feather name="lock" size={ms(20)} color={colors.textPrimary} />
+              </View>
               <View style={styles.menuTextContainer}>
                 <Text style={styles.menuTitle}>Password</Text>
-                <Text style={styles.menuSubtitle}>
-                  Change or reset your account password
-                </Text>
+                <Text style={styles.menuSubtitle}>Keep your account safe.</Text>
               </View>
-              <Feather name="chevron-right" size={20} color="#999" />
+              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
             </TouchableOpacity>
           </View>
         </View>
@@ -153,17 +166,21 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.menuItemWrapper}>
             {/* Notification */}
-            <TouchableOpacity style={styles.menuItem} accessibilityRole="button"
-              onPress={() => router.push("/profile/NotificationSettings")}
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              accessibilityRole="button"
+              onPress={() => router.push('../notifications')}
             >
-              <Feather name="bell" size={20} color="#666" />
+              <View style={styles.iconContainer}>
+                <Feather name="bell" size={ms(20)} color={colors.textPrimary} />
+              </View>
               <View style={styles.menuTextContainer}>
                 <Text style={styles.menuTitle}>Notification</Text>
                 <Text style={styles.menuSubtitle}>
-                  Choose what notifications you'd like to receive
+                  Choose alerts and reminders you'd like to receive.
                 </Text>
               </View>
-              <Feather name="chevron-right" size={20} color="#999" />
+              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
             </TouchableOpacity>
           </View>
         </View>
@@ -178,14 +195,16 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => router.push("/profile/AboutScreen")}
               accessibilityRole="button"
             >
-              <Feather name="info" size={20} color="#666" />
+              <View style={styles.iconContainer}>
+                <Feather name="info" size={ms(20)} color={colors.textPrimary} />
+              </View>
               <View style={styles.menuTextContainer}>
-                <Text style={styles.menuTitle}>About Mum Meetup At Home</Text>
+                <Text style={styles.menuTitle}>About Mum Mentor AI (Nora)</Text>
                 <Text style={styles.menuSubtitle}>
-                  Learn more about the app and our mission
+                  Learn more about the app and our mission.
                 </Text>
               </View>
-              <Feather name="chevron-right" size={20} color="#999" />
+              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
             </TouchableOpacity>
 
             {/* Log Out */}
@@ -195,16 +214,18 @@ export default function ProfileScreen({ navigation }: any) {
               accessibilityRole="button"
               accessibilityLabel="Log out of the account"
             >
-              <Feather name="log-out" size={20} color="#E63946" />
+              <View style={styles.iconContainer}>
+                <Feather name="log-out" size={ms(20)} color={colors.error} />
+              </View>
               <View style={styles.menuTextContainer}>
                 <Text style={[styles.menuTitle, { color: colors.error }]}>
                   Log Out
                 </Text>
                 <Text style={styles.menuSubtitle}>
-                  Sign out of your account safely
+                  Sign out of your account safely.
                 </Text>
               </View>
-              <Feather name="chevron-right" size={20} color="#999" />
+              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
             </TouchableOpacity>
           </View>
         </View>
@@ -231,65 +252,88 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundMain,
   },
+  scrollContent: {
+    paddingBottom: ms(spacing.xl),
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    gap: 16,
-    paddingVertical: 16,
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.md),
+    backgroundColor: colors.textWhite,
+    gap: ms(spacing.md),
+  },
+  backButton: {
+    padding: ms(spacing.xs),
   },
   headerTitle: {
-    ...typography.heading2
+    fontSize: typography.heading2.fontSize,
+    fontFamily: fontFamilies.bold,
+    color: colors.textPrimary,
   },
   profileCard: {
-    backgroundColor: colors.backgroundMain,
-    padding: 20,
+    backgroundColor: colors.textWhite,
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.xl),
     alignItems: "center",
     flexDirection: "row",
-    gap: 16,
+    gap: ms(spacing.md),
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: ms(80),
+    height: ms(80),
+    borderRadius: ms(40),
   },
   profileInfoCard: {
     flexDirection: "column",
     flex: 1,
   },
   profileInfo: {
-    marginBottom: 16,
+    marginBottom: ms(spacing.md),
   },
   userName: {
-    marginBottom: 4,
-    ...typography.bodyLarge,
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.bold,
+    marginBottom: ms(spacing.xs),
+    color: colors.textPrimary,
   },
   userRole: {
-    color: "#666",
-    ...typography.bodyMedium
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
   },
   editButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignSelf: "flex-start", // Keep button tight to text
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.sm),
+    borderRadius: ms(8),
+    alignSelf: "flex-start",
   },
   editButtonText: {
-    color: colors.backgroundMain,
-    ...typography.labelMedium
+    color: colors.textWhite,
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
   },
   section: {
-    marginTop: 25, // Increased spacing between sections
+    marginTop: ms(spacing.lg),
   },
   sectionTitle: {
-    paddingHorizontal: 4,
-    marginBottom: 10,
-    color: "#333",
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.bold,
+    paddingHorizontal: ms(spacing.lg),
+    marginBottom: ms(spacing.md),
+    color: colors.textPrimary,
+  },
+  menuItemWrapper: {
+    backgroundColor: colors.textWhite,
+    marginHorizontal: ms(spacing.lg),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    overflow: "hidden",
   },
   childCard: {
-    backgroundColor: colors.backgroundMain,
-    padding: 16,
+    padding: ms(spacing.md),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -298,51 +342,61 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
+    gap: ms(spacing.sm),
+  },
+  iconContainer: {
+    width: ms(40),
+    height: ms(40),
+    borderRadius: ms(20),
+    backgroundColor: colors.backgroundMain,
+    justifyContent: "center",
+    alignItems: "center",
   },
   childTextContainer: {
-    marginLeft: 12,
     flex: 1,
   },
   childName: {
-    ...typography.labelLarge,
-    marginBottom: 4,
-    color: "#333",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
+    marginBottom: ms(spacing.xs / 2),
+    color: colors.textPrimary,
   },
   childDescription: {
-    ...typography.labelMedium,
-    color: "#666",
-  },
-  menuItemWrapper: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderRadius: 8,
-    borderColor: "#F0F0F0",
+    fontSize: typography.bodySmall.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
   },
   menuItem: {
-    padding: 16,
+    padding: ms(spacing.md),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.textWhite,
+    gap: ms(spacing.sm),
   },
   menuItemTop: {
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0", // Separator line for items
+    borderBottomColor: colors.outlineVariant,
   },
   menuItemBottom: {
-    // Last item in the group, no bottom border needed within the wrapper
+    // Last item in the group, no bottom border needed
   },
   menuTextContainer: {
-    marginLeft: 12,
     flex: 1,
   },
   menuTitle: {
-    ...typography.labelLarge,
-    marginBottom: 4,
-    color: "#333",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
+    marginBottom: ms(spacing.xs / 2),
+    color: colors.textPrimary,
   },
   menuSubtitle: {
-    ...typography.labelMedium,
-    color: "#666",
+    fontSize: typography.bodySmall.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
+    lineHeight: typography.bodySmall.fontSize * 1.3,
+  },
+  footerSpacing: {
+    height: ms(spacing.xl),
   },
 });

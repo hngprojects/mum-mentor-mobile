@@ -35,7 +35,11 @@ export interface RegisterPayload {
   password: string;
   confirm_password: string;
 }
-
+export interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
+}
 export interface LoginPayload {
   email: string;
   password: string;
@@ -65,6 +69,11 @@ export interface ResetPasswordPayload {
 
 export interface MessageResponse {
   message: string;
+}
+
+export interface DeleteAccountPayload {
+  confirmation_phrase: string;
+  password: string;
 }
 
 export interface ValidationErrorDetail {
@@ -250,14 +259,19 @@ export async function resetPassword(
   return response.data;
 }
 
+
 export async function changePassword(
-  payload: ResetPasswordPayload
-): Promise<MessageResponse> {
-  const response = await apiClient.patch<MessageResponse>(
-    "/api/v1/auth/change-password",
-    payload
-  );
-  return response.data;
+  payload: ChangePasswordPayload
+): Promise<string> {
+  try {
+    const response = await apiClient.patch<string>(
+      "/api/v1/auth/change-password",
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw error as AxiosError<ApiErrorResponse>;
+  }
 }
 
 export async function logoutUser(): Promise<MessageResponse> {
@@ -269,6 +283,27 @@ export async function logoutUser(): Promise<MessageResponse> {
     return response.data;
   } catch (error) {
     await removeAuthToken();
+    throw error as AxiosError<ApiErrorResponse>;
+  }
+}
+
+/**
+ * Delete Account
+ * Permanently deletes user account and all associated data
+ * Requires confirmation phrase "DELETE MY ACCOUNT" and user's current password
+ * Removes auth token after successful deletion
+ */
+export async function deleteAccount(
+  payload: DeleteAccountPayload
+): Promise<string> {
+  try {
+    const response = await apiClient.delete<string>(
+      "/api/v1/auth/delete",
+      { data: payload }
+    );
+    await removeAuthToken();
+    return response.data;
+  } catch (error) {
     throw error as AxiosError<ApiErrorResponse>;
   }
 }
