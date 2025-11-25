@@ -3,13 +3,16 @@ import {
   View,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Text,
+  KeyboardAvoidingView,
   Image,
   Clipboard,
   Alert,
+  StatusBar,
+  Platform,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { ChatWelcome } from "../components/chat/chat-Welcome";
 import { ChatMessage } from "../components/chat/chat-Message";
 import { ChatInput } from "../components/chat/chat-Input";
@@ -38,6 +41,7 @@ interface Chat {
 }
 
 export default function ChatScreen() {
+  const router = useRouter();
   const [currentView, setCurrentView] = useState<"welcome" | "chat">("welcome");
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
@@ -45,6 +49,7 @@ export default function ChatScreen() {
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [showHistoryEmpty, setShowHistoryEmpty] = useState(false);
 
+  // Handle sending a message
   // Handle sending a message
   const handleSend = () => {
     if (!inputText.trim() || isAiSpeaking) return;
@@ -60,20 +65,27 @@ export default function ChatScreen() {
     if (!currentChat) {
       const newChat: Chat = {
         id: Date.now().toString(),
-        title: inputText.trim().substring(0, 30) + (inputText.length > 30 ? "..." : ""),
+        title:
+          inputText.trim().substring(0, 30) +
+          (inputText.length > 30 ? "..." : ""),
         messages: [userMessage],
         timestamp: new Date(),
       };
-      setCurrentChat(newChat);
+
+      // Update chats array FIRST
       setChats((prev) => [newChat, ...prev]);
+      // Then set as current chat
+      setCurrentChat(newChat);
     } else {
       // Add to existing chat
       const updatedChat = {
         ...currentChat,
         messages: [...currentChat.messages, userMessage],
       };
+
+      // Update current chat
       setCurrentChat(updatedChat);
-      
+
       // Update in chats list
       setChats((prev) =>
         prev.map((chat) => (chat.id === currentChat.id ? updatedChat : chat))
@@ -93,8 +105,8 @@ export default function ChatScreen() {
         timestamp: new Date(),
         link: {
           url: "https://example.com/guide",
-          title: "Making_Mealtimes_Fun_for_Picky_Eaters - CalmParent Guide"
-        }
+          title: "Making_Mealtimes_Fun_for_Picky_Eaters - CalmParent Guide",
+        },
       };
 
       setCurrentChat((prev) => {
@@ -103,15 +115,15 @@ export default function ChatScreen() {
           ...prev,
           messages: [...prev.messages, botMessage],
         };
-        
+
         // Update in chats list
         setChats((prevChats) =>
           prevChats.map((chat) => (chat.id === prev.id ? updated : chat))
         );
-        
+
         return updated;
       });
-      
+
       setIsAiSpeaking(false);
     }, 2000);
   };
@@ -132,6 +144,15 @@ export default function ChatScreen() {
   // Ask Anything opens the HistoryEmptyState modal
   const handleAskAnything = () => {
     setShowHistoryEmpty(true);
+  };
+
+  // Handle back button - goes back to previous screen or welcome
+  const handleBack = () => {
+    if (currentView === "chat") {
+      setCurrentView("welcome");
+    } else {
+      router.back();
+    }
   };
 
   // Handle chat selection from history
@@ -185,13 +206,17 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor={colors.textWhite} />
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => setShowHistoryEmpty(true)}
-          style={styles.backTouchable}
-        >
+        {/* Back Button - Goes back */}
+        <TouchableOpacity onPress={handleBack} style={styles.backTouchable}>
           <Image
             source={require("../assets/images/ai-chat/Line-arrow-left.png")}
             style={styles.backButton}
@@ -204,7 +229,13 @@ export default function ChatScreen() {
             : currentChat?.title || "New Chat"}
         </Text>
 
-        <TouchableOpacity onPress={() => setShowHistoryEmpty(true)}>
+        {/* Menu Button - Opens history */}
+        <TouchableOpacity
+          onPress={() => {
+            console.log("Opening history, chats count:", chats.length);
+            setShowHistoryEmpty(true);
+          }}
+        >
           <Image
             source={require("../assets/images/ai-chat/menu.png")}
             style={styles.menuButton}
@@ -238,18 +269,16 @@ export default function ChatScreen() {
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
               <>
-                <ChatMessage 
-                  message={item.text} 
+                <ChatMessage
+                  message={item.text}
                   isUser={item.isUser}
                   link={item.link}
                 />
-                
+
                 {/* Show typing indicator after last user message */}
-                {item.isUser && 
-                 index === (currentChat?.messages.length || 0) - 1 && 
-                 isAiSpeaking && (
-                  <TypingIndicator isAiSpeaking={true} />
-                )}
+                {item.isUser &&
+                  index === (currentChat?.messages.length || 0) - 1 &&
+                  isAiSpeaking && <TypingIndicator isAiSpeaking={true} />}
               </>
             )}
             contentContainerStyle={styles.messagesList}
@@ -274,7 +303,7 @@ export default function ChatScreen() {
           />
         </>
       )}
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -282,15 +311,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.textWhite,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : vs(44),
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: s(8),
-    paddingVertical: vs(12),
+    paddingHorizontal: s(16),
+    paddingVertical: vs(16),
   },
   backTouchable: {
-    paddingHorizontal: s(8),
+    paddingHorizontal: s(4),
     paddingVertical: vs(4),
   },
   backButton: {
@@ -299,11 +329,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: rfs(18),
+    fontSize: rfs(20),
     fontWeight: "600",
     color: colors.textPrimary,
     textAlign: "left",
-    marginLeft: s(8),
+    marginLeft: s(12),
   },
   menuButton: {
     width: s(24),

@@ -4,8 +4,6 @@ import {
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  KeyboardAvoidingView, 
-  Platform,
   Image
 } from 'react-native';
 import { colors } from '@/src/core/styles';
@@ -29,54 +27,43 @@ export const ChatInput = ({
   const hasText = value.trim().length > 0;
   
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={90}
-    >
-      <View style={styles.container}>
-        <View style={styles.inputContainer}>
-          {/* Text Input Area with Gray Background */}
-          <View style={styles.textInputWrapper} pointerEvents="box-none">
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChangeText}
-              placeholder={placeholder}
-              placeholderTextColor={colors.textGrey2}
-              multiline
-              maxLength={500}
-              editable={!isAiSpeaking}
+    <View style={styles.container}>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textGrey2}
+          multiline={false}
+          maxLength={500}
+          editable={!isAiSpeaking}
+        />
+        
+        <TouchableOpacity 
+          style={[
+            styles.sendButton, 
+            { 
+              backgroundColor: isAiSpeaking 
+                ? colors.primary 
+                : (hasText ? colors.primary : colors.outlineVariant) 
+            }
+          ]}
+          onPress={onSend}
+          disabled={!hasText && !isAiSpeaking}
+          activeOpacity={0.7}
+        >
+          {isAiSpeaking ? (
+            <View style={styles.stopIcon} />
+          ) : (
+            <Image
+              source={require('../../assets/images/ai-chat/send-message-icon.png')}
+              style={styles.sendIcon}
             />
-          </View>
-          
-          {/* Send/Stop Button */}
-          <TouchableOpacity 
-            style={[
-              styles.sendButton, 
-              { 
-                backgroundColor: isAiSpeaking 
-                  ? colors.primary 
-                  : (hasText ? colors.primary : colors.outlineVariant) 
-              }
-            ]}
-            onPress={onSend}
-            disabled={!hasText && !isAiSpeaking}
-            activeOpacity={0.7}
-          >
-            {isAiSpeaking ? (
-              // Stop icon (small square)
-              <View style={styles.stopIcon} />
-            ) : (
-              // Send icon
-              <Image
-                source={require('../../assets/images/ai-chat/send-message-icon.png')}
-                style={styles.sendIcon}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
+          )}
+        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -84,50 +71,45 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.textWhite,
     paddingHorizontal: s(16),
-    paddingVertical: vs(8),
+    paddingTop: vs(8),
+    paddingBottom: vs(24),
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: vs(56),
     backgroundColor: colors.textWhite,
-    borderRadius: rbr(8),
-    paddingHorizontal: s(16),
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    gap: s(16),
-  },
-  textInputWrapper: {
-    flex: 1,
-    borderRadius: rbr(8),
-    paddingHorizontal: s(16),
+    borderRadius: rbr(12),
+    paddingLeft: s(16),
+    paddingRight: s(8),
     paddingVertical: vs(8),
-    height: vs(56),
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D5D5D5',
+    minHeight: vs(48),
   },
   input: {
+    flex: 1,
     fontSize: rfs(15),
     color: colors.textPrimary,
-    padding: 0,
-    margin: 0,
-    maxHeight: vs(100),
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    marginRight: s(8),
   },
   sendButton: {
-    width: s(44),
-    height: s(44),
-    borderRadius: rbr(6.29),
+    width: s(36),
+    height: s(36),
+    borderRadius: rbr(8),
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendIcon: {
-    width: s(20),
-    height: s(20),
+    width: s(18),
+    height: s(18),
     tintColor: colors.textWhite,
   },
   stopIcon: {
-    width: s(14),
-    height: s(14),
+    width: s(12),
+    height: s(12),
     backgroundColor: colors.textWhite,
-    borderRadius: rbr(3),
+    borderRadius: rbr(2),
   },
 });

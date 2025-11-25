@@ -409,11 +409,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.textWhite,
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: colors.outlineVariant,
+    borderColor: colors.primary,
   },
   cancelButtonText: {
     ...typography.buttonText,
-    color: colors.textPrimary,
+    color: colors.primary,
   },
   saveButton: {
     width: "100%",
