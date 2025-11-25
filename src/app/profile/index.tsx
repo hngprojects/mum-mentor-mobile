@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import EditProfileModal from "./EditProfileScreen";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);

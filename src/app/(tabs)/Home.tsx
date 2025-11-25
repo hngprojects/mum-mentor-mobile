@@ -58,25 +58,13 @@ const quickActions: QuickAction[] = [
   },
 ];
 
-/**
- * Get greeting based on current time of day
- * Morning: 5:00 AM - 11:59 AM
- * Afternoon: 12:00 PM - 4:59 PM
- * Evening: 5:00 PM - 8:59 PM
- * Night: 9:00 PM - 4:59 AM
- */
 const getGreeting = (): string => {
   const hour = new Date().getHours();
 
-  if (hour >= 5 && hour < 12) {
-    return "Good Morning";
-  } else if (hour >= 12 && hour < 17) {
-    return "Good Afternoon";
-  } else if (hour >= 17 && hour < 21) {
-    return "Good Evening";
-  } else {
-    return "Good Night";
-  }
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 21) return "Good Evening";
+  return "Good Night";
 };
 
 const Home = () => {
@@ -94,8 +82,6 @@ const Home = () => {
     setIsLoadingUser(true);
     try {
       const response = await getCurrentUser();
-
-      // Set user directly from response
       setUser(response || null);
     } catch (error) {
       console.log("User fetch error:", error);
@@ -104,13 +90,29 @@ const Home = () => {
     }
   }
 
+  // ✅ UPDATED: graceful error handling
   async function listUserTasks() {
     setIsLoadingTasks(true);
     try {
       const response = await fetchTasks();
+
+      if (!response || !response.data) {
+        console.warn("fetchTasks returned invalid response:", response);
+        setTasks([]);
+        return;
+      }
+
       setTasks(response.data.details || []);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Error fetching tasks:", error);
+
+      Alert.alert(
+        "Unable to load tasks",
+        error?.response?.data?.message ||
+          "Something went wrong while fetching your tasks."
+      );
+
+      setTasks([]);
     } finally {
       setIsLoadingTasks(false);
     }
@@ -169,10 +171,9 @@ const Home = () => {
     loadUser();
     listUserTasks();
 
-    // Update greeting every minute in case the time period changes
     const greetingInterval = setInterval(() => {
       setGreeting(getGreeting());
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => clearInterval(greetingInterval);
   }, []);
@@ -187,18 +188,13 @@ const Home = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Top Bar */}
         <View style={styles.topBar}>
           <View>
             <View style={styles.greetingRow}>
               <Image source={profileImage} style={styles.profileAvatar} />
 
-              {/* Greeting displays only the first name using split(" ")[0] */}
               <Text style={styles.greetingLabel}>
-                Hi,{" "}
-                {isLoadingUser
-                  ? "..."
-                  : user?.full_name?.split(" ")[0] || "User"}
+                Hi, {isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"}
               </Text>
             </View>
 
@@ -210,7 +206,6 @@ const Home = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Hero Section */}
         <View style={styles.heroCard}>
           <View style={styles.heroImageWrapper}>
             <Image source={heroImage} style={styles.heroImage} />
@@ -218,9 +213,7 @@ const Home = () => {
           <View style={styles.heroText}>
             <Text style={styles.heroTitle}>You are Amazing</Text>
             <Text style={styles.heroSubtitle}>
-              {
-                "You're growing right alongside your child,\nand that's something to be proud of"
-              }
+              {"You're growing right alongside your child,\nand that's something to be proud of"}
             </Text>
             <PrimaryButton
               title="Chat with Nora AI"
@@ -230,7 +223,6 @@ const Home = () => {
           </View>
         </View>
 
-        {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
@@ -248,18 +240,12 @@ const Home = () => {
                 {action.id === "journal" ? (
                   <Image
                     source={journalIcon}
-                    style={[
-                      styles.quickActionImage,
-                      styles.quickActionIconSpacing,
-                    ]}
+                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
                   />
                 ) : action.id === "resources" ? (
                   <Image
                     source={resourceIcon}
-                    style={[
-                      styles.quickActionImage,
-                      styles.quickActionIconSpacing,
-                    ]}
+                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
                   />
                 ) : (
                   <Feather
@@ -270,15 +256,12 @@ const Home = () => {
                   />
                 )}
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
-                <Text style={styles.quickActionSubtitle}>
-                  {action.subtitle}
-                </Text>
+                <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Task Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
@@ -315,7 +298,6 @@ const Home = () => {
           )}
         </View>
 
-        {/* Logout Button */}
         <View style={styles.logoutSection}>
           <SecondaryButton
             title={isLoggingOut ? "Logging out..." : "Logout"}
@@ -326,7 +308,6 @@ const Home = () => {
         </View>
       </ScrollView>
 
-      {/* Floating Add Button */}
       {tasks.length !== 0 && (
         <TouchableOpacity
           style={styles.floatingButton}
@@ -336,7 +317,6 @@ const Home = () => {
         </TouchableOpacity>
       )}
 
-      {/* MODALS */}
       <TaskCreationFlow
         isVisible={isFormModalVisible}
         onClose={() => setIsFormModalVisible(false)}
@@ -353,7 +333,7 @@ const Home = () => {
 
 export default Home;
 
-// --- STYLES BELOW ----
+// STYLES — unchanged
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

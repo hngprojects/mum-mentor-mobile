@@ -388,8 +388,15 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
 
-  categoryChipText: { ...typography.bodySmall, color: colors.textGrey1, fontSize: rfs(12) },
-  categoryChipTextSelected: { color: colors.textPrimary, fontWeight: '600' },
+  categoryChipText: { 
+    ...typography.bodySmall, 
+    color: colors.textGrey1, 
+    fontSize: rfs(12) 
+  },
+  categoryChipTextSelected: { 
+    color: colors.textPrimary, 
+    fontWeight: '600' 
+  },
 
   dateContainer: {
     flexDirection: 'row',
