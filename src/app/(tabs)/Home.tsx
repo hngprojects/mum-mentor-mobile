@@ -92,7 +92,7 @@ const Home = () => {
   const [greeting, setGreeting] = useState<string>(getGreeting());
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
 
   // --- Data Fetching Functions ---
 
@@ -149,22 +149,6 @@ const Home = () => {
     setIsSuccessModalVisible(false);
   }, []);
 
-  // --- Authentication Handlers ---
-
-  /** Handles the user logout process. */
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      // NOTE: Placeholder for actual logout service call
-      router.replace("/(auth)/SignInScreen");
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  // --- Effects ---
 
   /** Effect to initialize data loading and set up the greeting timer. */
   useEffect(() => {
@@ -318,16 +302,6 @@ const Home = () => {
               setAppAction={() => setIsAppAction(true)}
             />
           )}
-        </View>
-
-        {/* === Logout Section === */}
-        <View style={styles.logoutSection}>
-          <SecondaryButton
-            title={isLoggingOut ? "Logging out..." : "Logout"}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-            disabled={isLoggingOut}
-          />
         </View>
       </ScrollView>
 
@@ -549,7 +523,7 @@ const styles = StyleSheet.create({
     right: 20,
     width: ms(50),
     height: ms(50),
-    borderRadius: ms(25),
+    borderRadius: ms(8),
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",

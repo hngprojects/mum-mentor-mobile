@@ -81,6 +81,7 @@ export default function DataPrivacyScreen() {
         <TouchableOpacity
           style={styles.privacyLink}
           accessibilityRole="link"
+          onPress={() => router.push("./PrivacyPolicy")}
           accessibilityLabel="View privacy policy"
         >
           <Text style={styles.privacyLinkText}>Privacy Policy</Text>

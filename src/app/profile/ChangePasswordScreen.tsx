@@ -14,6 +14,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Modal,
 } from "react-native";
 import { AxiosError } from "axios";
 import CustomInput from "../components/CustomInput";
@@ -32,6 +33,7 @@ const ChangePassword = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Password strength validation
   const validatePasswordStrength = (password: string) => {
@@ -85,24 +87,13 @@ const ChangePassword = () => {
       
       console.log("✅ Password changed successfully:", response);
 
-      // Show success message
-      Alert.alert(
-        "Success",
-        "Your password has been changed successfully. Please log in with your new password.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Clear form
-              setOldPassword("");
-              setNewPassword("");
-              setConfirmNewPassword("");
-              // Navigate back
-              router.back();
-            },
-          },
-        ]
-      );
+      // Clear form
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+
+      // Show success modal
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("❌ Error changing password:", error);
       
@@ -138,6 +129,11 @@ const ChangePassword = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    router.back();
   };
 
   return (
@@ -286,6 +282,38 @@ const ChangePassword = () => {
           }
         />
       </ScrollView>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleSuccessModalClose}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Success Icon */}
+            <View style={styles.successIconContainer}>
+              <Ionicons
+                name="checkmark-circle"
+                size={ms(60)}
+                color={colors.success}
+              />
+            </View>
+
+            {/* Success Message */}
+            <Text style={styles.successTitle}>Password changed successfully</Text>
+
+            {/* Done Button */}
+            <TouchableOpacity
+              style={styles.doneButton}
+              onPress={handleSuccessModalClose}
+            >
+              <Text style={styles.doneButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -361,5 +389,43 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.success,
     flex: 1,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: ms(40),
+  },
+  modalContent: {
+    backgroundColor: colors.textWhite,
+    borderRadius: ms(16),
+    padding: ms(32),
+    alignItems: "center",
+    width: "100%",
+    maxWidth: ms(320),
+  },
+  successIconContainer: {
+    marginBottom: vs(20),
+  },
+  successTitle: {
+    ...typography.heading3,
+    color: colors.textPrimary,
+    textAlign: "center",
+    marginBottom: vs(24),
+  },
+  doneButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: vs(14),
+    paddingHorizontal: ms(48),
+    borderRadius: ms(8),
+    width: "100%",
+    alignItems: "center",
+  },
+  doneButtonText: {
+    ...typography.bodyLarge,
+    color: colors.textWhite,
+    fontWeight: "600",
   },
 });

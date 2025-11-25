@@ -1,7 +1,7 @@
 import { logoutUser } from "@/src/core/services/authService";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Image,
   ScrollView,
@@ -9,6 +9,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,20 +21,131 @@ import { ms } from "../../core/styles/scaling";
 import EditProfileModal from "./EditProfileScreen";
 import LogoutModal from "./LogoutModal";
 
+// --- API Imports ---
+import apiClient from "../../core/services/apiClient";
+
 /**
  * @fileoverview ProfileScreen component displaying user information and settings menu.
  * @exports ProfileScreen
  */
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  profile_image?: string;
+  mom_status?: string;
+  goals?: string[];
+  partner?: {
+    name: string;
+    email: string;
+  };
+  children?: any[];
+}
+
 export default function ProfileScreen({ navigation }: any) {
   // --- State Variables ---
-  const [modalVisible, setModalVisible] = useState(false); // Controls Edit Profile Modal
-  const [showLogout, setShowLogout] = useState(false); // Controls Logout Confirmation Modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // --- Mock Data (Replace with real data fetch/context) ---
-  const user = {
-    name: "Tracy Michaels",
-    role: "New mum",
-    image: "https://i.pravatar.cc/150?img=5",
+  // --- Fetch Profile Setup ---
+  const fetchProfileSetup = async (baseProfile: UserProfile) => {
+    try {
+      const response = await apiClient.get("/api/v1/profile-setup/");
+      console.log("Profile setup response:", response.data);
+      
+      if (response.data) {
+        setUserProfile({
+          ...baseProfile,
+          mom_status: response.data.mom_status,
+          goals: response.data.goals,
+          partner: response.data.partner,
+          children: response.data.children,
+        });
+      }
+    } catch (err: any) {
+      console.log("Profile setup not available:", err.response?.status);
+      // Keep base profile if setup doesn't exist
+    }
+  };
+
+  // --- Fetch User Profile ---
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log("Fetching user profile...");
+      const response = await apiClient.get("/api/v1/auth/profile");
+      console.log("Profile response:", response.data);
+      
+      // The actual user data is nested in response.data.data
+      if (response.data?.data) {
+        const userData = response.data.data;
+        
+        // Transform the API response to match our UserProfile interface
+        const transformedProfile: UserProfile = {
+          id: userData.id,
+          email: userData.email,
+          full_name: userData.full_name || '',
+          profile_image: userData.profile?.avatar_url || undefined,
+        };
+        
+        setUserProfile(transformedProfile);
+        
+        // Fetch additional profile setup data (mom_status, goals, etc.)
+        await fetchProfileSetup(transformedProfile);
+      }
+    } catch (err: any) {
+      console.error("Error fetching user profile:", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setError(err.response?.data?.message || "Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // --- Effects ---
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  // --- Handlers ---
+  const handleLogout = useCallback(async () => {
+    try {
+      await logoutUser();
+      router.replace("/(auth)/SignInScreen");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  }, []);
+
+  const handleProfileUpdated = useCallback(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  // --- Helper Functions ---
+  const getUserDisplayName = () => {
+    return userProfile?.full_name || "User";
+  };
+
+  const getUserRole = () => {
+    if (!userProfile?.mom_status) return "User";
+    return userProfile.mom_status
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const getUserImage = () => {
+    return userProfile?.profile_image || "https://i.pravatar.cc/150?img=5";
   };
 
   const child = {
@@ -42,20 +154,35 @@ export default function ProfileScreen({ navigation }: any) {
     description: "Manage your baby's profile, age, and key details.",
   };
 
-  // --- Handlers ---
+  // --- Loading State ---
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  /** Handles the final logout action after confirmation. */
-  const handleLogout = useCallback(async () => {
-    try {
-      // Execute the logout service call
-      await logoutUser();
-      // Navigate to the sign-in screen
-      router.replace("/(auth)/SignInScreen");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      // Optionally show an alert if logout fails
-    }
-  }, []);
+  // --- Error State ---
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.errorContainer}>
+          <Feather name="alert-circle" size={ms(48)} color={colors.error} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchUserProfile}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // --- Render ---
   return (
@@ -77,14 +204,14 @@ export default function ProfileScreen({ navigation }: any) {
         {/* --- Profile Card --- */}
         <View style={styles.profileCard}>
           <Image
-            source={{ uri: user.image }}
+            source={{ uri: getUserImage() }}
             style={styles.avatar}
             accessibilityLabel="User profile avatar"
           />
           <View style={styles.profileInfoCard}>
             <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userRole}>{user.role}</Text>
+              <Text style={styles.userName}>{getUserDisplayName()}</Text>
+              <Text style={styles.userRole}>{getUserRole()}</Text>
             </View>
             <TouchableOpacity
               style={styles.editButton}
@@ -168,7 +295,7 @@ export default function ProfileScreen({ navigation }: any) {
             <TouchableOpacity 
               style={styles.menuItem} 
               accessibilityRole="button"
-              onPress={() => router.push('../notifications')}
+              onPress={() => router.push('./NotificationsSettings')}
             >
               <View style={styles.iconContainer}>
                 <Feather name="bell" size={ms(20)} color={colors.textPrimary} />
@@ -191,7 +318,7 @@ export default function ProfileScreen({ navigation }: any) {
             {/* About */}
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemTop]}
-              onPress={() => router.push("/profile/AboutScreen")}
+              onPress={() => router.push("./About")}
               accessibilityRole="button"
             >
               <View style={styles.iconContainer}>
@@ -235,6 +362,8 @@ export default function ProfileScreen({ navigation }: any) {
       <EditProfileModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
+        onProfileUpdated={handleProfileUpdated}
+        userProfile={userProfile}
       />
       <LogoutModal
         visible={showLogout}
@@ -253,6 +382,42 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: ms(spacing.xl),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: ms(spacing.md),
+  },
+  loadingText: {
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: ms(spacing.xl),
+    gap: ms(spacing.md),
+  },
+  errorText: {
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.error,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: ms(spacing.xl),
+    paddingVertical: ms(spacing.md),
+    borderRadius: ms(8),
+    marginTop: ms(spacing.md),
+  },
+  retryButtonText: {
+    color: colors.textWhite,
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
   },
   header: {
     flexDirection: "row",
@@ -377,9 +542,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.outlineVariant,
   },
-  menuItemBottom: {
-    // Last item in the group, no bottom border needed
-  },
+  menuItemBottom: {},
   menuTextContainer: {
     flex: 1,
   },
