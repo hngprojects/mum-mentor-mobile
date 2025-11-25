@@ -56,8 +56,7 @@ const INITIAL_POSTS: CommunityPost[] = [
     authorName: "Mum Mentor Community",
     authorAvatar: avatar,
     timeAgo: "2h",
-    text:
-      "My baby has been waking up every 2 hours at night. Any mums dealing with this too? What helped you?",
+    text: "My baby has been waking up every 2 hours at night. Any mums dealing with this too? What helped you?",
     image: placeholderImage,
     likes: 24,
     comments: 6,
@@ -68,8 +67,7 @@ const INITIAL_POSTS: CommunityPost[] = [
     authorName: "Oluwatobi",
     authorAvatar: avatar,
     timeAgo: "5h",
-    text:
-      "Shared a little win today – my toddler finally tried veggies without a fight 🎉",
+    text: "Shared a little win today – my toddler finally tried veggies without a fight 🎉",
     likes: 15,
     comments: 3,
     isLiked: false,
@@ -230,7 +228,11 @@ const Community: React.FC = () => {
       <Text style={styles.postText}>{item.text}</Text>
 
       {item.image && (
-        <Image source={item.image} style={styles.postImage} resizeMode="cover" />
+        <Image
+          source={item.image}
+          style={styles.postImage}
+          resizeMode="cover"
+        />
       )}
 
       {/* Footer */}
@@ -263,7 +265,10 @@ const Community: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundMain} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={colors.backgroundMain}
+      />
 
       <View style={styles.container}>
         {/* Top bar */}
@@ -319,7 +324,8 @@ const Community: React.FC = () => {
               <Text
                 style={[
                   styles.modalPostButton,
-                  (!createText.trim() && !createImage) &&
+                  !createText.trim() &&
+                    !createImage &&
                     styles.modalPostButtonDisabled,
                 ]}
               >
@@ -423,12 +429,17 @@ const Community: React.FC = () => {
               style={[styles.sheetButton, styles.sheetButtonDestructive]}
               onPress={openDeleteConfirm}
             >
-              <Text style={[styles.sheetButtonText, styles.sheetButtonTextDanger]}>
+              <Text
+                style={[styles.sheetButtonText, styles.sheetButtonTextDanger]}
+              >
                 Delete Post
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetCancel} onPress={closeOptionsModal}>
+            <TouchableOpacity
+              style={styles.sheetCancel}
+              onPress={closeOptionsModal}
+            >
               <Text style={styles.sheetCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -519,7 +530,9 @@ const Community: React.FC = () => {
                       <Text style={styles.authorName}>
                         {selectedPost.authorName}
                       </Text>
-                      <Text style={styles.postMeta}>{selectedPost.timeAgo}</Text>
+                      <Text style={styles.postMeta}>
+                        {selectedPost.timeAgo}
+                      </Text>
                     </View>
                   </View>
                 </View>
