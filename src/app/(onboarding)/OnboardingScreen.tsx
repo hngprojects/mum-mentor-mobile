@@ -215,6 +215,8 @@ export default function OnboardingSlides() {
 
   /**
    * Handle "Log in" button press
+   * Navigate to login screen
+   * NOTE: Onboarding will be marked complete AFTER successful login
    */
   const handleLogin = () => {
     router.push('./(auth)/SignInScreen');
@@ -222,6 +224,8 @@ export default function OnboardingSlides() {
 
   /**
    * Handle "Sign Up" button press
+   * Navigate to signup screen
+   * NOTE: Onboarding will be marked complete AFTER successful signup
    */
   const handleSignUp = () => {
     router.push('./(auth)/SignUpScreen');

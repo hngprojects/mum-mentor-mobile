@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  ImageSourcePropType,
   Modal,
   Pressable,
   ScrollView,
@@ -23,7 +24,7 @@ import { ms, rfs, vs } from "../../core/styles/scaling";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
 
-type ImageSource = ReturnType<typeof require>;
+type ImageSource = ImageSourcePropType;
 
 type CommunityPost = {
   id: string;
@@ -40,7 +41,7 @@ type CommunityPost = {
 const avatar = require("../../assets/images/profile-image.png");
 const placeholderImage = require("../../assets/images/home-image.png");
 
-// Mock gallery images just to simulate the “select photos” screen
+// Mock gallery images just to simulate the "select photos" screen
 const GALLERY_IMAGES: ImageSource[] = [
   require("../../assets/images/home-image.png"),
   require("../../assets/images/task-icon.png"),
@@ -324,8 +325,12 @@ const Community: React.FC = () => {
               <Text
                 style={[
                   styles.modalPostButton,
+<<<<<<< HEAD
                   !createText.trim() &&
                     !createImage &&
+=======
+                  !createText.trim() && !createImage &&
+>>>>>>> dev
                     styles.modalPostButtonDisabled,
                 ]}
               >
@@ -894,7 +899,7 @@ const styles = StyleSheet.create({
     width: ms(60),
     height: ms(60),
     borderRadius: ms(30),
-    backgroundColor: colors.successContainer,
+    backgroundColor: colors.successLight,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: vs(12),

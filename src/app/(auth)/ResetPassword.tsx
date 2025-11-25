@@ -25,6 +25,9 @@ import PrimaryButton from '../components/PrimaryButton';
 import { resetPassword, ApiErrorResponse } from '../../core/services/authService';
 import { AxiosError } from 'axios';
 
+// Destructure theme values outside component to prevent re-renders
+const { colors, typography } = defaultTheme;
+
 export default function ResetPassword() {
   const params = useLocalSearchParams<{ verificationToken: string; email: string }>();
   const verificationToken = params.verificationToken;
@@ -74,12 +77,11 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-    const payload = {
-      token: verificationToken,
-      new_password: newPassword,
-      confirm_password: confirmPassword,
-    };
-
+      const payload = {
+        token: verificationToken,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      };
 
       await resetPassword(payload);
 
@@ -107,74 +109,6 @@ export default function ResetPassword() {
     setShowSuccessModal(false);
     router.push('/SignInScreen');
   };
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: defaultTheme.colors.backgroundMain,
-    },
-    scrollContent: {
-      flexGrow: 1,
-      paddingHorizontal: ms(24),
-      paddingTop: vs(60),
-      paddingBottom: vs(40),
-    },
-    title: {
-      ...defaultTheme.typography.heading1,
-      color: defaultTheme.colors.textPrimary,
-      marginBottom: vs(8),
-    },
-    subtitle: {
-      ...defaultTheme.typography.bodySmall,
-      color: defaultTheme.colors.textGrey1,
-      marginBottom: vs(32),
-    },
-    inputWrapper: {
-      marginBottom: vs(16),
-    },
-    buttonWrapper: {
-      marginTop: vs(24),
-    },
-    // Success Modal Styles
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    modalContent: {
-      backgroundColor: defaultTheme.colors.textWhite,
-      borderRadius: ms(16),
-      padding: ms(24),
-      alignItems: 'center',
-      width: '85%',
-      maxWidth: ms(400),
-    },
-    successIcon: {
-      width: ms(80),
-      height: ms(80),
-      borderRadius: ms(40),
-      backgroundColor: defaultTheme.colors.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: vs(16),
-    },
-    modalTitle: {
-      ...defaultTheme.typography.heading2,
-      color: defaultTheme.colors.textPrimary,
-      marginBottom: vs(8),
-      textAlign: 'center',
-    },
-    modalSubtitle: {
-      ...defaultTheme.typography.bodyMedium,
-      color: defaultTheme.colors.textGrey1,
-      textAlign: 'center',
-      marginBottom: vs(24),
-    },
-    modalButton: {
-      width: '100%',
-    },
-  });
 
   return (
     <KeyboardAvoidingView
@@ -249,7 +183,7 @@ export default function ResetPassword() {
               <Ionicons
                 name="checkmark"
                 size={ms(48)}
-                color={defaultTheme.colors.textWhite}
+                color={colors.textWhite}
               />
             </View>
             <Text style={styles.modalTitle}>Password reset successful!</Text>
@@ -267,3 +201,72 @@ export default function ResetPassword() {
     </KeyboardAvoidingView>
   );
 }
+
+// Styles created outside component with destructured theme values
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.backgroundMain,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: ms(24),
+    paddingTop: vs(60),
+    paddingBottom: vs(40),
+  },
+  title: {
+    ...typography.heading1,
+    color: colors.textPrimary,
+    marginBottom: vs(8),
+  },
+  subtitle: {
+    ...typography.bodySmall,
+    color: colors.textGrey1,
+    marginBottom: vs(32),
+  },
+  inputWrapper: {
+    marginBottom: vs(20),
+  },
+  buttonWrapper: {
+    marginTop: vs(24),
+  },
+  // Success Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.textWhite,
+    borderRadius: ms(16),
+    padding: ms(24),
+    alignItems: 'center',
+    width: '85%',
+    maxWidth: ms(400),
+  },
+  successIcon: {
+    width: ms(80),
+    height: ms(80),
+    borderRadius: ms(40),
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: vs(16),
+  },
+  modalTitle: {
+    ...typography.heading2,
+    color: colors.textPrimary,
+    marginBottom: vs(8),
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    ...typography.bodyMedium,
+    color: colors.textGrey1,
+    textAlign: 'center',
+    marginBottom: vs(24),
+  },
+  modalButton: {
+    width: '100%',
+  },
+});

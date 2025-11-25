@@ -1,57 +1,86 @@
 {
- "expo": {
-   "name": "MumMentor",
-   "slug": "MumMentorMobile",
-   "version": "1.0.0",
-   "orientation": "portrait",
-   "icon": "@/src/assets/images/logo.png",
-   "scheme": "mummentor",
-   "userInterfaceStyle": "automatic",
-   "newArchEnabled": true,
-   "ios": {
-     "supportsTablet": true
-   },
-   "android": {
-     "adaptiveIcon": {
-       "backgroundColor": "#E6F4FE",
-       "foregroundImage": "./src/assets/images/logo.png"
-     },
-     "edgeToEdgeEnabled": true,
-     "predictiveBackGestureEnabled": false,
-     "package": "com.hng.mummentor"
-   },
-   "web": {
-     "output": "static",
-     "favicon": "./assets/images/favicon.png"
-   },
-   "plugins": [
-     "expo-router",
-     [
-       "expo-splash-screen",
-       {
-         "image": "./src/assets/images/logo.png",
-         "imageWidth": 200,
-         "resizeMode": "contain",
-         "backgroundColor": "#F9C1CC"
-       }
-     ],
-     "./plugins/withGradleProperties.js",
-     [
-       "./plugins/withReleaseKeystore.js",
-       {
-         "keystoreFile": "keystore.jks"
-       }
-     ]
-   ],
-   "experiments": {
-     "typedRoutes": true,
-     "reactCompiler": true
-   },
-   "extra": {
-     "router": {},
-     "eas": {
-       "projectId": "eb49307c-ac6d-4ddb-b0d5-c2e51a067520"
-     }
-   }
- }
+  "expo": {
+    "name": "MumMentor",
+    "slug": "MumMentorMobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/logo.png",
+    "scheme": "mummentor",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to the camera to take photos of your memories.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select photos.",
+        "NSMicrophoneUsageDescription": "This app needs access to the microphone for video recording."
+      },
+      "bundleIdentifier": "com.hng.mummentor"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./src/assets/images/logo.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hng.mummentor",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/assets/images/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F9C1CC"
+        }
+      ],
+      "./plugins/withGradleProperties.js",
+      [
+        "./plugins/withReleaseKeystore.js",
+        {
+          "keystoreFile": "keystore.jks"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MumMentor to access your camera to capture precious moments.",
+          "microphonePermission": "Allow MumMentor to access your microphone for video recording.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow MumMentor to access your photos to select and save memories.",
+          "cameraPermission": "Allow MumMentor to access your camera to take photos."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eb49307c-ac6d-4ddb-b0d5-c2e51a067520"
+      }
+    }
+  }
 }

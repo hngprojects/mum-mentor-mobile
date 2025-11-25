@@ -24,11 +24,13 @@ const icons: Record<string, any> = {
   "calendar-outline": require("../../assets/images/calendar.png"),
   "calendar-number": require("../../assets/images/calendar-num.png"),
   "gender-outline": require("../../assets/images/gender.png"),
+  "search-outline": require("../../assets/images/search.png"),
+  "gallery-outline": require("../../assets/images/gallery-edit.png"),
 };
 
 // --- TYPES ---
 interface CustomInputProps {
-  label: string;
+  label?: string;
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -126,7 +128,8 @@ const CustomInput: React.FC<CustomInputProps> = ({
       marginTop: ms(spacing.xs),
     },
     passwordToggle: {
-      paddingLeft: ms(spacing.sm),
+      flexDirection: "row",
+      alignItems: "center",
     },
   });
 
