@@ -110,7 +110,18 @@ export default function GalleryScreen() {
     });
   };
 
+  // Filter albums based on search query
+  const filteredAlbums = albums.filter((album) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const albumName = album.name.toLowerCase();
+    
+    return albumName.includes(query);
+  });
+
   const hasAlbums = albums.length > 0;
+  const hasFilteredResults = filteredAlbums.length > 0;
 
   return (
     <>
@@ -139,7 +150,7 @@ export default function GalleryScreen() {
           {/* Search Bar */}
           <View style={styles.searchWrapper}>
             <CustomInput
-              placeholder="Search"
+              placeholder="Search albums"
               value={searchQuery}
               onChangeText={setSearchQuery}
               iconName="search-outline"
@@ -152,7 +163,7 @@ export default function GalleryScreen() {
               <Text style={styles.emptySubtitle}>Loading albums...</Text>
             </View>
           ) : !hasAlbums ? (
-            /* Empty State */
+            /* Empty State - No Albums */
             <View style={styles.emptyContainer}>
               <Image 
                 source={require('../../assets/images/gallery.png')} 
@@ -164,10 +175,19 @@ export default function GalleryScreen() {
                 You currently have no album created.
               </Text>
             </View>
+          ) : !hasFilteredResults ? (
+            /* No Search Results */
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={60} color={colors.textGrey2} />
+              <Text style={styles.emptyTitle}>No albums found</Text>
+              <Text style={styles.emptySubtitle}>
+                Try searching with different keywords
+              </Text>
+            </View>
           ) : (
             /* Albums Grid */
             <View style={styles.albumsGrid}>
-              {albums.map((album) => (
+              {filteredAlbums.map((album) => (
                 <TouchableOpacity
                   key={album.id}
                   style={styles.albumCard}
@@ -251,6 +271,7 @@ const styles = StyleSheet.create({
   searchWrapper: {
     paddingHorizontal: ms(spacing.lg),
     marginTop: vs(1),
+    marginBottom: vs(spacing.md),
   },
   emptyContainer: {
     flex: 1,
@@ -260,8 +281,8 @@ const styles = StyleSheet.create({
     minHeight: vs(400),
   },
   emptyImage: {
-    width: ms(30),
-    height: ms(30),
+    width: ms(80),
+    height: ms(80),
     marginBottom: vs(spacing.md),
   },
   emptyTitle: {
@@ -279,27 +300,21 @@ const styles = StyleSheet.create({
   albumsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: ms(spacing.md),
+    paddingHorizontal: ms(spacing.lg),
     gap: ms(spacing.md),
-    paddingTop: vs(spacing.sm),
   },
   albumCard: {
     width: (width - ms(spacing.lg * 2) - ms(spacing.md)) / 2,
-    backgroundColor: colors.backgroundSubtle,
-    borderRadius: ms(16),
-    padding: ms(spacing.md),
-    alignItems: 'center',
-    marginBottom: vs(spacing.sm),
   },
   albumCover: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: colors.backgroundMain,
+    backgroundColor: colors.backgroundSubtle,
     borderRadius: ms(12),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: vs(spacing.sm),
     overflow: 'hidden',
+    marginBottom: vs(spacing.xs),
   },
   albumCoverImage: {
     width: '100%',
@@ -308,21 +323,20 @@ const styles = StyleSheet.create({
   albumName: {
     ...typography.labelLarge,
     color: colors.textPrimary,
-    marginBottom: vs(4),
-    textAlign: 'center',
-    width: '100%',
+    fontSize: rfs(14),
   },
   albumCount: {
     ...typography.bodySmall,
     color: colors.textGrey1,
     fontSize: rfs(12),
+    marginTop: vs(2),
   },
   addButton: {
     position: 'absolute',
     bottom: vs(80),
     right: ms(spacing.lg),
-    width: ms(45),
-    height: ms(45),
+    width: ms(40),
+    height: ms(40),
     borderRadius: ms(8),
     backgroundColor: colors.primary,
     justifyContent: 'center',

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { colors, typography, spacing } from '../../core/styles/index';
+import { colors, typography, spacing } from '@/src/core/styles';
 import { ms, vs, rfs } from '@/src/core/styles/scaling';
 import { Ionicons } from '@expo/vector-icons';
 import * as galleryStorage from '@/src/core/services/galleryStorageService';

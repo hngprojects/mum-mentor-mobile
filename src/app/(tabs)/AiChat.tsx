@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Text,
   Image,
@@ -18,6 +17,7 @@ import { TypingIndicator } from "../components/chat/typing-Indicator";
 import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { colors } from "@/src/core/styles";
 import { s, vs, rfs } from "@/src/core/styles/scaling";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Message {
   id: string;

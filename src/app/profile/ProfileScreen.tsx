@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +13,8 @@ import {
 } from "react-native";
 import EditProfileModal from "./EditProfileScreen";
 import LogoutModal from "./LogoutModal";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function ProfileScreen({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -94,7 +95,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.menuItemWrapper}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push("/profile/DataPrivacyScreen")}
+              onPress={() => router.push("./profile/DataPrivacyScreen")}
             >
               <Feather name="shield" size={20} color="#666" />
               <View style={styles.menuTextContainer}>
@@ -108,7 +109,7 @@ export default function ProfileScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push("/profile/ChangePasswordScreen")}
+              onPress={() => router.push("./profile/ChangePasswordScreen")}
             >
               <Feather name="settings" size={20} color="#666" />
               <View style={styles.menuTextContainer}>
@@ -147,7 +148,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.menuItemWrapper}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push("/profile/AboutScreen")}
+              onPress={() => router.push("./profile/AboutScreen")}
             >
               <Feather name="info" size={20} color="#666" />
               <View style={styles.menuTextContainer}>

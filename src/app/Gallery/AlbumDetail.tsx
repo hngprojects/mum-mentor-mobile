@@ -19,7 +19,7 @@ import { ms, vs, rfs } from '@/src/core/styles/scaling';
 import { Ionicons } from '@expo/vector-icons';
 import CustomInput from '../components/CustomInput';
 import AddMemoryModal, { MemoryData } from '../components/GalleryComponents/AddMemoryModal';
-import * as galleryStorage from '../../core/services/galleryStorageService';
+import * as galleryStorage from '@/src/core/services/galleryStorageService';
 
 const { width } = Dimensions.get('window');
 const PHOTO_SIZE = (width - ms(spacing.lg * 2) - ms(spacing.md)) / 2;
@@ -139,10 +139,23 @@ export default function AlbumDetailScreen() {
   };
 
   const handlePhotoPress = (photo: galleryStorage.Photo) => {
-    // TODO: Navigate to full photo viewer
-    console.log('Photo pressed:', photo.id);
-    Alert.alert('Photo Details', `Note: ${photo.note}\nCategory: ${photo.category}`);
+    router.push({
+      pathname: '../Gallery/PhotoDetail',
+      params: { photoId: photo.id }
+    });
   };
+
+  // Filter photos based on search query
+  const filteredPhotos = photos.filter((photo) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const note = photo.note.toLowerCase();
+    const category = photo.category.toLowerCase();
+    const date = new Date(photo.date).toLocaleDateString('en-US').toLowerCase();
+    
+    return note.includes(query) || category.includes(query) || date.includes(query);
+  });
 
   const renderPhotoItem = ({ item }: { item: galleryStorage.Photo }) => (
     <TouchableOpacity
@@ -155,6 +168,7 @@ export default function AlbumDetailScreen() {
   );
 
   const hasPhotos = photos.length > 0;
+  const hasFilteredResults = filteredPhotos.length > 0;
 
   return (
     <>
@@ -189,7 +203,7 @@ export default function AlbumDetailScreen() {
         {/* Search Bar */}
         <View style={styles.searchWrapper}>
           <CustomInput
-            placeholder="Search"
+            placeholder="Search photos by note, category, or date"
             value={searchQuery}
             onChangeText={setSearchQuery}
             iconName="search-outline"
@@ -200,7 +214,7 @@ export default function AlbumDetailScreen() {
         {hasPhotos && (
           <View style={styles.photoCountContainer}>
             <Text style={styles.photoCount}>
-              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
+              {filteredPhotos.length} of {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
             </Text>
           </View>
         )}
@@ -211,7 +225,7 @@ export default function AlbumDetailScreen() {
             <Text style={styles.emptySubtitle}>Loading photos...</Text>
           </View>
         ) : !hasPhotos ? (
-          /* Empty State */
+          /* Empty State - No Photos */
           <View style={styles.emptyContainer}>
             <Image 
               source={require('../../assets/images/gallery.png')} 
@@ -226,12 +240,23 @@ export default function AlbumDetailScreen() {
         ) : (
           /* Photo Grid */
           <FlatList
-            data={photos}
+            data={filteredPhotos}
             renderItem={renderPhotoItem}
             keyExtractor={(item) => item.id}
             numColumns={2}
             contentContainerStyle={styles.photoGrid}
             showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              searchQuery.trim() ? (
+                <View style={styles.emptySearchContainer}>
+                  <Ionicons name="search-outline" size={60} color={colors.textGrey2} />
+                  <Text style={styles.emptyTitle}>No photos found</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Try searching with different keywords
+                  </Text>
+                </View>
+              ) : null
+            }
             refreshControl={
               <RefreshControl 
                 refreshing={refreshing} 
@@ -310,8 +335,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: ms(spacing.xl),
   },
   emptyImage: {
-    width: ms(30),
-    height: ms(30),
+    width: ms(80),
+    height: ms(80),
     marginBottom: vs(spacing.md),
   },
   emptyTitle: {
@@ -326,6 +351,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: rfs(14),
   },
+  emptySearchContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: ms(spacing.xl),
+    paddingTop: vs(100),
+    minHeight: vs(300),
+  },
   photoGrid: {
     paddingHorizontal: ms(spacing.md),
     paddingBottom: vs(120),
@@ -333,7 +366,7 @@ const styles = StyleSheet.create({
   },
   photoItem: {
     width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
+    height: PHOTO_SIZE * 1.3,
     margin: ms(spacing.sm / 2),
     borderRadius: ms(12),
     overflow: 'hidden',
@@ -347,8 +380,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: vs(100),
     right: ms(spacing.lg),
-    width: ms(45),
-    height: ms(45),
+    width: ms(40),
+    height: ms(40),
     borderRadius: ms(8),
     backgroundColor: colors.primary,
     justifyContent: 'center',
