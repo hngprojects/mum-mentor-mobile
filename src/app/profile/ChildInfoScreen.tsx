@@ -4,13 +4,19 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// --- Style Imports ---
+import { colors, fontFamilies, spacing, typography } from "../../core/styles";
+import { ms } from "../../core/styles/scaling";
+
+// --- Component Imports ---
 import { AddChildModal } from "./AddChildModal";
 import { EditChildModal } from "./EditChildModal";
 
@@ -57,16 +63,25 @@ export default function ChildInfoScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#000" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Feather name="arrow-left" size={ms(24)} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Child Info</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Children List */}
         {children.map((child) => (
           <View key={child.id} style={styles.childCard}>
@@ -78,21 +93,27 @@ export default function ChildInfoScreen({ navigation }: any) {
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => handleEditChild(child)}
+              accessibilityLabel={`Edit ${child.name}`}
+              accessibilityRole="button"
             >
-              <Feather name="edit-2" size={20} color="#666" />
+              <Feather name="edit-2" size={ms(20)} color={colors.textPrimary} />
               <Text style={styles.editText}>Edit</Text>
             </TouchableOpacity>
           </View>
         ))}
+      </ScrollView>
 
-        {/* Add Another Child Button */}
+      {/* Add Another Child Button - Fixed at Bottom */}
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setAddModalVisible(true)}
+          accessibilityLabel="Add another child"
+          accessibilityRole="button"
         >
           <Text style={styles.addButtonText}>Add another child</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       {/* Modals */}
       <EditChildModal
@@ -115,70 +136,94 @@ export default function ChildInfoScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFF",
+    backgroundColor: colors.backgroundMain,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    gap: 16,
-    paddingVertical: 16,
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.md),
+    backgroundColor: colors.textWhite,
+    gap: ms(spacing.md),
+  },
+  backButton: {
+    padding: ms(spacing.xs),
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: "600",
+    fontSize: typography.heading2.fontSize,
+    fontFamily: fontFamilies.bold,
+    color: colors.textPrimary,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    backgroundColor: colors.backgroundMain,
+  },
+  scrollContent: {
+    paddingHorizontal: ms(spacing.lg),
+    paddingTop: ms(spacing.xl),
+    paddingBottom: ms(spacing.xl),
   },
   childCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF",
-    paddingVertical: 16,
-    marginBottom: 16,
+    backgroundColor: colors.textWhite,
+    paddingVertical: ms(spacing.lg),
+    paddingHorizontal: ms(spacing.lg),
+    marginBottom: ms(spacing.lg),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
   },
   childAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
+    width: ms(60),
+    height: ms(60),
+    borderRadius: ms(30),
+    marginRight: ms(spacing.md),
   },
   childInfo: {
     flex: 1,
   },
   childName: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 4,
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.semiBold,
+    color: colors.textPrimary,
+    marginBottom: ms(spacing.xs / 2),
   },
   childAge: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
   },
   editButton: {
     flexDirection: "column",
     alignItems: "center",
-    gap: 4,
+    gap: ms(spacing.xs),
+    paddingHorizontal: ms(spacing.sm),
   },
   editText: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: typography.bodySmall.fontSize,
+    fontFamily: fontFamilies.medium,
+    color: colors.textPrimary,
   },
   addButton: {
-    borderWidth: 2,
-    borderColor: "#E63946",
-    paddingVertical: 16,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingVertical: ms(spacing.md),
+    borderRadius: ms(12),
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 32,
+    backgroundColor: colors.textWhite,
   },
   addButtonText: {
-    color: "#E63946",
-    fontSize: 16,
-    fontWeight: "600",
+    color: colors.primary,
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
+  },
+  buttonContainer: {
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.md),
+    backgroundColor: colors.backgroundMain,
+    borderTopWidth: 1,
+    borderTopColor: colors.outlineVariant,
+    marginBottom: ms(60),
   },
 });

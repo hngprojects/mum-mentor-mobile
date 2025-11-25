@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,8 +15,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AxiosError } from "axios";
 import CustomInput from "../components/CustomInput";
 import PrimaryButton from "../components/PrimaryButton";
+import { changePassword, ApiErrorResponse } from "@/src/core/services/authService";
+
+interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
+}
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState("");
@@ -63,16 +72,69 @@ const ChangePassword = () => {
       return;
     }
 
-    // Handle password change logic here
+    // Call the API to change password
     setIsLoading(true);
     try {
-      // Your API call here
-      console.log("Changing password...");
-      // await changePasswordAPI(oldPassword, newPassword);
-      // router.back(); // or navigate to success screen
+      const payload: ChangePasswordPayload = {
+        old_password: oldPassword,
+        new_password: newPassword,
+        confirm_password: confirmNewPassword,
+      };
+
+      const response = await changePassword(payload);
+      
+      console.log("✅ Password changed successfully:", response);
+
+      // Show success message
+      Alert.alert(
+        "Success",
+        "Your password has been changed successfully. Please log in with your new password.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Clear form
+              setOldPassword("");
+              setNewPassword("");
+              setConfirmNewPassword("");
+              // Navigate back
+              router.back();
+            },
+          },
+        ]
+      );
     } catch (error) {
-      console.error("Error changing password:", error);
-      setErrors({ general: "Failed to change password" });
+      console.error("❌ Error changing password:", error);
+      
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const statusCode = axiosError.response?.status;
+      
+      // Handle different error cases
+      if (statusCode === 401) {
+        setErrors({ oldPassword: "Old password is incorrect" });
+      } else if (statusCode === 422) {
+        // Validation errors
+        const detail = axiosError.response?.data?.detail;
+        if (Array.isArray(detail)) {
+          const validationErrors: { [key: string]: string } = {};
+          detail.forEach((err: any) => {
+            const field = err.loc[err.loc.length - 1];
+            validationErrors[field] = err.msg;
+          });
+          setErrors(validationErrors);
+        } else {
+          setErrors({ general: "Validation failed. Please check your inputs." });
+        }
+      } else if (axiosError.response?.data?.detail) {
+        // Handle string detail message
+        setErrors({ 
+          general: typeof axiosError.response.data.detail === 'string' 
+            ? axiosError.response.data.detail 
+            : "Failed to change password" 
+        });
+      } else {
+        setErrors({ general: "Failed to change password. Please try again." });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +162,13 @@ const ChangePassword = () => {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContent}
       >
+        {/* General Error Message */}
+        {errors.general && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errors.general}</Text>
+          </View>
+        )}
+
         {/* Old Password */}
         <CustomInput
           label="Enter Old Password"
@@ -259,13 +328,25 @@ const styles = StyleSheet.create({
     paddingTop: vs(20),
     paddingBottom: vs(40),
   },
+  errorContainer: {
+    backgroundColor: colors.errorLight,
+    borderRadius: ms(8),
+    padding: ms(12),
+    marginBottom: vs(16),
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  errorText: {
+    ...typography.bodyMedium,
+    color: colors.error,
+    textAlign: "center",
+  },
   inputWrapper: {
     marginBottom: vs(8),
   },
   strengthIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    // marginTop: vs(6),
     marginBottom: vs(12),
   },
   strengthIcon: {

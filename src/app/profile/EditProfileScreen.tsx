@@ -13,6 +13,10 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
+// --- Style Imports ---
+import { colors, fontFamilies, spacing, typography } from "../../core/styles";
+import { ms } from "../../core/styles/scaling";
+
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface EditProfileModalProps {
@@ -80,7 +84,7 @@ export default function EditProfileModal({
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Edit Your Profile</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Feather name="x" size={24} color="#000" />
+              <Feather name="x" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -96,7 +100,7 @@ export default function EditProfileModal({
                 style={styles.avatar}
               />
               <TouchableOpacity style={styles.cameraButton}>
-                <Feather name="camera" size={20} color="#FFF" />
+                <Feather name="camera" size={20} color={colors.textWhite} />
               </TouchableOpacity>
             </View>
 
@@ -107,7 +111,7 @@ export default function EditProfileModal({
                 <Feather
                   name="user"
                   size={20}
-                  color="#999"
+                  color={colors.textGrey1}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -115,6 +119,7 @@ export default function EditProfileModal({
                   value={name}
                   onChangeText={setName}
                   placeholder="Enter your name"
+                  placeholderTextColor={colors.textGrey2}
                 />
               </View>
             </View>
@@ -126,7 +131,7 @@ export default function EditProfileModal({
                 <Feather
                   name="mail"
                   size={20}
-                  color="#999"
+                  color={colors.textGrey1}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -134,6 +139,7 @@ export default function EditProfileModal({
                   value={email}
                   onChangeText={setEmail}
                   placeholder="Enter your email"
+                  placeholderTextColor={colors.textGrey2}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -190,7 +196,7 @@ export default function EditProfileModal({
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity style={styles.chip}>
-                  <Feather name="plus" size={16} color="#666" />
+                  <Feather name="plus" size={16} color={colors.textGrey1} />
                   <Text style={[styles.chipText, { marginLeft: 4 }]}>Add</Text>
                 </TouchableOpacity>
               </View>
@@ -221,9 +227,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    backgroundColor: "#FFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: colors.textWhite,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
     maxHeight: SCREEN_HEIGHT * 0.9,
     overflow: "hidden",
   },
@@ -234,11 +240,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: colors.outlineVariant,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.bold,
+    color: colors.textPrimary,
   },
   closeButton: {
     padding: 4,
@@ -260,27 +267,29 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: "35%",
-    backgroundColor: "#333",
+    backgroundColor: colors.textPrimary,
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: colors.textWhite,
   },
   formSection: {
     marginBottom: 24,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
     marginBottom: 12,
-    color: "#000",
+    color: colors.textPrimary,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: colors.outlineVariant,
     borderRadius: 8,
     paddingHorizontal: 12,
   },
@@ -290,8 +299,9 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 14,
-    fontSize: 16,
-    color: "#000",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textPrimary,
   },
   chipContainer: {
     flexDirection: "row",
@@ -304,23 +314,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#E0E0E0",
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
   },
   chipSelected: {
-    borderColor: "#E63946",
-    backgroundColor: "#FFE8E9",
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryExtraLight,
   },
   chipText: {
-    fontSize: 15,
-    color: "#666",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
   },
   chipTextSelected: {
-    color: "#E63946",
-    fontWeight: "500",
+    color: colors.primary,
+    fontFamily: fontFamilies.semiBold,
   },
   saveButton: {
-    backgroundColor: "#E63946",
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: "center",
@@ -328,21 +339,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   saveButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
+    color: colors.textWhite,
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
   },
   cancelButton: {
-    borderWidth: 2,
-    borderColor: "#E63946",
+    borderWidth: 1,
+    borderColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 32,
   },
   cancelButtonText: {
-    color: "#E63946",
-    fontSize: 16,
-    fontWeight: "700",
+    color: colors.primary,
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
   },
 });

@@ -238,7 +238,7 @@ const Home = () => {
             </Text>
             <PrimaryButton
               title="Chat with Nora AI"
-              onPress={() => {}} // Navigate to chat
+              onPress={() => router.push("./AiChat")}
               style={styles.heroButton}
             />
           </View>
