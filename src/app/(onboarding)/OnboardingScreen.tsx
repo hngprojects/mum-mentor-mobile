@@ -10,6 +10,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Interface for each onboarding slide
@@ -163,13 +172,45 @@ export default function OnboardingSlides() {
   // Track current active slide index (0, 1, or 2)
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Animated values for swipe gestures
+  const translateX = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  /**
+   * Mark onboarding as complete and save to AsyncStorage
+   */
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem('@OnboardingComplete', 'true');
+    } catch (error) {
+      console.error('Failed to save onboarding status:', error);
+    }
+  };
+
   /**
    * Handle "Next" button press
    * Advances to the next slide
    */
   const handleNext = () => {
     if (currentIndex < ONBOARDING_SLIDES.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      // Animate transition
+      opacity.value = withTiming(0, { duration: 200 }, () => {
+        runOnJS(setCurrentIndex)(currentIndex + 1);
+        opacity.value = withTiming(1, { duration: 200 });
+      });
+    }
+  };
+
+  /**
+   * Handle going to previous slide
+   */
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      // Animate transition
+      opacity.value = withTiming(0, { duration: 200 }, () => {
+        runOnJS(setCurrentIndex)(currentIndex - 1);
+        opacity.value = withTiming(1, { duration: 200 });
+      });
     }
   };
 
@@ -178,48 +219,90 @@ export default function OnboardingSlides() {
    * Jumps directly to the last slide (slide 3)
    */
   const handleSkip = () => {
-    setCurrentIndex(ONBOARDING_SLIDES.length - 1);
+    opacity.value = withTiming(0, { duration: 200 }, () => {
+      runOnJS(setCurrentIndex)(ONBOARDING_SLIDES.length - 1);
+      opacity.value = withTiming(1, { duration: 200 });
+    });
   };
 
   /**
    * Handle "Log in" button press
-   * TODO: Navigate to login screen when auth is implemented
+   * Marks onboarding as complete before navigating
    */
-  const handleLogin = () => {
-    // TODO: Add navigation to login screen
-    console.log('Navigate to login');
+  const handleLogin = async () => {
+    await completeOnboarding();
     router.push('./(auth)/SignInScreen');
   };
 
   /**
    * Handle "Sign Up" button press
-   * TODO: Navigate to signup screen when auth is implemented
+   * Marks onboarding as complete before navigating
    */
-  const handleSignUp = () => {
-    // TODO: Add navigation to signup screen
-    console.log('Navigate to signup');
+  const handleSignUp = async () => {
+    await completeOnboarding();
     router.push('./(auth)/SignUpScreen');
   };
+
+  /**
+   * Pan gesture for swipe navigation
+   */
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // Update translateX based on gesture movement
+      translateX.value = event.translationX;
+    })
+    .onEnd((event) => {
+      const swipeThreshold = 50; // Minimum swipe distance in pixels
+      const velocity = event.velocityX;
+
+      // Determine if swipe was strong enough
+      if (Math.abs(event.translationX) > swipeThreshold || Math.abs(velocity) > 500) {
+        if (event.translationX < 0 && currentIndex < ONBOARDING_SLIDES.length - 1) {
+          // Swipe left -> Next slide
+          translateX.value = withSpring(0);
+          runOnJS(handleNext)();
+        } else if (event.translationX > 0 && currentIndex > 0) {
+          // Swipe right -> Previous slide
+          translateX.value = withSpring(0);
+          runOnJS(handlePrevious)();
+        } else {
+          // Reset position if swipe not valid
+          translateX.value = withSpring(0);
+        }
+      } else {
+        // Reset position if swipe too weak
+        translateX.value = withSpring(0);
+      }
+    });
 
   // --- RENDER ---
 
   // Get the current slide to display
   const currentSlide = ONBOARDING_SLIDES[currentIndex];
 
+  // Animated style for slide transitions
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  });
+
   return (
-    <View style={styles.container}>
-      {/* Render only the current slide */}
-      <OnboardingSlideItem
-        slide={currentSlide}
-        currentIndex={currentIndex}
-        totalSlides={ONBOARDING_SLIDES.length}
-        onSelectSlide={setCurrentIndex}
-        onNext={handleNext}
-        onSkip={handleSkip}
-        onLogin={handleLogin}
-        onSignUp={handleSignUp}
-      />
-    </View>
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={[styles.container, animatedStyle]}>
+        {/* Render only the current slide */}
+        <OnboardingSlideItem
+          slide={currentSlide}
+          currentIndex={currentIndex}
+          totalSlides={ONBOARDING_SLIDES.length}
+          onSelectSlide={setCurrentIndex}
+          onNext={handleNext}
+          onSkip={handleSkip}
+          onLogin={handleLogin}
+          onSignUp={handleSignUp}
+        />
+      </Animated.View>
+    </GestureDetector>
   );
 }
 

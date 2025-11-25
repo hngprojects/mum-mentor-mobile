@@ -1,22 +1,57 @@
-import React, { useEffect } from 'react';
-import { Stack, Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { AuthProvider, useAuth } from '../core/services/authContext'; // Adjust path if needed
-import { useAssetLoading } from '../core/utils/assetsLoading'; // Adjust path if needed
-import { colors } from '../core/styles/index'; // Adjust path if needed
+import React, { useEffect, useState } from "react";
+import { Stack, Redirect } from "expo-router";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+import { AuthProvider, useAuth } from "../core/services/authContext";
+import { useAssetLoading } from "../core/utils/assetsLoading";
+import { colors } from "../core/styles/index";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 SplashScreen.preventAutoHideAsync();
 
+// ----------------------------------------------------
+// ONBOARDING STORAGE LOGIC
+// ----------------------------------------------------
+const ONBOARDING_KEY = "@OnboardingComplete";
+
+function useOnboardingStatusLoader() {
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+        setOnboardingComplete(value === "true");
+      } catch (error) {
+        console.error("Failed to load onboarding status:", error);
+      }
+      setIsCheckingOnboarding(false);
+    };
+    check();
+  }, []);
+
+  return { onboardingComplete, isCheckingOnboarding };
+}
+
+// ----------------------------------------------------
+// MAIN ROOT LAYOUT CONTENT
+// ----------------------------------------------------
 function RootLayoutContent() {
   const isLoaded = useAssetLoading();
   const { user, isSessionLoading } = useAuth();
+  const { onboardingComplete, isCheckingOnboarding } = useOnboardingStatusLoader();
 
+  // Hide splash only when EVERYTHING is ready
   useEffect(() => {
-    if (isLoaded) SplashScreen.hideAsync();
-  }, [isLoaded]);
+    if (isLoaded && !isSessionLoading && !isCheckingOnboarding) {
+      SplashScreen.hideAsync();
+    }
+  }, [isLoaded, isSessionLoading, isCheckingOnboarding]);
 
-  if (!isLoaded || isSessionLoading) {
+  // --- STILL LOADING ---
+  if (!isLoaded || isSessionLoading || isCheckingOnboarding) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -24,39 +59,69 @@ function RootLayoutContent() {
     );
   }
 
-  // --- Unauthenticated users ---
+  // ----------------------------------------------------
+  // USER NOT LOGGED IN
+  // ----------------------------------------------------
   if (!user) {
+    if (onboardingComplete) {
+      // User has completed onboarding before, go to sign in
+      return (
+        <>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen name="(auth)" />
+          </Stack>
+          <Redirect href="/(auth)/SignInScreen" />
+        </>
+      );
+    }
+
+    // User has NOT completed onboarding, show onboarding
     return (
-      <Stack>
-        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(onboarding)" />
+          <Stack.Screen name="(auth)" />
+        </Stack>
         <Redirect href="/(onboarding)" />
-      </Stack>
+      </>
     );
   }
 
-  // --- Authenticated users ---
+  // ----------------------------------------------------
+  // USER LOGGED IN
+  // ----------------------------------------------------
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+      </Stack>
       <Redirect href="/(tabs)/Home" />
-    </Stack>
+    </>
   );
 }
 
+// ----------------------------------------------------
+// EXPORT ROOT LAYOUT WRAPPER
+// ----------------------------------------------------
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutContent />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <RootLayoutContent />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
 
+// ----------------------------------------------------
+// STYLES
+// ----------------------------------------------------
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.backgroundMain,
   },
 });
