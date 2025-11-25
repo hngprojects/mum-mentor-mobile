@@ -2,16 +2,16 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
@@ -67,7 +67,7 @@ const quickActions: QuickAction[] = [
  */
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  
+
   if (hour >= 5 && hour < 12) {
     return "Good Morning";
   } else if (hour >= 12 && hour < 17) {
@@ -94,9 +94,9 @@ const Home = () => {
     setIsLoadingUser(true);
     try {
       const response = await getCurrentUser();
-      
+
       // Set user directly from response
-      setUser(response || null); 
+      setUser(response || null);
     } catch (error) {
       console.log("User fetch error:", error);
     } finally {
@@ -178,7 +178,7 @@ const Home = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={colors.backgroundMain}
@@ -195,14 +195,17 @@ const Home = () => {
 
               {/* Greeting displays only the first name using split(" ")[0] */}
               <Text style={styles.greetingLabel}>
-                Hi, {isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"}
+                Hi,{" "}
+                {isLoadingUser
+                  ? "..."
+                  : user?.full_name?.split(" ")[0] || "User"}
               </Text>
             </View>
 
             <Text style={styles.greetingTitle}>{greeting}</Text>
           </View>
 
-          <TouchableOpacity onPress={() => router.push('../notifications')}>
+          <TouchableOpacity onPress={() => router.push("../profile")}>
             <Image source={notificationIcon} style={styles.notificationIcon} />
           </TouchableOpacity>
         </View>
@@ -245,12 +248,18 @@ const Home = () => {
                 {action.id === "journal" ? (
                   <Image
                     source={journalIcon}
-                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
                   />
                 ) : action.id === "resources" ? (
                   <Image
                     source={resourceIcon}
-                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
                   />
                 ) : (
                   <Feather
@@ -261,7 +270,9 @@ const Home = () => {
                   />
                 )}
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
-                <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
+                <Text style={styles.quickActionSubtitle}>
+                  {action.subtitle}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -271,7 +282,11 @@ const Home = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{"Today's Task"}</Text>
-            <TouchableOpacity onPress={() => { router.push('../components/TaskPage')}}>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("../components/TaskPage");
+              }}
+            >
               <Text style={styles.viewAllLink}>View All</Text>
             </TouchableOpacity>
           </View>
