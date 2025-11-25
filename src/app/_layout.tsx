@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "../core/services/authContext";
 import { colors } from "../core/styles/index";
 import { useAssetLoading } from "../core/utils/assetsLoading";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,10 +39,22 @@ function useOnboardingStatusLoader() {
 // ----------------------------------------------------
 // MAIN ROOT LAYOUT CONTENT
 // ----------------------------------------------------
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
 function RootLayoutContent() {
   const isLoaded = useAssetLoading();
   const { user, isSessionLoading } = useAuth();
-  const { onboardingComplete, isCheckingOnboarding } = useOnboardingStatusLoader();
+  const { onboardingComplete, isCheckingOnboarding } =
+    useOnboardingStatusLoader();
 
   // Hide splash only when EVERYTHING is ready
   useEffect(() => {
@@ -66,13 +79,13 @@ function RootLayoutContent() {
     if (onboardingComplete) {
       // User has completed onboarding before, go to sign in
       return (
-        <>
+        <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(auth)" />
           </Stack>
           <Redirect href="/(auth)/SignInScreen" />
-        </>
+        </QueryClientProvider>
       );
     }
 

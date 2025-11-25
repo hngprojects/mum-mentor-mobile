@@ -1,26 +1,26 @@
-import apiClient from './apiClient';
-import { AxiosError } from 'axios';
-import { ApiErrorResponse } from './authService'; // Assuming this import path is correct
+import apiClient from "./apiClient";
+import { AxiosError } from "axios";
+import { ApiErrorResponse } from "./authService"; // Assuming this import path is correct
 
 // --- 1. ACCURATE USER PROFILE TYPE (Based on your API response) ---
 export interface UserProfile {
-    // Note: ID is a string (UUID)
-    id: string; 
-    email: string;
-    full_name: string;
-    is_active: boolean;
-    // The key used in the response is 'email_verified'
-    email_verified: boolean; 
-    google_id: string | null;
-    role: string;
+  // Note: ID is a string (UUID)
+  id: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  // The key used in the response is 'email_verified'
+  email_verified: boolean;
+  google_id: string | null;
+  role: string;
 }
 
 // --- 2. WRAPPER TYPE (Matching the overall API structure) ---
 interface ProfileResponseWrapper {
-    status: string;
-    status_code: number;
-    message: string;
-    data: UserProfile; // The actual profile is nested here
+  status: string;
+  status_code: number;
+  message: string;
+  data: UserProfile; // The actual profile is nested here
 }
 
 // --- API SERVICE FUNCTIONS ---
@@ -32,41 +32,48 @@ interface ProfileResponseWrapper {
  */
 export async function getCurrentUser(): Promise<UserProfile | null> {
   // Use the correct API path confirmed in the last step
-  const PROFILE_ENDPOINT = '/api/v1/auth/profile'; 
-  
+  const PROFILE_ENDPOINT = "/api/v1/auth/profile";
+
   try {
     // We explicitly type the response as the wrapper structure
-    const response = await apiClient.get<ProfileResponseWrapper>(PROFILE_ENDPOINT);
-    
+    const response = await apiClient.get<ProfileResponseWrapper>(
+      PROFILE_ENDPOINT
+    );
+
     // --- FIX APPLIED HERE ---
     const profileData = response.data.data;
-    
+
     // We check for a valid nested object containing the essential email property
     if (profileData && profileData.email) {
-        console.log("Successfully extracted user profile from 'data' key.");
-        return profileData;
+      console.log("Successfully extracted user profile from 'data' key.");
+      return profileData;
     }
-    
+
     // This log should now ONLY fire if the 'data' key is present but empty/malformed
     console.log("API returned 200 OK but user data was incomplete or null.");
     return null;
-
   } catch (error) {
     const axiosError = error as AxiosError<ApiErrorResponse>;
-    
+
     // CRITICAL: We look for explicit authentication failures (401 Unauthorized or 403 Forbidden).
-    if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
-        // This is the expected path when the token is expired/invalid
-        console.debug("Token invalid or expired (401/403). Session cannot be restored.", axiosError.response.data);
-        return null;
+    if (
+      axiosError.response?.status === 401 ||
+      axiosError.response?.status === 403
+    ) {
+      // This is the expected path when the token is expired/invalid
+      console.debug(
+        "Token invalid or expired (401/403). Session cannot be restored.",
+        axiosError.response.data
+      );
+      return null;
     }
 
-    // Handle all other errors (e.g., 500 server error, network failure, etc.) 
+    // Handle all other errors (e.g., 500 server error, network failure, etc.)
     console.debug(
-        "Error fetching user profile (unhandled server/network error):", 
-        axiosError.message, 
-        axiosError.response?.data
+      "Error fetching user profile (unhandled server/network error):",
+      axiosError.message,
+      axiosError.response?.data
     );
-    return null; 
+    return null;
   }
 }

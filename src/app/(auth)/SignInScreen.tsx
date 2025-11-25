@@ -1,35 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  KeyboardAvoidingView, 
-  Platform,
+import { AxiosError } from "axios";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  ActivityIndicator
-} from 'react-native';
-import { router } from 'expo-router';
-import { AxiosError } from 'axios';
-import { StatusBar } from 'expo-status-bar';
+  View,
+} from "react-native";
 
 // --- Imports from Core Components and Styles ---
-import CustomInput from '../components/CustomInput'; 
-import PrimaryButton from '../components/PrimaryButton';
-import { colors, typography, spacing } from '../../core/styles/index';
-import { ms, rfs } from '../../core/styles/scaling';
+import { colors, spacing, typography } from "../../core/styles/index";
+import { ms, rfs } from "../../core/styles/scaling";
+import CustomInput from "../components/CustomInput";
+import PrimaryButton from "../components/PrimaryButton";
 
 // --- API Service Import ---
-import { login, loginWithGoogle, ApiErrorResponse } from '../../core/services/authService'; 
-import { useGoogleAuth, parseGoogleIdToken } from '../../core/services/googleAuthservice';
-import { getDeviceInfo } from '../../core/services/deviceInfoHelper';
+import {
+  ApiErrorResponse,
+  login,
+  loginWithGoogle,
+} from "../../core/services/authService";
+import { getDeviceInfo } from "../../core/services/deviceInfoHelper";
+import {
+  parseGoogleIdToken,
+  useGoogleAuth,
+} from "../../core/services/googleAuthservice";
 
 export default function SignInScreen() {
   // --- Local State Management ---
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -40,14 +47,17 @@ export default function SignInScreen() {
 
   // --- Handle Google Auth Response ---
   useEffect(() => {
-    if (response?.type === 'success') {
+    if (response?.type === "success") {
       const { authentication } = response;
       if (authentication?.idToken) {
         handleGoogleLogin(authentication.idToken);
       }
-    } else if (response?.type === 'error') {
-      console.error('Google auth error:', response.error);
-      Alert.alert('Google Sign In Failed', 'Unable to complete Google sign in.');
+    } else if (response?.type === "error") {
+      console.error("Google auth error:", response.error);
+      Alert.alert(
+        "Google Sign In Failed",
+        "Unable to complete Google sign in."
+      );
     }
   }, [response]);
 
@@ -56,13 +66,13 @@ export default function SignInScreen() {
     const newErrors: { [key: string]: string } = {};
     let isValid = true;
 
-    if (!email || !email.includes('@')) {
-      newErrors.email = 'Please enter a valid email address.';
+    if (!email || !email.includes("@")) {
+      newErrors.email = "Please enter a valid email address.";
       isValid = false;
     }
 
     if (!password) {
-      newErrors.password = 'Password is required.';
+      newErrors.password = "Password is required.";
       isValid = false;
     }
 
@@ -82,30 +92,31 @@ export default function SignInScreen() {
 
     try {
       const loginPayload = { email: email.toLowerCase(), password };
-      await login(loginPayload); 
+      await login(loginPayload);
 
       Alert.alert("Welcome Back!", "Login successful.");
-      router.replace('/(tabs)/Home'); 
-
+      router.replace("/(tabs)/Home");
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;
-      
-      console.warn("Login API Failure (Expected):", statusCode, axiosError.response?.data);
+
+      console.warn(
+        "Login API Failure (Expected):",
+        statusCode,
+        axiosError.response?.data
+      );
 
       if (statusCode === 401 || statusCode === 404) {
         setErrors({
-          email: 'The Email Address is incorrect or user not found.',
-          password: 'The Password is incorrect.',
+          email: "The Email Address is incorrect or user not found.",
+          password: "The Password is incorrect.",
         });
         setGeneralError(null);
-        
       } else if (statusCode === 422) {
-        setGeneralError('Validation failed. Check input formats.');
+        setGeneralError("Validation failed. Check input formats.");
         setErrors({});
-
       } else {
-        setGeneralError('An unexpected error occurred. Please try again.');
+        setGeneralError("An unexpected error occurred. Please try again.");
         setErrors({});
       }
     } finally {
@@ -122,9 +133,9 @@ export default function SignInScreen() {
     try {
       // Get device information
       const deviceInfo = await getDeviceInfo();
-      
+
       // Send ID token with device info to your backend
-      await loginWithGoogle({ 
+      await loginWithGoogle({
         id_token: idToken,
         device_id: deviceInfo.device_id,
         device_name: deviceInfo.device_name,
@@ -132,19 +143,18 @@ export default function SignInScreen() {
 
       // Parse user info for display (optional)
       const userInfo = parseGoogleIdToken(idToken);
-      
+
       Alert.alert(
-        "Welcome Back!", 
+        "Welcome Back!",
         userInfo ? `Signed in as ${userInfo.name}` : "Google login successful."
       );
-      
-      router.replace('/(tabs)/Home');
 
+      router.replace("/(tabs)/Home");
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Google login API error:", axiosError.response?.data);
-      
-      setGeneralError('Google sign in failed. Please try again.');
+
+      setGeneralError("Google sign in failed. Please try again.");
     } finally {
       setIsGoogleLoading(false);
     }
@@ -155,31 +165,31 @@ export default function SignInScreen() {
     try {
       await promptAsync();
     } catch (error) {
-      console.error('Error triggering Google sign in:', error);
-      Alert.alert('Error', 'Failed to start Google sign in');
+      console.error("Error triggering Google sign in:", error);
+      Alert.alert("Error", "Failed to start Google sign in");
     }
   };
 
   // --- Navigation Handlers ---
   const handleForgotPassword = () => {
-    router.push('/(auth)/ForgotPasswordScreen');
+    router.push("/(auth)/ForgotPasswordScreen");
   };
-  
+
   const handleSignUp = () => {
-    router.replace('/(auth)/SignUpScreen');
+    router.replace("/(auth)/SignUpScreen");
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <StatusBar style="dark" /> 
-      
+      <StatusBar style="dark" />
+
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.innerContainer}>
           <Text style={styles.header}>Log In</Text>
-          
+
           {/* General Error Message Display */}
           {generalError && (
             <Text style={styles.generalErrorText}>{generalError}</Text>
@@ -195,7 +205,7 @@ export default function SignInScreen() {
             isError={!!errors.email}
             errorMessage={errors.email}
             iconName="mail-outline"
-            isValid={email.includes('@') && email.length > 0 && !errors.email}
+            isValid={email.includes("@") && email.length > 0 && !errors.email}
           />
 
           {/* Password Input */}
@@ -211,14 +221,14 @@ export default function SignInScreen() {
           />
 
           {/* Forgot Password Link */}
-          <TouchableOpacity 
-            style={styles.forgotPasswordLink} 
+          <TouchableOpacity
+            style={styles.forgotPasswordLink}
             onPress={handleForgotPassword}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
-          
+
           {/* Log In Button */}
           <PrimaryButton
             title="Log In"
@@ -229,21 +239,18 @@ export default function SignInScreen() {
 
           {/* Don't have an account */}
           <Text style={styles.signupText}>
-            Don&apos;t have an account? {' '}
-            <Text 
-              style={styles.signupLink} 
-              onPress={handleSignUp}
-            >
+            Don&apos;t have an account?{" "}
+            <Text style={styles.signupLink} onPress={handleSignUp}>
               Sign up
             </Text>
           </Text>
-          
+
           <Text style={styles.socialLoginText}>OR CONTINUE WITH</Text>
 
           {/* Social Login Buttons */}
           <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity 
-              style={styles.socialButton} 
+            <TouchableOpacity
+              style={styles.socialButton}
               onPress={handleGooglePress}
               disabled={!request || isGoogleLoading}
             >
@@ -251,23 +258,23 @@ export default function SignInScreen() {
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <>
-                  <Image 
-                    source={require('../../assets/images/google.png')} 
-                    style={styles.socialButtonImage} 
+                  <Image
+                    source={require("../../assets/images/google.png")}
+                    style={styles.socialButtonImage}
                     resizeMode="contain"
                   />
                   <Text style={styles.socialButtonText}>Google</Text>
                 </>
               )}
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.socialButton, {marginLeft: ms(spacing.md)}]} 
-              onPress={() => Alert.alert('Apple Login', 'Coming soon!')}
+
+            <TouchableOpacity
+              style={[styles.socialButton, { marginLeft: ms(spacing.md) }]}
+              onPress={() => Alert.alert("Apple Login", "Coming soon!")}
             >
-              <Image 
-                source={require('../../assets/images/apple.png')} 
-                style={styles.socialButtonImage} 
+              <Image
+                source={require("../../assets/images/apple.png")}
+                style={styles.socialButtonImage}
                 resizeMode="contain"
               />
               <Text style={styles.socialButtonText}>Apple</Text>
@@ -291,7 +298,7 @@ const styles = StyleSheet.create({
     paddingBottom: ms(spacing.xl),
   },
   header: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: rfs(typography.heading1.fontSize),
     fontFamily: typography.heading1.fontFamily,
     color: colors.textPrimary,
@@ -300,55 +307,55 @@ const styles = StyleSheet.create({
   generalErrorText: {
     ...typography.bodyMedium,
     color: colors.error,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: ms(spacing.md),
   },
   forgotPasswordLink: {
-    alignSelf: 'flex-end',
-    marginTop: ms(-spacing.md), 
+    alignSelf: "flex-end",
+    marginTop: ms(-spacing.md),
     marginBottom: ms(spacing.xl),
   },
   forgotPasswordText: {
     fontSize: rfs(typography.bodySmall.fontSize),
     fontFamily: typography.bodySmall.fontFamily,
-    color: colors.primary, 
-    textDecorationLine: 'underline',
+    color: colors.primary,
+    textDecorationLine: "underline",
   },
   signupText: {
     fontSize: rfs(typography.bodyMedium.fontSize),
     fontFamily: typography.bodyMedium.fontFamily,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: ms(spacing.lg),
     marginBottom: ms(spacing.lg),
   },
   signupLink: {
     color: colors.primary,
-    textDecorationLine: 'underline',
-    fontWeight: 'bold',
+    textDecorationLine: "underline",
+    fontWeight: "bold",
   },
   socialLoginText: {
     fontSize: rfs(typography.caption.fontSize),
     fontFamily: typography.caption.fontFamily,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     marginVertical: ms(spacing.md),
   },
   socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   socialButton: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.outline,
     paddingVertical: ms(spacing.sm),
     borderRadius: ms(spacing.sm),
     marginHorizontal: ms(spacing.xs),
-    minHeight: ms(50), 
+    minHeight: ms(50),
   },
   socialButtonImage: {
     width: rfs(24),
@@ -359,5 +366,5 @@ const styles = StyleSheet.create({
     fontSize: rfs(typography.bodyMedium.fontSize),
     fontFamily: typography.bodyMedium.fontFamily,
     color: colors.textPrimary,
-  }
+  },
 });
