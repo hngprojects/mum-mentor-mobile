@@ -119,7 +119,7 @@ export default function ProfileScreen({ navigation }: any) {
             {/* Data & Privacy */}
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemTop]}
-              onPress={() => router.push("./profile/DataPrivacyScreen")}
+              onPress={() => router.push("/profile/DataPrivacyScreen")}
               accessibilityRole="button"
             >
               <Feather name="shield" size={20} color="#666" />
@@ -133,7 +133,7 @@ export default function ProfileScreen({ navigation }: any) {
             {/* Password */}
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemBottom]}
-              onPress={() => router.push("./profile/ChangePasswordScreen")}
+              onPress={() => router.push("/profile/ChangePasswordScreen")}
               accessibilityRole="button"
             >
               <Feather name="lock" size={20} color="#666" />
@@ -175,7 +175,7 @@ export default function ProfileScreen({ navigation }: any) {
             {/* About */}
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemTop]}
-              onPress={() => router.push("./profile/AboutScreen")}
+              onPress={() => router.push("/profile/AboutScreen")}
               accessibilityRole="button"
             >
               <Feather name="info" size={20} color="#666" />
