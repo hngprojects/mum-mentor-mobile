@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Added
 import { useSetup } from "../../core/hooks/setupContext";
 import ChildSetupItem, { ChildData } from "../components/ChildSetupItem";
 import PrimaryButton from "../components/PrimaryButton";
@@ -110,6 +111,10 @@ const ChildSetupScreen = () => {
     setIsLoading(true);
     try {
       await completeSetup(children, user.id);
+
+      // --- AsyncStorage flag to mark setup complete ---
+      await AsyncStorage.setItem("isSetupComplete", "true");
+
       console.log("Setup completed successfully!");
       show(); // Show success modal
     } catch (error) {

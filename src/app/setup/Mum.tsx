@@ -1,5 +1,3 @@
-// src/screens/MomSetupScreen.tsx
-
 import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, rbr, rfs, vs } from "@/src/core/styles/scaling";
 import { showToast } from "@/src/core/utils/toast";
@@ -16,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Added
 import { useSetup } from "../../core/hooks/setupContext";
 import { MomSetupData } from "../../core/services/setupStorageService";
 import AddGoalModal from "../components/AddGoalModal";
@@ -72,8 +71,6 @@ const MomSetupScreen: React.FC = () => {
 
   const handleAddGoal = () => {
     if (!newGoal.trim()) return;
-
-    const updatedGoals = [...goals, newGoal];
 
     setGoals([...goals, newGoal]);
     setCustomGoals([...customGoals, newGoal]);
@@ -181,6 +178,9 @@ const MomSetupScreen: React.FC = () => {
       }
 
       await saveMomSetup(momSetupData);
+
+      // --- AsyncStorage flag added ---
+      await AsyncStorage.setItem("isSetupComplete", "false");
 
       router.push("/setup/childSetupScreen");
     } catch (error) {
