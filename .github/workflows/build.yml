@@ -45,17 +45,25 @@ jobs:
 
      - name: Create google-services.json from secret
        run: |
-         # write secret contents to android app folder
-         mkdir -p android/app
-         printf "%s" "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
-         echo "Wrote android/app/google-services.json"
-         # validate the file has project_info
-         if command -v jq >/dev/null 2>&1; then
-           jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
-         else
-           # best-effort python check if jq not available
-           python -c "import json,sys;obj=json.load(open('android/app/google-services.json'));\nif 'project_info' not in obj:\n    print('google-services.json missing project_info');sys.exit(1)"
-         fi
+        # write secret contents to android app folder
+        mkdir -p android/app
+        SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
+        # Try treating secret as raw JSON first
+        printf "%s" "$SECRET" > android/app/google-services.json
+        echo "Wrote android/app/google-services.json (attempt as raw JSON)"
+
+        # test JSON validity; if it fails, try base64 decode then re-test
+        if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
+          echo "google-services.json is valid JSON"
+        else
+          echo "Initial JSON parse failed — attempting base64 decode of secret"
+          echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+          echo "Wrote android/app/google-services.json (after base64 decode)"
+          jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
+        fi
+
+        # final check: ensure project_info exists
+        jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
 
      - name: Create .env file with keystore credentials
        run: |
