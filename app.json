@@ -4,12 +4,18 @@
     "slug": "MumMentorMobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "@/src/assets/images/logo.png",
+    "icon": "./src/assets/images/logo.png",
     "scheme": "mummentor",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to the camera to take photos of your memories.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select photos.",
+        "NSMicrophoneUsageDescription": "This app needs access to the microphone for video recording."
+      },
+      "bundleIdentifier": "com.hng.mummentor"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +24,14 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.hng.mummentor"
+      "package": "com.hng.mummentor",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -42,7 +55,22 @@
           "keystoreFile": "keystore.jks"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MumMentor to access your camera to capture precious moments.",
+          "microphonePermission": "Allow MumMentor to access your microphone for video recording.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow MumMentor to access your photos to select and save memories.",
+          "cameraPermission": "Allow MumMentor to access your camera to take photos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

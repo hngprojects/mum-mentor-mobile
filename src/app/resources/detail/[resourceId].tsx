@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSavedResources } from "../../../core/services/savedResourcesContext";
 import { colors, spacing } from "../../../core/styles";
 import { ms, rfs } from "../../../core/styles/scaling";
-import SuccessModal from "../../components/SucessModal";
+import SuccessModal from "../../components/SuccessModal";
 import ResourceDetailView from "../../components/resources/ResourceDetailView";
 import { resourceSections } from "../data";
 import { ResourceListItem } from "../types";

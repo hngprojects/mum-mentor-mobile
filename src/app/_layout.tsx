@@ -1,9 +1,15 @@
+// app/_layout.tsx
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Redirect, Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+import { store } from "@/src/store/store";
+import { Provider } from "react-redux";
+import { SetupProvider } from "../core/hooks/setupContext";
 import { AuthProvider, useAuth } from "../core/services/authContext";
 import { SavedResourcesProvider } from "../core/services/savedResourcesContext";
 import { colors } from "../core/styles/index";
@@ -25,6 +31,10 @@ function useOnboardingStatusLoader() {
       try {
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
         setOnboardingComplete(value === "true");
+        console.log(
+          "📱 Onboarding status:",
+          value === "true" ? "Complete" : "Not complete"
+        );
       } catch (error) {
         console.error("Failed to load onboarding status:", error);
       }
@@ -42,7 +52,10 @@ function useOnboardingStatusLoader() {
 function RootLayoutContent() {
   const isLoaded = useAssetLoading();
   const { user, isSessionLoading } = useAuth();
-  const { onboardingComplete, isCheckingOnboarding } = useOnboardingStatusLoader();
+
+  const { onboardingComplete, isCheckingOnboarding } =
+    useOnboardingStatusLoader();
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   // Hide splash only when EVERYTHING is ready
   useEffect(() => {
@@ -51,7 +64,46 @@ function RootLayoutContent() {
     }
   }, [isLoaded, isSessionLoading, isCheckingOnboarding]);
 
-  // --- STILL LOADING ---
+  // Handle initial navigation ONLY ONCE
+  useEffect(() => {
+    if (!isLoaded || isSessionLoading || isCheckingOnboarding || hasNavigated) {
+      return;
+    }
+
+    console.log("🚀 Initial navigation check:", {
+      user: !!user,
+      onboardingComplete,
+    });
+
+    // Perform initial navigation only once
+    setHasNavigated(true);
+
+    if (user) {
+      // User is logged in - go to home
+      console.log("✅ User logged in - redirecting to Home");
+      router.replace("/(tabs)/Home");
+    } else {
+      // User is not logged in
+      if (onboardingComplete) {
+        // Onboarding done - go to sign in
+        console.log("✅ Onboarding complete - redirecting to SignIn");
+        router.replace("/(auth)/SignInScreen");
+      } else {
+        // Show onboarding
+        console.log("✅ Onboarding not complete - showing onboarding");
+        router.replace("/(onboarding)");
+      }
+    }
+  }, [
+    isLoaded,
+    isSessionLoading,
+    isCheckingOnboarding,
+    user,
+    onboardingComplete,
+    hasNavigated,
+  ]);
+
+  // Still loading assets or session state
   if (!isLoaded || isSessionLoading || isCheckingOnboarding) {
     return (
       <View style={styles.loadingContainer}>
@@ -60,46 +112,21 @@ function RootLayoutContent() {
     );
   }
 
-  // ----------------------------------------------------
-  // USER NOT LOGGED IN
-  // ----------------------------------------------------
-  if (!user) {
-    if (onboardingComplete) {
-      // User has completed onboarding before, go to sign in
-      return (
-        <>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(onboarding)" />
-            <Stack.Screen name="(auth)" />
-          </Stack>
-          <Redirect href="/(auth)/SignInScreen" />
-        </>
-      );
-    }
-
-    // User has NOT completed onboarding, show onboarding
-    return (
-      <>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(auth)" />
-        </Stack>
-        <Redirect href="/(onboarding)" />
-      </>
-    );
-  }
-
-  // ----------------------------------------------------
-  // USER LOGGED IN
-  // ----------------------------------------------------
+  // Just render the stack - navigation happens in useEffect above
+  // ONLY include routes that actually exist in your file structure
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="resources" />
-      </Stack>
-      <Redirect href="/(tabs)/Home" />
-    </>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(onboarding)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="setup" />
+      <Stack.Screen name="Gallery" />
+      <Stack.Screen name="notifications" />
+      <Stack.Screen name="profile" />
+      <Stack.Screen name="resources" />
+      <Stack.Screen name="components" />
+      <Stack.Screen name="categories/[categoryId]" />
+    </Stack>
   );
 }
 
@@ -109,11 +136,15 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <SavedResourcesProvider>
-          <RootLayoutContent />
-        </SavedResourcesProvider>
-      </AuthProvider>
+      <Provider store={store}>
+        <AuthProvider>
+          <SetupProvider>
+            <SavedResourcesProvider>
+              <RootLayoutContent />
+            </SavedResourcesProvider>
+          </SetupProvider>
+        </AuthProvider>
+      </Provider>
     </GestureHandlerRootView>
   );
 }

@@ -1,3 +1,5 @@
+// src/screens/(auth)/SignInScreen.tsx
+
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -14,6 +16,7 @@ import {
 import { router } from 'expo-router';
 import { AxiosError } from 'axios';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- Imports from Core Components and Styles ---
 import CustomInput from '../components/CustomInput'; 
@@ -26,6 +29,10 @@ import { login, loginWithGoogle, ApiErrorResponse } from '../../core/services/au
 import { useGoogleAuth, parseGoogleIdToken } from '../../core/services/googleAuthservice';
 import { getDeviceInfo } from '../../core/services/deviceInfoHelper';
 
+// --- Setup Hook Import ---
+import { useSetup } from '../../core/hooks/setupContext';
+import { setupStorage } from '../../core/services/setupStorageService';
+
 export default function SignInScreen() {
   // --- Local State Management ---
   const [email, setEmail] = useState('');
@@ -34,6 +41,9 @@ export default function SignInScreen() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // --- Setup Hook ---
+  const { refreshSetupData } = useSetup();
 
   // --- Google Auth Hook ---
   const { request, response, promptAsync } = useGoogleAuth();
@@ -84,8 +94,23 @@ export default function SignInScreen() {
       const loginPayload = { email: email.toLowerCase(), password };
       await login(loginPayload); 
 
-      Alert.alert("Welcome Back!", "Login successful.");
-      router.replace('/(tabs)/Home'); 
+      // Mark onboarding as complete after successful login
+      await AsyncStorage.setItem('@OnboardingComplete', 'true');
+      console.log('✅ Login successful - onboarding marked complete');
+
+      // Refresh setup data and check if setup is completed
+      await refreshSetupData();
+      const isSetupDone = await setupStorage.isSetupCompleted();
+      
+      if (!isSetupDone) {
+        // First time user - redirect to setup
+        Alert.alert("Welcome!", "Let's set up your profile.");
+        router.replace('/setup/Mum');
+      } else {
+        // Returning user - go to home
+        Alert.alert("Welcome Back!", "Login successful.");
+        router.replace('/(tabs)/Home');
+      }
 
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
@@ -130,15 +155,29 @@ export default function SignInScreen() {
         device_name: deviceInfo.device_name,
       });
 
+      // Mark onboarding as complete after successful Google login
+      await AsyncStorage.setItem('@OnboardingComplete', 'true');
+      console.log('✅ Google login successful - onboarding marked complete');
+
+      // Refresh setup data and check if setup is completed
+      await refreshSetupData();
+      const isSetupDone = await setupStorage.isSetupCompleted();
+
       // Parse user info for display (optional)
       const userInfo = parseGoogleIdToken(idToken);
-      
-      Alert.alert(
-        "Welcome Back!", 
-        userInfo ? `Signed in as ${userInfo.name}` : "Google login successful."
-      );
-      
-      router.replace('/(tabs)/Home');
+
+      if (!isSetupDone) {
+        // First time Google user - redirect to setup
+        Alert.alert("Welcome!", "Let's personalize your experience.");
+        router.replace('/setup/Mum');
+      } else {
+        // Returning Google user - go to home
+        Alert.alert(
+          "Welcome Back!", 
+          userInfo ? `Signed in as ${userInfo.name}` : "Google login successful."
+        );
+        router.replace('/(tabs)/Home');
+      }
 
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
@@ -166,7 +205,7 @@ export default function SignInScreen() {
   };
   
   const handleSignUp = () => {
-    router.replace('/(auth)/SignUpScreen');
+    router.push('/(auth)/SignUpScreen');
   };
 
   return (
