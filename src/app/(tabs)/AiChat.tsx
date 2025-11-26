@@ -1,9 +1,9 @@
 import { colors } from "@/src/core/styles";
 import { rfs, s, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Clipboard,
   FlatList,
   Image,
@@ -123,7 +123,7 @@ export default function ChatScreen() {
       });
     } catch (error) {
       if (!hasReceivedChunkRef.current) {
-        Alert.alert("Error", "Failed to send message");
+        showToast.error("Error", "Failed to send message");
       }
       console.error(error);
     } finally {
@@ -141,7 +141,7 @@ export default function ChatScreen() {
         const newChat = await createChat.mutateAsync();
         setCurrentChat(newChat);
       } catch {
-        Alert.alert("Error", "Failed to start chat");
+        showToast.error("Error", "Failed to start chat");
       }
     }
   };
@@ -182,9 +182,9 @@ export default function ChatScreen() {
         setCurrentChat((prev) => (prev ? { ...prev, title: newTitle } : null));
       }
 
-      Alert.alert("Success", "Chat renamed successfully");
+      showToast.success("Success", "Chat renamed successfully");
     } catch (error) {
-      Alert.alert("Error", "Failed to rename chat");
+      showToast.error("Error", "Failed to rename chat");
       console.error(error);
     }
   };
@@ -200,7 +200,7 @@ export default function ChatScreen() {
         setCurrentView("welcome");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to delete chat");
+      showToast.error("Error", "Failed to delete chat");
       console.error(error);
       throw error; // OPTIONAL but recommended
     }
@@ -208,15 +208,15 @@ export default function ChatScreen() {
 
   // Message actions
   const handleLike = () => {
-    Alert.alert("Liked", "Message feedback recorded");
+    showToast.success("Liked", "Message feedback recorded");
   };
 
   const handleDislike = () => {
-    Alert.alert("Disliked", "Message feedback recorded");
+    showToast.success("Disliked", "Message feedback recorded");
   };
 
   const handleRefresh = () => {
-    Alert.alert("Refresh", "This would regenerate the last response");
+    showToast.success("Refresh", "This would regenerate the last response");
   };
 
   const handleCopy = () => {
@@ -225,7 +225,7 @@ export default function ChatScreen() {
       .find((m) => !m.isUser);
     if (lastBotMessage) {
       Clipboard.setString(lastBotMessage.text);
-      Alert.alert("Copied", "Message copied to clipboard");
+      showToast.success("Copied", "Message copied to clipboard");
     }
   };
 

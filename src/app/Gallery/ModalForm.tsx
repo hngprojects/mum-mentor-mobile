@@ -1,24 +1,23 @@
 // src/app/gallery/modal-form.tsx
 
-import React, { useState } from 'react';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
   KeyboardTypeOptions,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs } from '../../core/styles/scaling';
-import PageHeader from '../components/shared/PageHeader';
-import CustomInput from '../components/CustomInput';
-import PrimaryButton from '../components/PrimaryButton';
-import SecondaryButton from '../components/SecondaryButton';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ms, vs } from "../../core/styles/scaling";
+import CustomInput from "../components/CustomInput";
+import PrimaryButton from "../components/PrimaryButton";
+import SecondaryButton from "../components/SecondaryButton";
+import PageHeader from "../components/shared/PageHeader";
 
 // Define proper types for form fields
 interface FormField {
@@ -46,88 +45,88 @@ interface FormConfig {
 
 // Form configurations with proper typing
 const FORM_CONFIGS: Record<string, FormConfig> = {
-  'create-album': {
-    title: 'Create Album',
-    subtitle: 'Create album to capture memorable photos',
+  "create-album": {
+    title: "Create Album",
+    subtitle: "Create album to capture memorable photos",
     fields: [
-      { 
-        name: 'albumName', 
-        label: 'Album name', 
-        placeholder: 'Enter album name', 
-        icon: 'folder-outline',
-        keyboardType: 'default',
+      {
+        name: "albumName",
+        label: "Album name",
+        placeholder: "Enter album name",
+        icon: "folder-outline",
+        keyboardType: "default",
       },
     ],
     options: [
-      { 
-        name: 'isPrivate', 
-        label: 'Private Album', 
-        description: 'Only you can see this album' 
+      {
+        name: "isPrivate",
+        label: "Private Album",
+        description: "Only you can see this album",
       },
     ],
-    submitText: 'Save',
+    submitText: "Save",
   },
-  'add-memory': {
-    title: 'Add Memory',
-    subtitle: 'Share the detail about this moment',
+  "add-memory": {
+    title: "Add Memory",
+    subtitle: "Share the detail about this moment",
     fields: [
-      { 
-        name: 'date', 
-        label: 'Date', 
-        placeholder: 'Select date', 
-        icon: 'calendar-outline', 
-        keyboardType: 'default',
+      {
+        name: "date",
+        label: "Date",
+        placeholder: "Select date",
+        icon: "calendar-outline",
+        keyboardType: "default",
       },
-      { 
-        name: 'pregnancy', 
-        label: 'Pregnancy', 
-        placeholder: 'Enter pregnancy week', 
-        icon: 'calendar-number',
-        keyboardType: 'numeric',
+      {
+        name: "pregnancy",
+        label: "Pregnancy",
+        placeholder: "Enter pregnancy week",
+        icon: "calendar-number",
+        keyboardType: "numeric",
       },
-      { 
-        name: 'video', 
-        label: 'Video', 
-        placeholder: 'Add video link (optional)', 
-        icon: 'videocam-outline',
-        keyboardType: 'url',
+      {
+        name: "video",
+        label: "Video",
+        placeholder: "Add video link (optional)",
+        icon: "videocam-outline",
+        keyboardType: "url",
       },
-      { 
-        name: 'gender', 
-        label: 'Gender', 
-        placeholder: 'Select gender', 
-        icon: 'gender-outline',
-        keyboardType: 'default',
+      {
+        name: "gender",
+        label: "Gender",
+        placeholder: "Select gender",
+        icon: "gender-outline",
+        keyboardType: "default",
       },
     ],
-    submitText: 'Save Memory',
+    submitText: "Save Memory",
   },
-  'edit-album': {
-    title: 'Edit Album',
-    subtitle: 'Update your album details',
+  "edit-album": {
+    title: "Edit Album",
+    subtitle: "Update your album details",
     fields: [
-      { 
-        name: 'albumName', 
-        label: 'Album name', 
-        placeholder: 'Enter album name', 
-        icon: 'folder-outline',
-        keyboardType: 'default',
+      {
+        name: "albumName",
+        label: "Album name",
+        placeholder: "Enter album name",
+        icon: "folder-outline",
+        keyboardType: "default",
       },
     ],
     options: [
-      { 
-        name: 'isPrivate', 
-        label: 'Private Album', 
-        description: 'Only you can see this album' 
+      {
+        name: "isPrivate",
+        label: "Private Album",
+        description: "Only you can see this album",
       },
     ],
-    submitText: 'Update',
+    submitText: "Update",
   },
 };
 
 export default function ModalFormScreen() {
   const params = useLocalSearchParams();
-  const formType = (params.type as string) || 'create-album';
+  const formType = (params.type as string) || "create-album";
   const config = FORM_CONFIGS[formType];
 
   // Dynamic form state
@@ -148,22 +147,27 @@ export default function ModalFormScreen() {
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleOptionToggle = (option: string) => {
-    setOptions(prev => ({ ...prev, [option]: !prev[option] }));
+    setOptions((prev) => ({ ...prev, [option]: !prev[option] }));
   };
 
   const handleSubmit = async () => {
     // Validate required fields (fields without "optional" in placeholder)
     const requiredFields = config.fields.filter(
-      f => !f.placeholder?.toLowerCase().includes('optional')
+      (f) => !f.placeholder?.toLowerCase().includes("optional")
     );
-    const missingFields = requiredFields.filter(f => !formData[f.name]?.trim());
+    const missingFields = requiredFields.filter(
+      (f) => !formData[f.name]?.trim()
+    );
 
     if (missingFields.length > 0) {
-      Alert.alert('Error', `Please fill in: ${missingFields.map(f => f.label).join(', ')}`);
+      showToast.error(
+        "Error",
+        `Please fill in: ${missingFields.map((f) => f.label).join(", ")}`
+      );
       return;
     }
 
@@ -171,13 +175,13 @@ export default function ModalFormScreen() {
 
     try {
       // TODO: Call appropriate service based on formType
-      console.log('Submitting:', formType, formData, options);
+      console.log("Submitting:", formType, formData, options);
 
-      Alert.alert('Success', `${config.title} completed successfully!`);
+      showToast.success("Success", `${config.title} completed successfully!`);
       router.back();
     } catch (error) {
-      console.error('Form submission error:', error);
-      Alert.alert('Error', 'Failed to save. Please try again.');
+      console.error("Form submission error:", error);
+      showToast.error("Error", "Failed to save. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +193,7 @@ export default function ModalFormScreen() {
       <View style={styles.container}>
         <PageHeader title={config.title} showClose />
 
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
@@ -201,10 +205,10 @@ export default function ModalFormScreen() {
               key={field.name}
               label={field.label}
               placeholder={field.placeholder}
-              value={formData[field.name] || ''}
+              value={formData[field.name] || ""}
               onChangeText={(value) => handleInputChange(field.name, value)}
               iconName={field.icon}
-              keyboardType={field.keyboardType || 'default'}
+              keyboardType={field.keyboardType || "default"}
               multiline={field.multiline}
             />
           ))}
@@ -218,7 +222,9 @@ export default function ModalFormScreen() {
             >
               <View style={styles.optionTextContainer}>
                 <Text style={styles.optionLabel}>{option.label}</Text>
-                <Text style={styles.optionDescription}>{option.description}</Text>
+                <Text style={styles.optionDescription}>
+                  {option.description}
+                </Text>
               </View>
               <View
                 style={[
@@ -227,7 +233,11 @@ export default function ModalFormScreen() {
                 ]}
               >
                 {options[option.name] && (
-                  <Ionicons name="checkmark" size={18} color={colors.textWhite} />
+                  <Ionicons
+                    name="checkmark"
+                    size={18}
+                    color={colors.textWhite}
+                  />
                 )}
               </View>
             </TouchableOpacity>
@@ -269,9 +279,9 @@ const styles = StyleSheet.create({
     marginBottom: vs(spacing.xl),
   },
   optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: vs(spacing.md),
     marginTop: vs(spacing.lg),
   },
@@ -294,8 +304,8 @@ const styles = StyleSheet.create({
     borderRadius: ms(6),
     borderWidth: 2,
     borderColor: colors.outline,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkboxChecked: {
     backgroundColor: colors.primary,
@@ -304,11 +314,11 @@ const styles = StyleSheet.create({
   errorText: {
     ...typography.bodyLarge,
     color: colors.error,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: vs(spacing.xl),
   },
   bottomButtons: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -318,7 +328,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
     borderTopWidth: 1,
     borderTopColor: colors.backgroundSubtle,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,

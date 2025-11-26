@@ -1,37 +1,35 @@
 // src/screens/MomSetupScreen.tsx
 
-import React, { useState } from 'react';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rbr, rfs, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { colors, spacing, typography } from '@/src/core/styles';
-import { ms, rbr, rfs, vs } from '@/src/core/styles/scaling';
-import AddGoalModal from '../components/AddGoalModal';
-import EditGoalModal from '../components/EditGoalModal';
-import CustomInput from '../components/CustomInput';
-import PrimaryButton from '../components/PrimaryButton';
-import { router } from 'expo-router';
-import { useSetup } from '../../core/hooks/setupContext';
-import { MomSetupData } from '@/src/core/services/setupStorageService';
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSetup } from "../../core/hooks/setupContext";
+import { MomSetupData } from "../../core/services/setupStorageService";
+import AddGoalModal from "../components/AddGoalModal";
+import PrimaryButton from "../components/PrimaryButton";
 
-const momStatuses: string[] = ['Pregnant', 'New Mom', 'Toddler Mom', 'Mixed'];
+const momStatuses: string[] = ["Pregnant", "New Mom", "Toddler Mom", "Mixed"];
 
 const defaultGoals: string[] = [
-  'Sleep',
-  'Feeding',
-  'Body Recovery',
-  'Emotional Tracker',
-  'Mental Wellness',
-  'Routine Builder',
+  "Sleep",
+  "Feeding",
+  "Body Recovery",
+  "Emotional Tracker",
+  "Mental Wellness",
+  "Routine Builder",
 ];
 
 interface Errors {
@@ -44,9 +42,10 @@ interface Errors {
 const MomSetupScreen: React.FC = () => {
   const { saveMomSetup } = useSetup();
 
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
+  const [notificationsEnabled, setNotificationsEnabled] =
+    useState<boolean>(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -57,15 +56,15 @@ const MomSetupScreen: React.FC = () => {
   const [customGoals, setCustomGoals] = useState<string[]>([]);
 
   const [showInputs, setShowInputs] = useState<boolean>(false);
-  const [partnersName, setPartnersName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
+  const [partnersName, setPartnersName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [errors, setErrors] = useState<Errors>({});
 
   const [isLoading, setIsLoading] = useState(false);
 
   const toggleGoal = (goal: string) => {
     if (selectedGoals.includes(goal)) {
-      setSelectedGoals(selectedGoals.filter(g => g !== goal));
+      setSelectedGoals(selectedGoals.filter((g) => g !== goal));
     } else {
       setSelectedGoals([...selectedGoals, goal]);
     }
@@ -85,9 +84,9 @@ const MomSetupScreen: React.FC = () => {
 
   const handleDeleteGoal = (goal: string) => {
     if (customGoals.includes(goal)) {
-      setGoals(goals.filter(g => g !== goal));
-      setCustomGoals(customGoals.filter(g => g !== goal));
-      setSelectedGoals(selectedGoals.filter(g => g !== goal));
+      setGoals(goals.filter((g) => g !== goal));
+      setCustomGoals(customGoals.filter((g) => g !== goal));
+      setSelectedGoals(selectedGoals.filter((g) => g !== goal));
     }
   };
 
@@ -103,9 +102,15 @@ const MomSetupScreen: React.FC = () => {
       return;
     }
 
-    const updatedGoals = goals.map(g => g === editingGoal ? editedGoalValue : g);
-    const updatedCustomGoals = customGoals.map(g => g === editingGoal ? editedGoalValue : g);
-    const updatedSelectedGoals = selectedGoals.map(g => g === editingGoal ? editedGoalValue : g);
+    const updatedGoals = goals.map((g) =>
+      g === editingGoal ? editedGoalValue : g
+    );
+    const updatedCustomGoals = customGoals.map((g) =>
+      g === editingGoal ? editedGoalValue : g
+    );
+    const updatedSelectedGoals = selectedGoals.map((g) =>
+      g === editingGoal ? editedGoalValue : g
+    );
 
     setGoals(updatedGoals);
     setCustomGoals(updatedCustomGoals);
@@ -121,12 +126,12 @@ const MomSetupScreen: React.FC = () => {
     let isValid = true;
 
     if (!selectedStatus) {
-      newErrors.momStatus = 'Please select a mom status';
+      newErrors.momStatus = "Please select a mom status";
       isValid = false;
     }
 
     if (selectedGoals.length === 0) {
-      newErrors.goals = 'Please select at least one goal';
+      newErrors.goals = "Please select at least one goal";
       isValid = false;
     }
 
@@ -137,10 +142,10 @@ const MomSetupScreen: React.FC = () => {
       }
 
       if (!email.trim()) {
-        newErrors.email = 'Email is required';
+        newErrors.email = "Email is required";
         isValid = false;
-      } else if (!email.includes('@')) {
-        newErrors.email = 'Please enter a valid email';
+      } else if (!email.includes("@")) {
+        newErrors.email = "Please enter a valid email";
         isValid = false;
       }
     }
@@ -151,7 +156,10 @@ const MomSetupScreen: React.FC = () => {
 
   const handleNext = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please complete all required fields.');
+      showToast.error(
+        "Validation Error",
+        "Please complete all required fields."
+      );
       return;
     }
 
@@ -174,10 +182,9 @@ const MomSetupScreen: React.FC = () => {
 
       await saveMomSetup(momSetupData);
 
-      router.push('/setup/childSetupScreen');
-
+      router.push("/setup/childSetupScreen");
     } catch (error) {
-      Alert.alert('Error', 'Failed to save your setup. Please try again.');
+      showToast.error("Error", "Failed to save your setup. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -188,10 +195,10 @@ const MomSetupScreen: React.FC = () => {
       <StatusBar style="dark" />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView 
-          style={styles.scrollView} 
+        <ScrollView
+          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
@@ -203,7 +210,9 @@ const MomSetupScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Mom Set up</Text>
 
             <Text style={styles.label}>Mom Status</Text>
-            {errors.momStatus && <Text style={styles.errorText}>{errors.momStatus}</Text>}
+            {errors.momStatus && (
+              <Text style={styles.errorText}>{errors.momStatus}</Text>
+            )}
 
             <View style={styles.chipContainer}>
               {momStatuses.map((status) => (
@@ -211,7 +220,7 @@ const MomSetupScreen: React.FC = () => {
                   key={status}
                   style={[
                     styles.chip,
-                    selectedStatus === status && styles.chipSelected
+                    selectedStatus === status && styles.chipSelected,
                   ]}
                   onPress={() => {
                     setSelectedStatus(status);
@@ -221,7 +230,7 @@ const MomSetupScreen: React.FC = () => {
                   <Text
                     style={[
                       styles.chipText,
-                      selectedStatus === status && styles.chipTextSelected
+                      selectedStatus === status && styles.chipTextSelected,
                     ]}
                   >
                     {status}
@@ -232,7 +241,9 @@ const MomSetupScreen: React.FC = () => {
 
             {/* Goals */}
             <Text style={styles.label}>Goals</Text>
-            {errors.goals && <Text style={styles.errorText}>{errors.goals}</Text>}
+            {errors.goals && (
+              <Text style={styles.errorText}>{errors.goals}</Text>
+            )}
 
             <View style={styles.chipContainer}>
               {goals.map((goal) => {
@@ -243,7 +254,7 @@ const MomSetupScreen: React.FC = () => {
                       style={[
                         styles.chip,
                         selectedGoals.includes(goal) && styles.chipSelected,
-                        isCustomGoal && styles.chipWithButtons
+                        isCustomGoal && styles.chipWithButtons,
                       ]}
                       onPress={() => {
                         toggleGoal(goal);
@@ -253,7 +264,8 @@ const MomSetupScreen: React.FC = () => {
                       <Text
                         style={[
                           styles.chipText,
-                          selectedGoals.includes(goal) && styles.chipTextSelected
+                          selectedGoals.includes(goal) &&
+                            styles.chipTextSelected,
                         ]}
                       >
                         {goal}
@@ -262,7 +274,6 @@ const MomSetupScreen: React.FC = () => {
 
                     {isCustomGoal && (
                       <View style={styles.actionButtons}>
-                        
                         <TouchableOpacity
                           style={styles.deleteButton}
                           onPress={() => handleDeleteGoal(goal)}
@@ -275,7 +286,10 @@ const MomSetupScreen: React.FC = () => {
                 );
               })}
 
-              <TouchableOpacity style={styles.addChip} onPress={() => setIsModalVisible(true)}>
+              <TouchableOpacity
+                style={styles.addChip}
+                onPress={() => setIsModalVisible(true)}
+              >
                 <Text style={styles.addChipText}>+ Add</Text>
               </TouchableOpacity>
             </View>
@@ -311,7 +325,11 @@ const MomSetupScreen: React.FC = () => {
                 value={notificationsEnabled}
                 onValueChange={setNotificationsEnabled}
                 trackColor={{ false: colors.textGrey2, true: colors.primary }}
-                thumbColor={notificationsEnabled ? colors.secondaryExtraLight : colors.secondaryExtraLight}
+                thumbColor={
+                  notificationsEnabled
+                    ? colors.secondaryExtraLight
+                    : colors.secondaryExtraLight
+                }
               />
             </View>
           </View>
@@ -322,7 +340,6 @@ const MomSetupScreen: React.FC = () => {
             isLoading={isLoading}
             disabled={isLoading}
           />
-
         </ScrollView>
       </KeyboardAvoidingView>
     </>
@@ -332,9 +349,9 @@ const MomSetupScreen: React.FC = () => {
 export default MomSetupScreen;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: colors.backgroundMain 
+  container: {
+    flex: 1,
+    backgroundColor: colors.backgroundMain,
   },
   scrollView: { flex: 1 },
   scrollContent: {
@@ -345,32 +362,32 @@ const styles = StyleSheet.create({
   header: {
     ...typography.heading1,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(spacing.xl),
   },
   section: { marginBottom: vs(spacing.xl) },
-  sectionTitle: { 
+  sectionTitle: {
     ...typography.heading3,
-    color: colors.textPrimary, 
-    marginBottom: vs(spacing.md) 
+    color: colors.textPrimary,
+    marginBottom: vs(spacing.md),
   },
-  label: { 
+  label: {
     ...typography.labelLarge,
-    color: colors.textPrimary, 
-    marginBottom: vs(spacing.sm), 
+    color: colors.textPrimary,
+    marginBottom: vs(spacing.sm),
   },
   errorText: {
     ...typography.bodySmall,
     color: colors.error,
     marginBottom: vs(spacing.xs),
   },
-  chipContainer: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
+  chipContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: ms(spacing.sm),
-    marginBottom: vs(spacing.md), 
+    marginBottom: vs(spacing.md),
   },
-  chipWrapper: { position: 'relative' },
+  chipWrapper: { position: "relative" },
   chip: {
     paddingVertical: vs(spacing.sm),
     paddingHorizontal: ms(spacing.md),
@@ -383,16 +400,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondaryLight,
     borderColor: colors.backgroundStrong,
   },
-  chipText: { 
-    ...typography.labelMedium, 
-    color: colors.textGrey1 
+  chipText: {
+    ...typography.labelMedium,
+    color: colors.textGrey1,
   },
-  chipTextSelected: { 
-    color: colors.textPrimary, 
-    fontWeight: '500' 
+  chipTextSelected: {
+    color: colors.textPrimary,
+    fontWeight: "500",
   },
   actionButtons: {
-    position: 'absolute',
+    position: "absolute",
     right: ms(4),
     top: vs(6),
   },
@@ -401,21 +418,21 @@ const styles = StyleSheet.create({
     height: ms(24),
     borderRadius: ms(12),
     backgroundColor: colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   editButtonText: {
     color: colors.textWhite,
     fontSize: rfs(14),
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   deleteButton: {
     width: ms(20),
     height: ms(20),
     borderRadius: ms(12),
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteButtonText: {
     color: colors.textWhite,
@@ -429,14 +446,14 @@ const styles = StyleSheet.create({
     borderWidth: 1.2,
     borderColor: colors.outline,
   },
-  addChipText: { 
-    ...typography.labelMedium, 
-    color: colors.textGrey1 
+  addChipText: {
+    ...typography.labelMedium,
+    color: colors.textGrey1,
   },
   notificationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: vs(spacing.sm),
   },
 });

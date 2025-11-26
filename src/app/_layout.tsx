@@ -1,20 +1,22 @@
 // app/_layout.tsx
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Redirect, router, Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { store } from "@/src/store/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
+import { Provider } from "react-redux";
 import { SetupProvider } from "../core/hooks/setupContext";
 import { AuthProvider, useAuth } from "../core/services/authContext";
 import { SavedResourcesProvider } from "../core/services/savedResourcesContext";
 import { colors } from "../core/styles";
-import { store } from "@/src/store/store";
-import { Provider } from "react-redux";
 import { useAssetLoading } from "../core/utils/assetsLoading";
+import { toastConfig } from "../core/utils/toast";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -125,18 +127,21 @@ function RootLayoutContent() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(onboarding)" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="setup" />
-      <Stack.Screen name="Gallery" />
-      <Stack.Screen name="notifications" />
-      <Stack.Screen name="profile" />
-      <Stack.Screen name="resources" />
-      <Stack.Screen name="components" />
-      <Stack.Screen name="categories/[categoryId]" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="setup" />
+        <Stack.Screen name="Gallery" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="resources" />
+        <Stack.Screen name="components" />
+        <Stack.Screen name="categories/[categoryId]" />
+      </Stack>
+      <Toast config={toastConfig} />
+    </>
   );
 }
 

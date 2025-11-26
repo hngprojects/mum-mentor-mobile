@@ -1,8 +1,8 @@
 import { colors, typography } from "@/src/core/styles";
 import { rbr, s, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
 import React, { useState } from "react";
 import {
-  Alert,
   FlatList,
   Image,
   Modal,
@@ -75,7 +75,7 @@ export const HistoryEmptyState = ({
         setRenameTitle("");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to rename chat");
+      showToast.error("Error", "Failed to rename chat");
       console.error(error);
     }
   };
@@ -95,7 +95,7 @@ export const HistoryEmptyState = ({
       }, 2000);
     } catch (error) {
       setCurrentView("list"); // prevent stuck modal
-      Alert.alert("Error", "Failed to delete chat");
+      showToast.error("Error", "Failed to delete chat");
       console.error(error);
     }
   };

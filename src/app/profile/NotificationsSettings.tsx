@@ -1,23 +1,23 @@
 // app/notifications/NotificationSettingsScreen.tsx
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // --- Style Imports ---
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
 // --- Component Imports ---
+import { showToast } from "@/src/core/utils/toast";
 import CustomToggle from "../components/CustomToggle";
 
 interface NotificationSettings {
@@ -94,7 +94,7 @@ export default function NotificationSettingsScreen() {
       console.log(`Updated ${key} to ${value}`);
     } catch (error) {
       console.error("Error updating notification settings:", error);
-      Alert.alert("Error", "Failed to update notification settings");
+      showToast.error("Error", "Failed to update notification settings");
     }
   };
 
@@ -134,10 +134,16 @@ export default function NotificationSettingsScreen() {
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
                 <View style={styles.iconContainer}>
-                  <Feather name="bell-off" size={ms(20)} color={colors.textPrimary} />
+                  <Feather
+                    name="bell-off"
+                    size={ms(20)}
+                    color={colors.textPrimary}
+                  />
                 </View>
                 <View style={styles.settingTextContainer}>
-                  <Text style={styles.settingLabel}>Mute All Notifications</Text>
+                  <Text style={styles.settingLabel}>
+                    Mute All Notifications
+                  </Text>
                   <Text style={styles.settingDescription}>
                     Quickly disable all notifications
                   </Text>
@@ -160,15 +166,23 @@ export default function NotificationSettingsScreen() {
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <View style={styles.iconContainer}>
-                    <Feather name="award" size={ms(20)} color={colors.textPrimary} />
+                    <Feather
+                      name="award"
+                      size={ms(20)}
+                      color={colors.textPrimary}
+                    />
                   </View>
                   <View style={styles.settingTextContainer}>
-                    <Text style={styles.settingLabel}>New Milestones Achieved</Text>
+                    <Text style={styles.settingLabel}>
+                      New Milestones Achieved
+                    </Text>
                   </View>
                 </View>
                 <CustomToggle
                   value={settings.newMilestones}
-                  onValueChange={(value) => updateSetting("newMilestones", value)}
+                  onValueChange={(value) =>
+                    updateSetting("newMilestones", value)
+                  }
                   disabled={settings.muteAll}
                 />
               </View>
@@ -178,15 +192,23 @@ export default function NotificationSettingsScreen() {
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <View style={styles.iconContainer}>
-                    <Feather name="clock" size={ms(20)} color={colors.textPrimary} />
+                    <Feather
+                      name="clock"
+                      size={ms(20)}
+                      color={colors.textPrimary}
+                    />
                   </View>
                   <View style={styles.settingTextContainer}>
-                    <Text style={styles.settingLabel}>Remind Pending Milestone</Text>
+                    <Text style={styles.settingLabel}>
+                      Remind Pending Milestone
+                    </Text>
                   </View>
                 </View>
                 <CustomToggle
                   value={settings.pendingMilestone}
-                  onValueChange={(value) => updateSetting("pendingMilestone", value)}
+                  onValueChange={(value) =>
+                    updateSetting("pendingMilestone", value)
+                  }
                   disabled={settings.muteAll}
                 />
               </View>
@@ -203,7 +225,11 @@ export default function NotificationSettingsScreen() {
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <View style={styles.iconContainer}>
-                    <Feather name="zap" size={ms(20)} color={colors.textPrimary} />
+                    <Feather
+                      name="zap"
+                      size={ms(20)}
+                      color={colors.textPrimary}
+                    />
                   </View>
                   <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>AI Mentor Insights</Text>
@@ -228,7 +254,11 @@ export default function NotificationSettingsScreen() {
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <View style={styles.iconContainer}>
-                    <Feather name="check-circle" size={ms(20)} color={colors.textPrimary} />
+                    <Feather
+                      name="check-circle"
+                      size={ms(20)}
+                      color={colors.textPrimary}
+                    />
                   </View>
                   <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>Nora Check-ins</Text>
@@ -236,7 +266,9 @@ export default function NotificationSettingsScreen() {
                 </View>
                 <CustomToggle
                   value={settings.noraCheckins}
-                  onValueChange={(value) => updateSetting("noraCheckins", value)}
+                  onValueChange={(value) =>
+                    updateSetting("noraCheckins", value)
+                  }
                   disabled={settings.muteAll}
                 />
               </View>
@@ -246,7 +278,11 @@ export default function NotificationSettingsScreen() {
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <View style={styles.iconContainer}>
-                    <Feather name="bell" size={ms(20)} color={colors.textPrimary} />
+                    <Feather
+                      name="bell"
+                      size={ms(20)}
+                      color={colors.textPrimary}
+                    />
                   </View>
                   <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>Task Reminders</Text>
@@ -254,7 +290,9 @@ export default function NotificationSettingsScreen() {
                 </View>
                 <CustomToggle
                   value={settings.taskReminders}
-                  onValueChange={(value) => updateSetting("taskReminders", value)}
+                  onValueChange={(value) =>
+                    updateSetting("taskReminders", value)
+                  }
                   disabled={settings.muteAll}
                 />
               </View>
@@ -271,10 +309,16 @@ export default function NotificationSettingsScreen() {
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <View style={styles.iconContainer}>
-                    <Feather name="users" size={ms(20)} color={colors.textPrimary} />
+                    <Feather
+                      name="users"
+                      size={ms(20)}
+                      color={colors.textPrimary}
+                    />
                   </View>
                   <View style={styles.settingTextContainer}>
-                    <Text style={styles.settingLabel}>Community Notifications</Text>
+                    <Text style={styles.settingLabel}>
+                      Community Notifications
+                    </Text>
                   </View>
                 </View>
                 <CustomToggle

@@ -1,24 +1,24 @@
 // src/components/GalleryComponents/AddMemoryModal.tsx
 
-import React, { useState } from 'react';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  Image,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Alert,
-  ScrollView,
-  TextInput,
-  Image,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '@/src/core/styles/scaling';
-import PrimaryButton from '../PrimaryButton';
-import CameraScreen from './CameraScreen';
+  View,
+} from "react-native";
+import PrimaryButton from "../PrimaryButton";
+import CameraScreen from "./CameraScreen";
 
 interface AddMemoryModalProps {
   visible: boolean;
@@ -34,7 +34,7 @@ export interface MemoryData {
   date: Date;
 }
 
-const CATEGORIES = ['Baby Photos', 'Pregnancy', 'Videos', 'Album'];
+const CATEGORIES = ["Baby Photos", "Pregnancy", "Videos", "Album"];
 
 const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   visible,
@@ -43,8 +43,8 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   albumName,
 }) => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [note, setNote] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Baby Photos');
+  const [note, setNote] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Baby Photos");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
@@ -62,8 +62,8 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
   const resetForm = () => {
     setPhotoUri(null);
-    setNote('');
-    setSelectedCategory('Baby Photos');
+    setNote("");
+    setSelectedCategory("Baby Photos");
     setSelectedDate(new Date());
   };
 
@@ -74,8 +74,11 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
   const handleTakePhoto = async () => {
     const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-    if (cameraPermission.status !== 'granted') {
-      Alert.alert('Permission Required', 'Camera permission is required to take photos.');
+    if (cameraPermission.status !== "granted") {
+      showToast.warning(
+        "Permission Required",
+        "Camera permission is required to take photos."
+      );
       return;
     }
     setIsCameraVisible(true);
@@ -104,12 +107,16 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
         setPhotoUri(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload photo.');
+      showToast.error("Error", "Failed to upload photo.");
     }
   };
 
   const handleSaveMemory = () => {
-    if (!photoUri) return Alert.alert('No Photo', 'Please select or take a photo first.');
+    if (!photoUri)
+      return showToast.warning(
+        "No Photo",
+        "Please select or take a photo first."
+      );
 
     setIsLoading(true);
 
@@ -128,22 +135,26 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   };
 
   const formatDate = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     };
-    return `Today, ${date.toLocaleDateString('en-US', options)}`;
+    return `Today, ${date.toLocaleDateString("en-US", options)}`;
   };
 
   return (
     <>
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleClose}
+      >
         <TouchableWithoutFeedback onPress={handleClose}>
           <View style={styles.overlay}>
             <TouchableWithoutFeedback>
-              
               {/* DYNAMIC HEIGHT MODAL */}
               <View
                 style={[
@@ -153,8 +164,15 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
               >
                 {/* Header */}
                 <View style={styles.header}>
-                  <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                  <TouchableOpacity
+                    onPress={handleClose}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons
+                      name="arrow-back"
+                      size={20}
+                      color={colors.textPrimary}
+                    />
                   </TouchableOpacity>
                   <Text style={styles.headerTitle}>Add A Memory</Text>
                   <View style={{ width: 20 }} />
@@ -167,29 +185,50 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
                 >
                   {photoUri ? (
                     <View style={styles.photoPreviewContainer}>
-                      <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+                      <Image
+                        source={{ uri: photoUri }}
+                        style={styles.photoPreview}
+                      />
                     </View>
                   ) : (
                     <View style={styles.photoOptionsContainer}>
-                      <TouchableOpacity style={styles.photoOption} onPress={handleTakePhoto}>
+                      <TouchableOpacity
+                        style={styles.photoOption}
+                        onPress={handleTakePhoto}
+                      >
                         <View style={styles.photoIconContainer}>
-                          <Ionicons name="camera-outline" size={24} color={colors.primary} />
+                          <Ionicons
+                            name="camera-outline"
+                            size={24}
+                            color={colors.primary}
+                          />
                         </View>
                         <Text style={styles.photoOptionText}>Take a photo</Text>
                       </TouchableOpacity>
 
-                      <TouchableOpacity style={styles.photoOption} onPress={handleUploadFromGallery}>
+                      <TouchableOpacity
+                        style={styles.photoOption}
+                        onPress={handleUploadFromGallery}
+                      >
                         <View style={styles.photoIconContainer}>
-                          <Ionicons name="images-outline" size={24} color={colors.primary} />
+                          <Ionicons
+                            name="images-outline"
+                            size={24}
+                            color={colors.primary}
+                          />
                         </View>
-                        <Text style={styles.photoOptionText}>Upload from gallery</Text>
+                        <Text style={styles.photoOptionText}>
+                          Upload from gallery
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   )}
 
                   {/* Note Section */}
                   <View style={styles.section}>
-                    <Text style={styles.sectionLabel}>Note about this moment</Text>
+                    <Text style={styles.sectionLabel}>
+                      Note about this moment
+                    </Text>
                     <TextInput
                       style={styles.noteInput}
                       placeholder="Add a little note"
@@ -215,14 +254,16 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
                           key={cat}
                           style={[
                             styles.categoryChip,
-                            selectedCategory === cat && styles.categoryChipSelected,
+                            selectedCategory === cat &&
+                              styles.categoryChipSelected,
                           ]}
                           onPress={() => setSelectedCategory(cat)}
                         >
                           <Text
                             style={[
                               styles.categoryChipText,
-                              selectedCategory === cat && styles.categoryChipTextSelected,
+                              selectedCategory === cat &&
+                                styles.categoryChipTextSelected,
                             ]}
                           >
                             {cat}
@@ -242,8 +283,14 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
                     </View>
 
                     <View style={styles.dateContainer}>
-                      <Ionicons name="calendar-outline" size={16} color={colors.textGrey1} />
-                      <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={16}
+                        color={colors.textGrey1}
+                      />
+                      <Text style={styles.dateText}>
+                        {formatDate(selectedDate)}
+                      </Text>
                     </View>
                   </View>
                 </ScrollView>
@@ -279,16 +326,16 @@ export default AddMemoryModal;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
 
   /** NEW HEIGHTS **/
   partialHeight: {
-    maxHeight: '92%',
+    maxHeight: "92%",
   },
   fullHeight: {
-    height: '100%',
+    height: "100%",
   },
 
   modalContainer: {
@@ -297,9 +344,9 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: ms(spacing.lg),
     paddingBottom: vs(spacing.md),
   },
@@ -315,39 +362,43 @@ const styles = StyleSheet.create({
   },
 
   photoPreviewContainer: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1,
     borderRadius: ms(16),
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: vs(spacing.lg),
     borderWidth: 3,
     borderColor: colors.primary,
   },
-  photoPreview: { width: '100%', height: '100%' },
+  photoPreview: { width: "100%", height: "100%" },
 
   photoOptionsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: ms(spacing.md),
     marginBottom: vs(spacing.lg),
   },
-  photoOption: { flex: 1, alignItems: 'center' },
+  photoOption: { flex: 1, alignItems: "center" },
   photoIconContainer: {
     width: ms(48),
     height: ms(48),
     borderRadius: ms(24),
     backgroundColor: colors.backgroundSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: vs(spacing.xs),
   },
 
-  photoOptionText: { ...typography.bodySmall, textAlign: 'center', fontSize: rfs(12) },
+  photoOptionText: {
+    ...typography.bodySmall,
+    textAlign: "center",
+    fontSize: rfs(12),
+  },
 
   section: { marginBottom: vs(spacing.md) },
 
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: vs(spacing.xs),
   },
   editText: {
@@ -362,7 +413,11 @@ const styles = StyleSheet.create({
     fontSize: rfs(13),
   },
 
-  createAlbumText: { ...typography.labelMedium, color: colors.primary, fontSize: rfs(12) },
+  createAlbumText: {
+    ...typography.labelMedium,
+    color: colors.primary,
+    fontSize: rfs(12),
+  },
 
   noteInput: {
     ...typography.bodySmall,
@@ -374,7 +429,11 @@ const styles = StyleSheet.create({
     borderColor: colors.outline,
   },
 
-  categoriesContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: ms(spacing.xs) },
+  categoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: ms(spacing.xs),
+  },
 
   categoryChip: {
     paddingVertical: vs(spacing.xs),
@@ -388,19 +447,19 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
 
-  categoryChipText: { 
-    ...typography.bodySmall, 
-    color: colors.textGrey1, 
-    fontSize: rfs(12) 
+  categoryChipText: {
+    ...typography.bodySmall,
+    color: colors.textGrey1,
+    fontSize: rfs(12),
   },
-  categoryChipTextSelected: { 
-    color: colors.textPrimary, 
-    fontWeight: '600' 
+  categoryChipTextSelected: {
+    color: colors.textPrimary,
+    fontWeight: "600",
   },
 
   dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.backgroundSubtle,
     padding: ms(spacing.sm),
     borderRadius: ms(10),

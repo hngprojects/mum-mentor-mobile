@@ -1,15 +1,15 @@
 import { logoutUser } from "@/src/core/services/authService";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -56,7 +56,7 @@ export default function ProfileScreen({ navigation }: any) {
     try {
       const response = await apiClient.get("/api/v1/profile-setup/");
       console.log("Profile setup response:", response.data);
-      
+
       if (response.data) {
         setUserProfile({
           ...baseProfile,
@@ -77,25 +77,25 @@ export default function ProfileScreen({ navigation }: any) {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log("Fetching user profile...");
       const response = await apiClient.get("/api/v1/auth/profile");
       console.log("Profile response:", response.data);
-      
+
       // The actual user data is nested in response.data.data
       if (response.data?.data) {
         const userData = response.data.data;
-        
+
         // Transform the API response to match our UserProfile interface
         const transformedProfile: UserProfile = {
           id: userData.id,
           email: userData.email,
-          full_name: userData.full_name || '',
+          full_name: userData.full_name || "",
           profile_image: userData.profile?.avatar_url || undefined,
         };
-        
+
         setUserProfile(transformedProfile);
-        
+
         // Fetch additional profile setup data (mom_status, goals, etc.)
         await fetchProfileSetup(transformedProfile);
       }
@@ -196,7 +196,11 @@ export default function ProfileScreen({ navigation }: any) {
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <Feather name="arrow-left" size={ms(24)} color={colors.textPrimary} />
+            <Feather
+              name="arrow-left"
+              size={ms(24)}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
         </View>
@@ -235,7 +239,11 @@ export default function ProfileScreen({ navigation }: any) {
             >
               <View style={styles.childInfo}>
                 <View style={styles.iconContainer}>
-                  <Feather name="user" size={ms(20)} color={colors.textPrimary} />
+                  <Feather
+                    name="user"
+                    size={ms(20)}
+                    color={colors.textPrimary}
+                  />
                 </View>
                 <View style={styles.childTextContainer}>
                   <Text style={styles.childName}>{child.name}</Text>
@@ -244,7 +252,11 @@ export default function ProfileScreen({ navigation }: any) {
                   </Text>
                 </View>
               </View>
-              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
+              <Feather
+                name="chevron-right"
+                size={ms(20)}
+                color={colors.textGrey1}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -260,13 +272,21 @@ export default function ProfileScreen({ navigation }: any) {
               accessibilityRole="button"
             >
               <View style={styles.iconContainer}>
-                <Feather name="shield" size={ms(20)} color={colors.textPrimary} />
+                <Feather
+                  name="shield"
+                  size={ms(20)}
+                  color={colors.textPrimary}
+                />
               </View>
               <View style={styles.menuTextContainer}>
                 <Text style={styles.menuTitle}>Data & Privacy</Text>
                 <Text style={styles.menuSubtitle}>Control what you share</Text>
               </View>
-              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
+              <Feather
+                name="chevron-right"
+                size={ms(20)}
+                color={colors.textGrey1}
+              />
             </TouchableOpacity>
 
             {/* Password */}
@@ -282,7 +302,11 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={styles.menuTitle}>Password</Text>
                 <Text style={styles.menuSubtitle}>Keep your account safe.</Text>
               </View>
-              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
+              <Feather
+                name="chevron-right"
+                size={ms(20)}
+                color={colors.textGrey1}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -292,10 +316,10 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.menuItemWrapper}>
             {/* Notification */}
-            <TouchableOpacity 
-              style={styles.menuItem} 
+            <TouchableOpacity
+              style={styles.menuItem}
               accessibilityRole="button"
-              onPress={() => router.push('./NotificationsSettings')}
+              onPress={() => router.push("./NotificationsSettings")}
             >
               <View style={styles.iconContainer}>
                 <Feather name="bell" size={ms(20)} color={colors.textPrimary} />
@@ -303,10 +327,14 @@ export default function ProfileScreen({ navigation }: any) {
               <View style={styles.menuTextContainer}>
                 <Text style={styles.menuTitle}>Notification</Text>
                 <Text style={styles.menuSubtitle}>
-                  Choose alerts and reminders you'd like to receive.
+                  Choose alerts and reminders you&apos;d like to receive.
                 </Text>
               </View>
-              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
+              <Feather
+                name="chevron-right"
+                size={ms(20)}
+                color={colors.textGrey1}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -330,7 +358,11 @@ export default function ProfileScreen({ navigation }: any) {
                   Learn more about the app and our mission.
                 </Text>
               </View>
-              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
+              <Feather
+                name="chevron-right"
+                size={ms(20)}
+                color={colors.textGrey1}
+              />
             </TouchableOpacity>
 
             {/* Log Out */}
@@ -351,7 +383,11 @@ export default function ProfileScreen({ navigation }: any) {
                   Sign out of your account safely.
                 </Text>
               </View>
-              <Feather name="chevron-right" size={ms(20)} color={colors.textGrey1} />
+              <Feather
+                name="chevron-right"
+                size={ms(20)}
+                color={colors.textGrey1}
+              />
             </TouchableOpacity>
           </View>
         </View>

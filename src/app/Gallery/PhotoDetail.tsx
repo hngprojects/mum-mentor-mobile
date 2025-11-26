@@ -1,21 +1,22 @@
 // src/app/photo-detail.tsx
 
-import React, { useState, useEffect } from 'react';
+import * as galleryStorage from "@/src/core/services/galleryStorageService";
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
   Alert,
+  Image,
   ScrollView,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '@/src/core/styles/scaling';
-import { Ionicons } from '@expo/vector-icons';
-import * as galleryStorage from '@/src/core/services/galleryStorageService';
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function PhotoDetailScreen() {
   const params = useLocalSearchParams();
@@ -33,8 +34,8 @@ export default function PhotoDetailScreen() {
       const loadedPhoto = await galleryStorage.getPhotoById(photoId);
       setPhoto(loadedPhoto);
     } catch (error) {
-      console.error('Error loading photo:', error);
-      Alert.alert('Error', 'Failed to load photo');
+      console.error("Error loading photo:", error);
+      showToast.error("Error", "Failed to load photo");
     } finally {
       setIsLoading(false);
     }
@@ -45,41 +46,37 @@ export default function PhotoDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Photo',
-      'Are you sure you want to delete this photo?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (photo) {
-                await galleryStorage.deletePhoto(photo.id);
-                Alert.alert('Success', 'Photo deleted successfully');
-                router.back();
-              }
-            } catch (error) {
-              console.error('Error deleting photo:', error);
-              Alert.alert('Error', 'Failed to delete photo');
+    Alert.alert("Delete Photo", "Are you sure you want to delete this photo?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            if (photo) {
+              await galleryStorage.deletePhoto(photo.id);
+              showToast.success("Success", "Photo deleted successfully");
+              router.back();
             }
-          },
+          } catch (error) {
+            console.error("Error deleting photo:", error);
+            showToast.error("Error", "Failed to delete photo");
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
-      month: 'long',
-      day: 'numeric',
+      month: "long",
+      day: "numeric",
     };
-    const formattedDate = date.toLocaleDateString('en-US', options);
-    const time = date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
+    const formattedDate = date.toLocaleDateString("en-US", options);
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
       hour12: true,
     });
     return { date: formattedDate, time: time.toLowerCase() };
@@ -89,7 +86,9 @@ export default function PhotoDetailScreen() {
     // This is a simple calculation - you might want to get baby's birthdate from user profile
     const date = new Date(photoDate);
     const now = new Date();
-    const months = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
+    const months =
+      (now.getFullYear() - date.getFullYear()) * 12 +
+      (now.getMonth() - date.getMonth());
     return `${months} months old`;
   };
 
@@ -136,7 +135,11 @@ export default function PhotoDetailScreen() {
             onPress={handleDelete}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="trash-outline" size={24} color={colors.textPrimary} />
+            <Ionicons
+              name="trash-outline"
+              size={24}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
         </View>
 
@@ -190,15 +193,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: ms(spacing.lg),
     paddingTop: vs(60),
     paddingBottom: vs(spacing.md),
   },
   headerCenter: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   headerDate: {
     ...typography.labelLarge,
@@ -213,29 +216,29 @@ const styles = StyleSheet.create({
   loadingText: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: vs(100),
   },
   scrollContent: {
     paddingBottom: vs(spacing.xl),
   },
   photoContainer: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 0.75,
     paddingHorizontal: ms(spacing.lg),
     marginBottom: vs(spacing.lg),
   },
   photo: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: ms(16),
   },
   detailsSection: {
     paddingHorizontal: ms(spacing.lg),
   },
   nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: vs(spacing.md),
   },
   babyName: {
@@ -256,8 +259,8 @@ const styles = StyleSheet.create({
     fontSize: rfs(14),
   },
   noteContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     padding: ms(spacing.md),
     borderRadius: ms(12),
     marginBottom: vs(spacing.md),
@@ -276,7 +279,7 @@ const styles = StyleSheet.create({
     marginBottom: vs(spacing.md),
   },
   categoryBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     backgroundColor: colors.secondaryLight,
     paddingVertical: vs(spacing.xs),
     paddingHorizontal: ms(spacing.md),

@@ -4,7 +4,6 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -27,6 +26,7 @@ import {
   signInWithApple,
 } from "@/src/core/services/appleAuthService";
 import { signInWithGoogle } from "@/src/core/services/googleAuthservice";
+import { showToast } from "@/src/core/utils/toast";
 import { ApiErrorResponse, login } from "../../core/services/authService";
 
 export default function SignInScreen() {
@@ -59,7 +59,7 @@ export default function SignInScreen() {
       const result = await signInWithApple();
 
       if (result.success) {
-        Alert.alert(
+        showToast.success(
           "Welcome Back!",
           result.user?.name
             ? `Signed in as ${result.user.name}`
@@ -88,7 +88,7 @@ export default function SignInScreen() {
       const result = await signInWithGoogle();
 
       if (result.success) {
-        Alert.alert(
+        showToast.success(
           "Welcome Back!",
           result.user
             ? `Signed in as ${result.user.name}`
@@ -141,7 +141,7 @@ export default function SignInScreen() {
       const loginPayload = { email: email.toLowerCase(), password };
       await login(loginPayload);
 
-      Alert.alert("Welcome Back!", "Login successful.");
+      showToast.success("Welcome Back!", "Login successful.");
       router.replace("/(tabs)/Home");
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;

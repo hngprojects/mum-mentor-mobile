@@ -1,19 +1,18 @@
 // src/components/gallery/CreateAlbumModal.tsx
 
-import React, { useState } from 'react';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   Modal,
+  StyleSheet,
+  Text,
   TouchableWithoutFeedback,
-  Alert,
-} from 'react-native';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '@/src/core/styles/scaling';
-import CustomInput from '../CustomInput';
-import PrimaryButton from '../PrimaryButton';
-import SecondaryButton from '../SecondaryButton';
+  View,
+} from "react-native";
+import CustomInput from "../CustomInput";
+import PrimaryButton from "../PrimaryButton";
+import SecondaryButton from "../SecondaryButton";
 
 interface CreateAlbumModalProps {
   visible: boolean;
@@ -26,20 +25,20 @@ const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const [albumName, setAlbumName] = useState('');
+  const [albumName, setAlbumName] = useState("");
 
   const handleSave = () => {
     if (!albumName.trim()) {
-      Alert.alert('Error', 'Please enter an album name');
+      showToast.error("Error", "Please enter an album name");
       return;
     }
 
     onSave(albumName.trim());
-    setAlbumName(''); // Reset after save
+    setAlbumName(""); // Reset after save
   };
 
   const handleCancel = () => {
-    setAlbumName(''); // Reset on cancel
+    setAlbumName(""); // Reset on cancel
     onClose();
   };
 
@@ -69,7 +68,7 @@ const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({
                   placeholder="e.g Tiny Smiles"
                   value={albumName}
                   onChangeText={setAlbumName}
-                   iconName="gallery-outline" 
+                  iconName="gallery-outline"
                 />
               </View>
 
@@ -80,10 +79,7 @@ const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({
                   onPress={handleSave}
                   disabled={!albumName.trim()}
                 />
-                <SecondaryButton
-                  title="Cancel"
-                  onPress={handleCancel}
-                />
+                <SecondaryButton title="Cancel" onPress={handleCancel} />
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -98,8 +94,8 @@ export default CreateAlbumModal;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContainer: {
     backgroundColor: colors.backgroundMain,
@@ -108,7 +104,7 @@ const styles = StyleSheet.create({
     paddingBottom: vs(spacing.xl * 2),
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: vs(spacing.lg),
   },
   title: {
@@ -119,7 +115,7 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: rfs(14),
   },
   inputContainer: {

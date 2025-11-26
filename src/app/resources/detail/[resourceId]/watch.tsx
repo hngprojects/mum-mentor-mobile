@@ -1,16 +1,21 @@
 import { Feather } from "@expo/vector-icons";
-import { AVPlaybackStatus, AVPlaybackStatusSuccess, ResizeMode, Video } from "expo-av";
+import {
+  AVPlaybackStatus,
+  AVPlaybackStatusSuccess,
+  ResizeMode,
+  Video,
+} from "expo-av";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-   ActivityIndicator,
-   Image,
-   ImageBackground,
-   StatusBar,
-   StyleSheet,
-   Text,
-   TouchableOpacity,
-   View,
+  ActivityIndicator,
+  Image,
+  ImageBackground,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,13 +31,17 @@ const COMMENT_COUNT = 20;
 const ResourceWatchScreen: React.FC = () => {
   const router = useRouter();
   const videoRef = useRef<Video | null>(null);
-  const { resourceId } = useLocalSearchParams<{ resourceId?: string | string[] }>();
+  const { resourceId } = useLocalSearchParams<{
+    resourceId?: string | string[];
+  }>();
 
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState(3 / 4);
 
-  const normalizedResourceId = Array.isArray(resourceId) ? resourceId[0] : resourceId;
+  const normalizedResourceId = Array.isArray(resourceId)
+    ? resourceId[0]
+    : resourceId;
 
   const resource = useMemo(() => {
     if (!normalizedResourceId) {
@@ -40,7 +49,9 @@ const ResourceWatchScreen: React.FC = () => {
     }
 
     for (const section of resourceSections) {
-      const found = section.resources.find((item) => item.id === normalizedResourceId);
+      const found = section.resources.find(
+        (item) => item.id === normalizedResourceId
+      );
       if (found) {
         return found;
       }
@@ -84,7 +95,8 @@ const ResourceWatchScreen: React.FC = () => {
     }
 
     const successStatus = status as AVPlaybackStatusSuccess;
-    const { width, height } = successStatus.naturalSize || {};
+    //@ts-ignore
+    const { width, height } = successStatus?.naturalSize || {};
     if (width && height) {
       const ratio = width / height;
       if (ratio > 0 && Number.isFinite(ratio)) {
@@ -98,7 +110,10 @@ const ResourceWatchScreen: React.FC = () => {
   if (!resource) {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundMain} />
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={colors.backgroundMain}
+        />
         <View style={styles.errorContent}>
           <Text style={styles.errorTitle}>Resource not found</Text>
           <Text style={styles.errorMessage}>
@@ -114,7 +129,10 @@ const ResourceWatchScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundMain} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={colors.backgroundMain}
+      />
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -123,7 +141,11 @@ const ResourceWatchScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <Feather name="arrow-left" size={ms(22)} color={colors.textPrimary} />
+            <Feather
+              name="arrow-left"
+              size={ms(22)}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
 
           <Text style={styles.screenTitle} numberOfLines={1}>
@@ -133,7 +155,9 @@ const ResourceWatchScreen: React.FC = () => {
           <View style={styles.headerSpacer} />
         </View>
 
-        <View style={[styles.videoContainer, { aspectRatio: videoAspectRatio }] }>
+        <View
+          style={[styles.videoContainer, { aspectRatio: videoAspectRatio }]}
+        >
           {showVideo ? (
             <View style={styles.videoWrapper}>
               {!isVideoReady ? (
@@ -174,12 +198,20 @@ const ResourceWatchScreen: React.FC = () => {
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
-            <Feather name="thumbs-up" size={ms(18)} color={colors.textPrimary} />
+            <Feather
+              name="thumbs-up"
+              size={ms(18)}
+              color={colors.textPrimary}
+            />
             <Text style={styles.metaLabel}>{LIKE_COUNT} Likes</Text>
           </View>
 
           <View style={styles.metaItem}>
-            <Feather name="message-circle" size={ms(18)} color={colors.textPrimary} />
+            <Feather
+              name="message-circle"
+              size={ms(18)}
+              color={colors.textPrimary}
+            />
             <Text style={styles.metaLabel}>{COMMENT_COUNT} Comments</Text>
           </View>
         </View>
