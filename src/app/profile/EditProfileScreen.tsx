@@ -1,25 +1,26 @@
 // components/EditProfileModal.tsx
-import React, { useState, useEffect } from "react";
+import { Feather } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Modal,
-  Image,
-  Dimensions,
-  ActivityIndicator,
-  Alert,
+  View,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
 
 // --- Style Imports ---
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
 // --- API Imports ---
+import { showToast } from "@/src/core/utils/toast";
 import apiClient from "../../core/services/apiClient";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -100,7 +101,7 @@ export default function EditProfileModal({
 
       // Validate required fields
       if (!selectedMomStatus) {
-        Alert.alert("Validation Error", "Please select your mom status.");
+        showToast.error("Validation Error", "Please select your mom status.");
         setLoading(false);
         return;
       }
@@ -115,33 +116,41 @@ export default function EditProfileModal({
       try {
         // Try PATCH first
         console.log("📤 Trying PATCH...");
-        const patchResponse = await apiClient.patch("/api/v1/profile-setup/", profileSetupData);
+        const patchResponse = await apiClient.patch(
+          "/api/v1/profile-setup/",
+          profileSetupData
+        );
         console.log("✅ PATCH successful:", patchResponse.data);
 
         if (onProfileUpdated) {
           onProfileUpdated();
         }
-        
-        Alert.alert("Success", "Profile updated successfully!");
+
+        showToast.success("Success", "Profile updated successfully!");
         onClose();
         return;
-
       } catch (patchError: any) {
         const patchStatus = patchError.response?.status;
         const patchErrorDetail = patchError.response?.data?.error?.detail || "";
-        
+
         console.log("❌ PATCH failed:", patchStatus);
         console.log("Error detail:", patchErrorDetail);
 
         // Check if database table doesn't exist (500 error with specific message)
-        if (patchStatus === 500 && patchErrorDetail.includes("profile_setup") && patchErrorDetail.includes("does not exist")) {
+        if (
+          patchStatus === 500 &&
+          patchErrorDetail.includes("profile_setup") &&
+          patchErrorDetail.includes("does not exist")
+        ) {
           Alert.alert(
             "Feature Not Available",
             "Profile customization is currently being set up on our servers. This feature will be available soon. We apologize for the inconvenience.",
-            [{ 
-              text: "OK",
-              onPress: () => onClose()
-            }]
+            [
+              {
+                text: "OK",
+                onPress: () => onClose(),
+              },
+            ]
           );
           setLoading(false);
           return;
@@ -150,44 +159,53 @@ export default function EditProfileModal({
         // If it's 404 (not found), try POST to create
         if (patchStatus === 404) {
           console.log("📤 Profile not found, trying POST to create...");
-          
+
           try {
             const createData = {
               mom_status: selectedMomStatus,
               goals: selectedGoals,
               partner: {
                 name: "",
-                email: ""
+                email: "",
               },
               children: [],
             };
 
-            const postResponse = await apiClient.post("/api/v1/profile-setup/", createData);
+            const postResponse = await apiClient.post(
+              "/api/v1/profile-setup/",
+              createData
+            );
             console.log("✅ POST successful:", postResponse.data);
 
             if (onProfileUpdated) {
               onProfileUpdated();
             }
-            
-            Alert.alert("Success", "Profile created successfully!");
+
+            showToast.success("Success", "Profile created successfully!");
             onClose();
             return;
-
           } catch (postError: any) {
             const postStatus = postError.response?.status;
-            const postErrorDetail = postError.response?.data?.error?.detail || "";
-            
+            const postErrorDetail =
+              postError.response?.data?.error?.detail || "";
+
             console.log("❌ POST failed:", postStatus);
 
             // Check for database error on POST as well
-            if (postStatus === 500 && postErrorDetail.includes("profile_setup") && postErrorDetail.includes("does not exist")) {
+            if (
+              postStatus === 500 &&
+              postErrorDetail.includes("profile_setup") &&
+              postErrorDetail.includes("does not exist")
+            ) {
               Alert.alert(
                 "Feature Not Available",
                 "Profile customization is currently being set up on our servers. This feature will be available soon. We apologize for the inconvenience.",
-                [{ 
-                  text: "OK",
-                  onPress: () => onClose()
-                }]
+                [
+                  {
+                    text: "OK",
+                    onPress: () => onClose(),
+                  },
+                ]
               );
               setLoading(false);
               return;
@@ -203,10 +221,12 @@ export default function EditProfileModal({
           Alert.alert(
             "Feature Not Available",
             "This feature is currently unavailable. Please contact support if the issue persists.",
-            [{ 
-              text: "OK",
-              onPress: () => onClose()
-            }]
+            [
+              {
+                text: "OK",
+                onPress: () => onClose(),
+              },
+            ]
           );
           setLoading(false);
           return;
@@ -215,14 +235,13 @@ export default function EditProfileModal({
         // Re-throw for other errors
         throw patchError;
       }
-
     } catch (error: any) {
       console.error("❌ Unexpected error:", error);
       console.error("Error response:", error.response?.data);
       console.error("Error status:", error.response?.status);
-      
+
       let errorMessage = "Failed to update profile. Please try again.";
-      
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.detail) {
@@ -234,8 +253,8 @@ export default function EditProfileModal({
           errorMessage = error.response.data.detail;
         }
       }
-      
-      Alert.alert("Error", errorMessage);
+
+      showToast.error("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -332,9 +351,7 @@ export default function EditProfileModal({
                   editable={false}
                 />
               </View>
-              <Text style={styles.helperText}>
-                Email cannot be changed
-              </Text>
+              <Text style={styles.helperText}>Email cannot be changed</Text>
             </View>
 
             {/* Mom Status */}

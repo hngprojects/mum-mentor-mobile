@@ -1,34 +1,35 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { AxiosError } from "axios";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { AxiosError } from 'axios';
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 // --- Theme and Utilities ---
-import { colors, typography, spacing } from '../../core/styles/index';
-import { ms, vs, rfs } from '../../core/styles/scaling';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { colors, typography } from "../../core/styles/index";
+import { ms, rfs, vs } from "../../core/styles/scaling";
 
 // --- API Service and Types ---
-import { 
-  verifyValue,
-  resendVerification, 
-  ApiErrorResponse, 
-  VerificationPayload,
+import { showToast } from "@/src/core/utils/toast";
+import {
+  ApiErrorResponse,
   EmailPayload,
+  resendVerification,
+  ServiceResponse,
   TokenResponse,
-  ServiceResponse
-} from '../../core/services/authService'; 
-import PrimaryButton from '../components/PrimaryButton'; 
+  VerificationPayload,
+  verifyValue,
+} from "../../core/services/authService";
+import PrimaryButton from "../components/PrimaryButton";
 
 const OTP_LENGTH = 6;
 const INITIAL_TIMER = 60;
@@ -36,14 +37,18 @@ const INITIAL_TIMER = 60;
 // --- Component ---
 function OtpScreen() {
   // Get URL parameters
-  const params = useLocalSearchParams<{ email: string; context?: 'register' | 'reset'; verificationToken?: string }>();
+  const params = useLocalSearchParams<{
+    email: string;
+    context?: "register" | "reset";
+    verificationToken?: string;
+  }>();
   const email = params.email;
-  const context = params.context ?? 'register';
+  const context = params.context ?? "register";
   const resetToken = params.verificationToken;
 
   // State
-  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
-  const [verificationError, setVerificationError] = useState('');
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const [verificationError, setVerificationError] = useState("");
   const [timer, setTimer] = useState(INITIAL_TIMER);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -53,7 +58,7 @@ function OtpScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Computed values
-  const isOtpComplete = otp.every((digit) => digit !== '');
+  const isOtpComplete = otp.every((digit) => digit !== "");
   const isResendDisabled = timer > 0 || isResending || isLoading;
 
   // --- Timer Effect ---
@@ -81,9 +86,12 @@ function OtpScreen() {
   // --- Initial Setup Effect ---
   useEffect(() => {
     if (!email) {
-      Alert.alert("Error", "Email parameter missing. Redirecting to Login.");
-      router.replace('/(auth)/SignInScreen');
-      return; 
+      showToast.error(
+        "Error",
+        "Email parameter missing. Redirecting to Login."
+      );
+      router.replace("/(auth)/SignInScreen");
+      return;
     }
 
     const focusTimeout = setTimeout(() => {
@@ -96,90 +104,111 @@ function OtpScreen() {
   }, [email]);
 
   // --- Handlers wrapped in useCallback to prevent recreation ---
-  const handleVerify = useCallback(async (code?: string) => {
-    if (isLoading) return;
+  const handleVerify = useCallback(
+    async (code?: string) => {
+      if (isLoading) return;
 
-    const verificationValue = code || otp.join('');
-    if (verificationValue.length !== OTP_LENGTH) {
-      setVerificationError('Please enter the full 6-digit code.');
-      return;
-    }
-
-    setIsLoading(true);
-    setVerificationError('');
-
-    const verificationType: VerificationPayload['type'] = 
-      context === 'register' ? 'email_verification' : 'password_reset';
-
-    const payload: VerificationPayload = { 
-      email, 
-      verification_value: verificationValue,
-      type: verificationType 
-    };
-
-    try {
-      const result: ServiceResponse<TokenResponse> = await verifyValue(payload);
-      
-      if (result.success) {
-        const response = result.data;
-        
-        if (context === 'register') {
-          const tokenResponse = response as TokenResponse;
-          
-          if (tokenResponse.access_token) {
-            Alert.alert("Success", "Email verified and logged in! Welcome to NORA.");
-            router.replace('/(tabs)/Home'); 
-          } else {
-            console.warn("Verification successful but missing access_token.");
-            Alert.alert(
-              "Verification Success", 
-              "Your email has been verified. Please log in to continue.",
-              [{ 
-                text: "Log In", 
-                onPress: () => router.replace('/(auth)/SignInScreen') 
-              }]
-            );
-          }
-        } else if (context === 'reset') {
-          const verificationToken = response.access_token || resetToken; 
-          
-          if (!verificationToken) {
-            setVerificationError("Verification successful, but missing token for password reset.");
-          } else {
-            Alert.alert("Success", "Code verified. Proceeding to reset password.");
-            router.push({ 
-              pathname: '/(auth)/ResetPassword',
-              params: { 
-                verificationToken: verificationToken,
-                email: email
-              } 
-            });
-          }
-        }
-      } else { 
-        const error = result.error;
-        let serverMessage = 'A network or unexpected error occurred. Please check your connection.';
-        
-        if (error && typeof error === 'object' && 'isAxiosError' in error) {
-          const axiosError = error as AxiosError<ApiErrorResponse>;
-          serverMessage = axiosError.response?.data?.message 
-            || (typeof axiosError.response?.data?.detail === 'string' ? axiosError.response.data.detail : undefined)
-            || 'Incorrect code, expired token, or server error. Please try again.';
-        }
-        
-        Alert.alert("Verification Failed", serverMessage);
-        setVerificationError(serverMessage); 
-        setOtp(Array(OTP_LENGTH).fill('')); 
-        inputRefs.current[0]?.focus(); 
+      const verificationValue = code || otp.join("");
+      if (verificationValue.length !== OTP_LENGTH) {
+        setVerificationError("Please enter the full 6-digit code.");
+        return;
       }
-    } catch (error) {
-      console.error("Unhandled error during verification:", error);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
-      setVerificationError("An unexpected error occurred.");
-    } finally {
-      setIsLoading(false); 
-    }
-  }, [isLoading, otp, context, email, resetToken]);
+
+      setIsLoading(true);
+      setVerificationError("");
+
+      const verificationType: VerificationPayload["type"] =
+        context === "register" ? "email_verification" : "password_reset";
+
+      const payload: VerificationPayload = {
+        email,
+        verification_value: verificationValue,
+        type: verificationType,
+      };
+
+      try {
+        const result: ServiceResponse<TokenResponse> =
+          await verifyValue(payload);
+
+        if (result.success) {
+          const response = result.data;
+
+          if (context === "register") {
+            const tokenResponse = response as TokenResponse;
+
+            if (tokenResponse.access_token) {
+              showToast.success(
+                "Success",
+                "Email verified and logged in! Welcome to NORA."
+              );
+              router.replace("/(tabs)/Home");
+            } else {
+              console.warn("Verification successful but missing access_token.");
+              Alert.alert(
+                "Verification Success",
+                "Your email has been verified. Please log in to continue.",
+                [
+                  {
+                    text: "Log In",
+                    onPress: () => router.replace("/(auth)/SignInScreen"),
+                  },
+                ]
+              );
+            }
+          } else if (context === "reset") {
+            const verificationToken = response.access_token || resetToken;
+
+            if (!verificationToken) {
+              setVerificationError(
+                "Verification successful, but missing token for password reset."
+              );
+            } else {
+              showToast.success(
+                "Success",
+                "Code verified. Proceeding to reset password."
+              );
+              router.push({
+                pathname: "/(auth)/ResetPassword",
+                params: {
+                  verificationToken: verificationToken,
+                  email: email,
+                },
+              });
+            }
+          }
+        } else {
+          const error = result.error;
+          let serverMessage =
+            "A network or unexpected error occurred. Please check your connection.";
+
+          if (error && typeof error === "object" && "isAxiosError" in error) {
+            const axiosError = error as AxiosError<ApiErrorResponse>;
+            serverMessage =
+              axiosError.response?.data?.message ||
+              (typeof axiosError.response?.data?.detail === "string"
+                ? axiosError.response.data.detail
+                : undefined) ||
+              "Incorrect code, expired token, or server error. Please try again.";
+          }
+
+          showToast.error("Verification Failed", serverMessage);
+          setVerificationError(serverMessage);
+          setOtp(Array(OTP_LENGTH).fill(""));
+          inputRefs.current[0]?.focus();
+        }
+      } catch (error) {
+        console.error("Unhandled error during verification:", error);
+        showToast.error(
+          "Error",
+          "An unexpected error occurred. Please try again."
+        );
+        setVerificationError("An unexpected error occurred.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, otp, context, email, resetToken]
+  );
 
   const handleResendCode = useCallback(async () => {
     if (timer > 0 || isResending || isLoading || !email) {
@@ -187,81 +216,96 @@ function OtpScreen() {
     }
 
     setIsResending(true);
-    setVerificationError('');
-    
+    setVerificationError("");
+
     try {
       const payload: EmailPayload = { email };
-      await resendVerification(payload); 
+      await resendVerification(payload);
 
-      setOtp(Array(OTP_LENGTH).fill(''));
+      setOtp(Array(OTP_LENGTH).fill(""));
       setTimer(INITIAL_TIMER);
       inputRefs.current[0]?.focus();
-      Alert.alert("Sent!", "New code has been sent to your email.");
+      showToast.success("Sent!", "New code has been sent to your email.");
     } catch (error) {
       let errorMessage = "Could not resend code. Please try again.";
-      
-      if (error && typeof error === 'object' && 'isAxiosError' in error) {
+
+      if (error && typeof error === "object" && "isAxiosError" in error) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
-        errorMessage = axiosError.response?.data?.message 
-          || (typeof axiosError.response?.data?.detail === 'string' ? axiosError.response.data.detail : errorMessage);
+        errorMessage =
+          axiosError.response?.data?.message ||
+          (typeof axiosError.response?.data?.detail === "string"
+            ? axiosError.response.data.detail
+            : errorMessage);
       }
-      
-      Alert.alert("Error", errorMessage);
+
+      showToast.error("Error", errorMessage);
     } finally {
-      setIsResending(false); 
+      setIsResending(false);
     }
   }, [timer, isResending, isLoading, email]);
 
-  const handleChangeText = useCallback((text: string, index: number) => {
-    const numericText = text.replace(/[^0-9]/g, '');
+  const handleChangeText = useCallback(
+    (text: string, index: number) => {
+      const numericText = text.replace(/[^0-9]/g, "");
 
-    if (numericText.length <= 1) {
-      const newOtp = [...otp];
-      newOtp[index] = numericText;
-      setOtp(newOtp);
+      if (numericText.length <= 1) {
+        const newOtp = [...otp];
+        newOtp[index] = numericText;
+        setOtp(newOtp);
 
-      if (numericText && index < OTP_LENGTH - 1) {
-        inputRefs.current[index + 1]?.focus();
+        if (numericText && index < OTP_LENGTH - 1) {
+          inputRefs.current[index + 1]?.focus();
+        }
+
+        // Auto-submit when complete
+        if (newOtp.filter((d) => d).length === OTP_LENGTH) {
+          setTimeout(() => handleVerify(newOtp.join("")), 50);
+        }
       }
+    },
+    [otp, handleVerify]
+  );
 
-      // Auto-submit when complete
-      if (newOtp.filter(d => d).length === OTP_LENGTH) {
-        setTimeout(() => handleVerify(newOtp.join('')), 50); 
+  const handleKeyPress = useCallback(
+    (key: string, index: number) => {
+      if (key === "Backspace" && !otp[index] && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+        const newOtp = [...otp];
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
       }
-    }
-  }, [otp, handleVerify]);
-
-  const handleKeyPress = useCallback((key: string, index: number) => {
-    if (key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-      const newOtp = [...otp];
-      newOtp[index - 1] = '';
-      setOtp(newOtp);
-    }
-  }, [otp]);
+    },
+    [otp]
+  );
 
   const formatTimer = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>
-          {context === 'register' ? 'Verify Your Account' : 'Reset Password Code'}
+          {context === "register"
+            ? "Verify Your Account"
+            : "Reset Password Code"}
         </Text>
 
         <View style={styles.iconContainer}>
           <View style={styles.mailIcon}>
-            <Ionicons name="mail-outline" size={ms(32)} color={colors.textWhite} />
+            <Ionicons
+              name="mail-outline"
+              size={ms(32)}
+              color={colors.textWhite}
+            />
           </View>
         </View>
 
@@ -280,14 +324,18 @@ function OtpScreen() {
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => { inputRefs.current[index] = ref; }}
+              ref={(ref) => {
+                inputRefs.current[index] = ref;
+              }}
               style={[
                 styles.otpInput,
-                verificationError && styles.otpInputError
+                verificationError && styles.otpInputError,
               ]}
               value={digit}
               onChangeText={(text) => handleChangeText(text, index)}
-              onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+              onKeyPress={({ nativeEvent }) =>
+                handleKeyPress(nativeEvent.key, index)
+              }
               keyboardType="number-pad"
               maxLength={1}
               selectTextOnFocus
@@ -302,18 +350,22 @@ function OtpScreen() {
             disabled={isResendDisabled}
             activeOpacity={0.7}
           >
-            <Text style={[
-              styles.resendText, 
-              isResendDisabled && styles.resendTextDisabled
-            ]}>
-              {isResending ? 'Sending...' : 'Resend code'}
+            <Text
+              style={[
+                styles.resendText,
+                isResendDisabled && styles.resendTextDisabled,
+              ]}
+            >
+              {isResending ? "Sending..." : "Resend code"}
             </Text>
           </TouchableOpacity>
-          {timer > 0 && <Text style={styles.timerText}> {formatTimer(timer)}</Text>}
+          {timer > 0 && (
+            <Text style={styles.timerText}> {formatTimer(timer)}</Text>
+          )}
         </View>
 
         <PrimaryButton
-          title={isLoading ? 'VERIFYING...' : 'Verify'}
+          title={isLoading ? "VERIFYING..." : "Verify"}
           onPress={() => handleVerify()}
           disabled={!isOtpComplete || isLoading || isResending}
           isLoading={isLoading}
@@ -338,49 +390,49 @@ const styles = StyleSheet.create({
     paddingBottom: vs(40),
   },
   mailIcon: {
-    width: ms(80), 
+    width: ms(80),
     height: ms(80),
     backgroundColor: colors.secondary,
     borderRadius: ms(40),
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: ms(16)
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: ms(16),
   },
   title: {
     fontSize: rfs(typography.heading1.fontSize),
     fontFamily: typography.heading1.fontFamily,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(24),
   },
   iconContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: vs(16),
   },
   description: {
     fontSize: rfs(typography.bodySmall.fontSize),
     fontFamily: typography.bodySmall.fontFamily,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(10),
   },
   email: {
     fontSize: rfs(typography.bodyMedium.fontSize),
     fontFamily: typography.labelMedium.fontFamily,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(32),
   },
   label: {
     fontSize: rfs(typography.heading3.fontSize),
     fontFamily: typography.heading3.fontFamily,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: vs(14),
   },
   otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: ms(8),
     marginBottom: vs(16),
   },
@@ -391,7 +443,7 @@ const styles = StyleSheet.create({
     borderColor: colors.outline,
     borderRadius: ms(8),
     backgroundColor: colors.textWhite,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: rfs(24),
     fontFamily: typography.labelMedium.fontFamily,
     color: colors.textPrimary,
@@ -401,9 +453,9 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   resendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: vs(24),
     minHeight: vs(30),
   },
@@ -424,7 +476,7 @@ const styles = StyleSheet.create({
     fontSize: rfs(typography.bodySmall.fontSize),
     fontFamily: typography.bodySmall.fontFamily,
     color: colors.error,
-    textAlign: 'center',
-    marginBottom: vs(16)
-  }
+    textAlign: "center",
+    marginBottom: vs(16),
+  },
 });

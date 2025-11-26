@@ -1,14 +1,14 @@
+import { colors, typography } from "@/src/core/styles";
+import { rbr, s, vs } from "@/src/core/styles/scaling";
 import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   Image,
-  TouchableOpacity,
   Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { colors, typography } from "@/src/core/styles";
-import { s, vs, rbr } from "@/src/core/styles/scaling";
 
 interface ChatMessageProps {
   message: string;
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     ...typography.bodyMedium,
-    lineHeight: vs(20),
+    lineHeight: vs(30),
     textAlign: "left",
   },
   userText: {

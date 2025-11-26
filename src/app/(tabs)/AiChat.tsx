@@ -1,9 +1,9 @@
 import { colors } from "@/src/core/styles";
 import { rfs, s, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -25,6 +25,7 @@ import { ChatMessage } from "../components/chat/chat-Message";
 import { ChatWelcome } from "../components/chat/chat-Welcome";
 import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { TypingIndicator } from "../components/chat/typing-Indicator";
+import { getCurrentUser } from "@/src/core/services/userService";
 
 interface Chat {
   id: string;
@@ -49,6 +50,9 @@ export default function ChatScreen() {
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [showHistoryEmpty, setShowHistoryEmpty] = useState(false);
   const [streamingText, setStreamingText] = useState("");
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
   const flatListRef = useRef<FlatList>(null);
   const hasReceivedChunkRef = useRef(false);
 
@@ -57,6 +61,24 @@ export default function ChatScreen() {
   const deleteConversation = useDeleteConversation();
   const renameConversation = useRenameConversation();
   const { data: chatMessages } = useChatMessages(currentChat?.id);
+
+  /** Fetches the current user data. */
+  const loadUser = useCallback(async () => {
+    setIsLoadingUser(true);
+    try {
+      const response = await getCurrentUser();
+      setUser(response || null);
+    } catch (error) {
+      console.log("User fetch error:", error);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  }, []);
+
+  /** Effect to initialize data loading and set up the greeting timer. */
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
 
   // Update currentChat title when messages are loaded
   useEffect(() => {
@@ -121,7 +143,7 @@ export default function ChatScreen() {
       });
     } catch (error) {
       if (!hasReceivedChunkRef.current) {
-        Alert.alert("Error", "Failed to send message");
+        showToast.error("Error", "Failed to send message");
       }
       console.error(error);
     } finally {
@@ -139,7 +161,7 @@ export default function ChatScreen() {
         const newChat = await createChat.mutateAsync();
         setCurrentChat(newChat);
       } catch {
-        Alert.alert("Error", "Failed to start chat");
+        showToast.error("Error", "Failed to start chat");
       }
     }
   };
@@ -180,9 +202,9 @@ export default function ChatScreen() {
         setCurrentChat((prev) => (prev ? { ...prev, title: newTitle } : null));
       }
 
-      Alert.alert("Success", "Chat renamed successfully");
+      showToast.success("Success", "Chat renamed successfully");
     } catch (error) {
-      Alert.alert("Error", "Failed to rename chat");
+      showToast.error("Error", "Failed to rename chat");
       console.error(error);
     }
   };
@@ -198,7 +220,7 @@ export default function ChatScreen() {
         setCurrentView("welcome");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to delete chat");
+      showToast.error("Error", "Failed to delete chat");
       console.error(error);
       throw error; // OPTIONAL but recommended
     }
@@ -250,7 +272,9 @@ export default function ChatScreen() {
       {/* Content Views */}
       {currentView === "welcome" && (
         <ChatWelcome
-          userName="Tracy"
+          userName={
+            isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"
+          }
           onCategoryPress={handleCategoryPress}
           onAskAnything={handleAskAnything}
         />

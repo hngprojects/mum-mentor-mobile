@@ -1,20 +1,19 @@
 // ListTasks.tsx - Updated with style guide
 import { deleteTask, toggleTaskStatus } from "@/src/core/services/tasksService";
+import { showToast } from "@/src/core/utils/toast";
 import React, { useState } from "react";
+import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import {
-  Alert,
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+  colors,
+  fontFamilies,
+  spacing,
+  typography,
+} from "../../core/styles/index";
+import { ms, rfs } from "../../core/styles/scaling";
 import CreateTaskFormModal from "./CreateTask";
 import PrimaryButton from "./PrimaryButton";
 import SecondaryButton from "./SecondaryButton";
 import TaskListItem from "./TaskListItem";
-import { colors, typography, spacing, fontFamilies } from "../../core/styles/index";
-import { ms, rfs } from "../../core/styles/scaling";
 
 const trashIcon = require("../../assets/images/trash.png");
 const successIcon = require("../../assets/images/success-icon.png");
@@ -47,7 +46,7 @@ const ListTasks = ({
       callback();
     } catch (err) {
       console.error("Delete error:", err);
-      Alert.alert("Error", "Failed to delete task. Try again.");
+      showToast.error("Error", "Failed to delete task. Try again.");
     } finally {
       setIsLoadingDelete(false);
       setSelectedTask(null);
@@ -56,14 +55,14 @@ const ListTasks = ({
 
   const handleToggleStatus = async (taskId: string, status: string) => {
     const newStatus = status === "completed" ? "pending" : "completed";
-    
+
     callback(taskId, newStatus);
-    
+
     try {
       await toggleTaskStatus(taskId, newStatus === "completed");
     } catch (err) {
       console.error("Update error:", err);
-      Alert.alert("Error", "Failed to update task. Try again.");
+      showToast.error("Error", "Failed to update task. Try again.");
       callback();
     }
   };
@@ -99,10 +98,7 @@ const ListTasks = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Image
-              source={trashIcon}
-              style={styles.trashIconImage}
-            />
+            <Image source={trashIcon} style={styles.trashIconImage} />
 
             <Text style={styles.modalTitle}>Delete Task</Text>
             <Text style={styles.modalSubtitle}>
@@ -135,10 +131,7 @@ const ListTasks = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Image
-              source={successIcon}
-              style={styles.successIconImage}
-            />
+            <Image source={successIcon} style={styles.successIconImage} />
 
             <Text style={styles.modalTitle}>Task deleted successfully</Text>
 

@@ -1,34 +1,33 @@
 // src/app/(tabs)/Gallery.tsx
 
-import React, { useState, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image, 
-  Alert,
-  RefreshControl,
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useFocusEffect } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useCallback, useState } from "react";
+import {
   Dimensions,
-} from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '@/src/core/styles/scaling';
-import { Ionicons } from '@expo/vector-icons';
-import CustomInput from '../components/CustomInput';
-import CreateAlbumModal from '../components/GalleryComponents/CreateAlbumModal';
-import AlbumCreatedModal from '../components/GalleryComponents/AlbumCreated';
-import * as galleryStorage from '../../core/services/galleryStorageService';
+  Image,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import * as galleryStorage from "../../core/services/galleryStorageService";
+import CustomInput from "../components/CustomInput";
+import AlbumCreatedModal from "../components/GalleryComponents/AlbumCreated";
+import CreateAlbumModal from "../components/GalleryComponents/CreateAlbumModal";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function GalleryScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [createdAlbumName, setCreatedAlbumName] = useState('');
+  const [createdAlbumName, setCreatedAlbumName] = useState("");
   const [albums, setAlbums] = useState<galleryStorage.Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,8 +45,8 @@ export default function GalleryScreen() {
       const loadedAlbums = await galleryStorage.getAlbums();
       setAlbums(loadedAlbums);
     } catch (error) {
-      console.error('Error loading albums:', error);
-      Alert.alert('Error', 'Failed to load albums');
+      console.error("Error loading albums:", error);
+      showToast.error("Error", "Failed to load albums");
     } finally {
       setIsLoading(false);
     }
@@ -66,19 +65,19 @@ export default function GalleryScreen() {
   const handleSaveAlbum = async (albumName: string) => {
     try {
       const newAlbum = await galleryStorage.createAlbum(albumName);
-      console.log('Album created:', newAlbum);
-      
+      console.log("Album created:", newAlbum);
+
       setCreatedAlbumName(albumName);
       setIsCreateModalVisible(false);
-      
+
       // Reload albums
       await loadAlbums();
-      
+
       // Show success modal
       setIsSuccessModalVisible(true);
     } catch (error) {
-      console.error('Error creating album:', error);
-      Alert.alert('Error', 'Failed to create album. Please try again.');
+      console.error("Error creating album:", error);
+      showToast.error("Error", "Failed to create album. Please try again.");
     }
   };
 
@@ -88,13 +87,13 @@ export default function GalleryScreen() {
 
   const handleAddPhotos = () => {
     setIsSuccessModalVisible(false);
-    
+
     // Find the created album
-    const album = albums.find(a => a.name === createdAlbumName);
+    const album = albums.find((a) => a.name === createdAlbumName);
     if (album) {
       router.push({
-        pathname: '../Gallery/AlbumDetail',
-        params: { albumId: album.id, albumName: album.name }
+        pathname: "../Gallery/AlbumDetail",
+        params: { albumId: album.id, albumName: album.name },
       });
     }
   };
@@ -105,18 +104,18 @@ export default function GalleryScreen() {
 
   const handleViewAlbum = (album: galleryStorage.Album) => {
     router.push({
-      pathname: '../Gallery/AlbumDetail',
-      params: { albumId: album.id, albumName: album.name }
+      pathname: "../Gallery/AlbumDetail",
+      params: { albumId: album.id, albumName: album.name },
     });
   };
 
   // Filter albums based on search query
   const filteredAlbums = albums.filter((album) => {
     if (!searchQuery.trim()) return true;
-    
+
     const query = searchQuery.toLowerCase();
     const albumName = album.name.toLowerCase();
-    
+
     return albumName.includes(query);
   });
 
@@ -127,13 +126,13 @@ export default function GalleryScreen() {
     <>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={handleRefresh}
               tintColor={colors.primary}
             />
@@ -165,8 +164,8 @@ export default function GalleryScreen() {
           ) : !hasAlbums ? (
             /* Empty State - No Albums */
             <View style={styles.emptyContainer}>
-              <Image 
-                source={require('../../assets/images/gallery.png')} 
+              <Image
+                source={require("../../assets/images/gallery.png")}
                 style={styles.emptyImage}
                 resizeMode="contain"
               />
@@ -178,7 +177,11 @@ export default function GalleryScreen() {
           ) : !hasFilteredResults ? (
             /* No Search Results */
             <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={60} color={colors.textGrey2} />
+              <Ionicons
+                name="search-outline"
+                size={60}
+                color={colors.textGrey2}
+              />
               <Text style={styles.emptyTitle}>No albums found</Text>
               <Text style={styles.emptySubtitle}>
                 Try searching with different keywords
@@ -196,19 +199,24 @@ export default function GalleryScreen() {
                 >
                   <View style={styles.albumCover}>
                     {album.coverPhotoUri ? (
-                      <Image 
-                        source={{ uri: album.coverPhotoUri }} 
+                      <Image
+                        source={{ uri: album.coverPhotoUri }}
                         style={styles.albumCoverImage}
                       />
                     ) : (
-                      <Ionicons name="images" size={40} color={colors.textGrey1} />
+                      <Ionicons
+                        name="images"
+                        size={40}
+                        color={colors.textGrey1}
+                      />
                     )}
                   </View>
                   <Text style={styles.albumName} numberOfLines={1}>
                     {album.name}
                   </Text>
                   <Text style={styles.albumCount}>
-                    {album.photoCount} {album.photoCount === 1 ? 'photo' : 'photos'}
+                    {album.photoCount}{" "}
+                    {album.photoCount === 1 ? "photo" : "photos"}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -217,7 +225,7 @@ export default function GalleryScreen() {
         </ScrollView>
 
         {/* Floating Add Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
           onPress={handleCreateAlbum}
           activeOpacity={0.8}
@@ -275,8 +283,8 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: ms(spacing.xl),
     minHeight: vs(400),
   },
@@ -289,17 +297,17 @@ const styles = StyleSheet.create({
     ...typography.heading3,
     color: colors.textPrimary,
     marginBottom: vs(spacing.xs),
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptySubtitle: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: rfs(14),
   },
   albumsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: ms(spacing.lg),
     gap: ms(spacing.md),
   },
@@ -307,18 +315,18 @@ const styles = StyleSheet.create({
     width: (width - ms(spacing.lg * 2) - ms(spacing.md)) / 2,
   },
   albumCover: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1,
     backgroundColor: colors.backgroundSubtle,
     borderRadius: ms(12),
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
     marginBottom: vs(spacing.xs),
   },
   albumCoverImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   albumName: {
     ...typography.labelLarge,
@@ -332,16 +340,16 @@ const styles = StyleSheet.create({
     marginTop: vs(2),
   },
   addButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: vs(80),
     right: ms(spacing.lg),
     width: ms(40),
     height: ms(40),
     borderRadius: ms(8),
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,

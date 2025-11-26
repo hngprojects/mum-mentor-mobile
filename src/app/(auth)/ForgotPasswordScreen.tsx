@@ -1,39 +1,41 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  KeyboardAvoidingView, 
+import { AxiosError } from "axios";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  KeyboardAvoidingView,
   Platform,
-  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  StatusBar
-} from 'react-native';
-import { router } from 'expo-router';
-import { AxiosError } from 'axios';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // --- Imports from Core Components and Styles ---
-import CustomInput from '../components/CustomInput'; 
-import PrimaryButton from '../components/PrimaryButton';
-import { colors, typography, spacing} from '../../core/styles/index';
-import { ms, rfs } from '../../core/styles/scaling'; 
+import { colors, spacing, typography } from "../../core/styles/index";
+import { ms, rfs } from "../../core/styles/scaling";
+import CustomInput from "../components/CustomInput";
+import PrimaryButton from "../components/PrimaryButton";
 
 // --- API Service and Types ---
-import { forgotPassword, EmailPayload, ApiErrorResponse } from '../../core/services/authService'; 
-
+import { showToast } from "@/src/core/utils/toast";
+import {
+  ApiErrorResponse,
+  EmailPayload,
+  forgotPassword,
+} from "../../core/services/authService";
 
 export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // Client-side validation helper
-  const isEmailValid = email.includes('@') && email.includes('.') && email.length > 0;
-  
+  const isEmailValid =
+    email.includes("@") && email.includes(".") && email.length > 0;
+
   // --- Client-Side Validation Logic ---
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
@@ -41,7 +43,7 @@ export default function ForgotPasswordScreen() {
 
     // Email Validation (Simple check for presence of @ and .)
     if (!email || !isEmailValid) {
-      newErrors.email = 'Please enter a valid email address.';
+      newErrors.email = "Please enter a valid email address.";
       isValid = false;
     }
 
@@ -63,32 +65,37 @@ export default function ForgotPasswordScreen() {
       await forgotPassword(payload);
 
       // Success: Redirect to the verification screen, passing the email and context
-      Alert.alert("Code Sent", `A verification code has been sent to ${email}.`);
-      
-      router.replace({ 
-        pathname: '/(auth)/OtpScreen', 
-        params: { 
-          context: 'reset', // Context indicates this is for password reset
-          email: email 
-        } 
-      });
+      showToast.success(
+        "Code Sent",
+        `A verification code has been sent to ${email}.`
+      );
 
+      router.replace({
+        pathname: "/(auth)/OtpScreen",
+        params: {
+          context: "reset", // Context indicates this is for password reset
+          email: email,
+        },
+      });
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Forgot Password API Error:", axiosError.response?.data);
 
-      let errorMessage = "Could not send verification code. Please check the email and try again.";
+      let errorMessage =
+        "Could not send verification code. Please check the email and try again.";
 
       // Handle common API errors (e.g., 400 Bad Request / 422 Unprocessable Entity)
-      if (axiosError.response?.status === 400 || axiosError.response?.status === 422) {
-          // General validation failure or email not found
-          errorMessage = "The email address was not found or is invalid.";
-          // Set error on the field for visual feedback
-          setErrors({ email: errorMessage });
+      if (
+        axiosError.response?.status === 400 ||
+        axiosError.response?.status === 422
+      ) {
+        // General validation failure or email not found
+        errorMessage = "The email address was not found or is invalid.";
+        // Set error on the field for visual feedback
+        setErrors({ email: errorMessage });
       }
-      
-      Alert.alert("Error", errorMessage);
 
+      showToast.error("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -107,43 +114,50 @@ export default function ForgotPasswordScreen() {
     },
     header: {
       // Style adjustment for visual impact
-      fontSize: rfs(typography.heading1.fontSize), 
+      fontSize: rfs(typography.heading1.fontSize),
       fontFamily: typography.heading1.fontFamily,
       color: colors.textPrimary,
       marginBottom: ms(spacing.lg), // Increased margin
-      textAlign: 'center',
+      textAlign: "center",
     },
     description: {
       fontSize: rfs(typography.bodyMedium.fontSize),
       fontFamily: typography.bodyMedium.fontFamily,
       color: colors.textPrimary,
       marginBottom: ms(spacing.xl * 1.5), // Increased margin
-      textAlign: 'center',
+      textAlign: "center",
     },
     loginLink: {
       fontSize: rfs(typography.bodySmall.fontSize),
       fontFamily: typography.bodySmall.fontFamily,
-      color: colors.primary, 
-      textDecorationLine: 'underline',
-      alignSelf: 'center',
+      color: colors.primary,
+      textDecorationLine: "underline",
+      alignSelf: "center",
       marginTop: ms(spacing.xl * 2), // Extra margin for separation
-    }
+    },
   });
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundMain} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={colors.backgroundMain}
+      />
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: colors.backgroundMain }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <SafeAreaView style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.innerContainer}>
               <Text style={styles.header}>Forgot Password?</Text>
-              
+
               <Text style={styles.description}>
-                Enter the email address linked to your account. We will send you a verification code to reset your password.
+                Enter the email address linked to your account. We will send you
+                a verification code to reset your password.
               </Text>
 
               {/* Email Input */}
@@ -170,11 +184,11 @@ export default function ForgotPasswordScreen() {
               />
 
               {/* Back to Login Link */}
-              <TouchableOpacity onPress={() => router.replace('/(auth)/SignInScreen')}>
-                 <Text style={styles.loginLink}>Back to Login</Text>
+              <TouchableOpacity
+                onPress={() => router.replace("/(auth)/SignInScreen")}
+              >
+                <Text style={styles.loginLink}>Back to Login</Text>
               </TouchableOpacity>
-              
-
             </View>
           </ScrollView>
         </SafeAreaView>

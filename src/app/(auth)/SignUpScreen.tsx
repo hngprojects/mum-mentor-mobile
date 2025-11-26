@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -29,6 +28,7 @@ import {
   signInWithApple,
 } from "@/src/core/services/appleAuthService";
 import { signInWithGoogle } from "@/src/core/services/googleAuthservice";
+import { showToast } from "@/src/core/utils/toast";
 import {
   ApiErrorResponse,
   register,
@@ -191,7 +191,7 @@ export default function SignUpScreen() {
       await register(payload);
 
       // Success: Redirect to the verification screen, passing the email as a parameter
-      Alert.alert(
+      showToast.success(
         "Success!",
         "Account created. Please check your email for the verification code."
       );
@@ -250,7 +250,7 @@ export default function SignUpScreen() {
       if (Object.keys(apiErrors).length > 0) {
         setErrors((prev) => ({ ...prev, ...apiErrors }));
       } else {
-        Alert.alert("Signup Failed", errorMessage);
+        showToast.error("Signup Failed", errorMessage);
       }
     } finally {
       setIsLoading(false);
@@ -266,7 +266,7 @@ export default function SignUpScreen() {
       const result = await signInWithGoogle();
 
       if (result.success) {
-        Alert.alert(
+        showToast.success(
           "Welcome Back!",
           result.user
             ? `Signed in as ${result.user.name}`
@@ -296,7 +296,7 @@ export default function SignUpScreen() {
       const result = await signInWithApple();
 
       if (result.success) {
-        Alert.alert(
+        showToast.success(
           "Welcome Back!",
           result.user?.name
             ? `Signed in as ${result.user.name}`

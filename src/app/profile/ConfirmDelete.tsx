@@ -1,11 +1,12 @@
+import { deleteAccount } from "@/src/core/services/authService";
 import { colors, fontFamilies, spacing, typography } from "@/src/core/styles";
 import { ms } from "@/src/core/styles/scaling";
-import { deleteAccount } from "@/src/core/services/authService";
+import { showToast } from "@/src/core/utils/toast";
 import { Feather } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -16,7 +17,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomInput from "../components/CustomInput";
 import DeleteConfirmModal from "../components/DeleteConfirmationModal";
 import PrimaryButton from "../components/PrimaryButton";
@@ -62,7 +62,7 @@ const ConfirmDelete = () => {
       // Clear onboarding status IMMEDIATELY after successful deletion
       try {
         await AsyncStorage.removeItem(ONBOARDING_KEY);
-        console.log('✅ Onboarding status cleared');
+        console.log("✅ Onboarding status cleared");
       } catch (error) {
         console.error("Failed to clear onboarding status:", error);
       }
@@ -75,7 +75,7 @@ const ConfirmDelete = () => {
 
       // Handle error
       let errorMessage = "Failed to delete account. Please try again.";
-      
+
       if (error?.response?.data?.detail) {
         if (Array.isArray(error.response.data.detail)) {
           // Handle validation errors
@@ -89,7 +89,7 @@ const ConfirmDelete = () => {
         errorMessage = error.response.data.message;
       }
 
-      Alert.alert("Delete Failed", errorMessage);
+      showToast.error("Delete Failed", errorMessage);
     }
   };
 
@@ -115,7 +115,11 @@ const ConfirmDelete = () => {
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <Feather name="arrow-left" size={ms(24)} color={colors.textPrimary} />
+            <Feather
+              name="arrow-left"
+              size={ms(24)}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Confirm Deletion</Text>
           <View style={styles.headerSpacer} />
@@ -132,8 +136,8 @@ const ConfirmDelete = () => {
             <Feather name="alert-octagon" size={ms(64)} color={colors.error} />
             <Text style={styles.finalWarningTitle}>Final Confirmation</Text>
             <Text style={styles.finalWarningText}>
-              You are about to permanently delete your account. This is your last
-              chance to cancel.
+              You are about to permanently delete your account. This is your
+              last chance to cancel.
             </Text>
           </View>
 
@@ -141,7 +145,8 @@ const ConfirmDelete = () => {
           <View style={styles.deleteTextContainer}>
             <Text style={styles.deleteText}>
               Please enter your email address to confirm you want to delete this
-              account. Once confirmed, all your data will be permanently removed.
+              account. Once confirmed, all your data will be permanently
+              removed.
             </Text>
           </View>
 
@@ -169,12 +174,8 @@ const ConfirmDelete = () => {
             <Text style={styles.reminderText}>
               ✓ Confirmation phrase verified
             </Text>
-            <Text style={styles.reminderText}>
-              ✓ Password verified
-            </Text>
-            <Text style={styles.reminderText}>
-              ✓ Ready to delete account
-            </Text>
+            <Text style={styles.reminderText}>✓ Password verified</Text>
+            <Text style={styles.reminderText}>✓ Ready to delete account</Text>
           </View>
         </ScrollView>
 

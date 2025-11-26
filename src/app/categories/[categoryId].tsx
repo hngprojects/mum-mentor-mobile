@@ -10,7 +10,6 @@ import { colors, typography } from "@/src/core/styles";
 import { useMilestoneTypeChange } from "@/src/hooks/useMilestoneTypeChange";
 import { useAppDispatch } from "@/src/store/hooks";
 import { onToggleCreateForm } from "@/src/store/milestoneSlice";
-import { useLocalSearchParams } from "expo-router";
 
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
@@ -18,8 +17,6 @@ import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CategoryScreen() {
-  const { categoryId } = useLocalSearchParams();
-
   const dispatch = useAppDispatch();
   const {
     mileStoneType: milestoneStatus,

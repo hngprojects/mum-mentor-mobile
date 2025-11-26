@@ -1,11 +1,11 @@
 // src/components/shared/EmptyState.tsx
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '@/src/core/styles/scaling';
-import PrimaryButton from '../PrimaryButton';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import PrimaryButton from "../PrimaryButton";
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -27,13 +27,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       <Ionicons name={icon} size={80} color={colors.textGrey1} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
-      
+
       {buttonText && onButtonPress && (
         <View style={styles.buttonContainer}>
-          <PrimaryButton
-            title={buttonText}
-            onPress={onButtonPress}
-          />
+          <PrimaryButton title={buttonText} onPress={onButtonPress} />
         </View>
       )}
     </View>
@@ -45,24 +42,24 @@ export default EmptyState;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: ms(spacing.xl),
   },
   title: {
     ...typography.heading2,
     color: colors.textPrimary,
     marginTop: vs(spacing.lg),
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: vs(spacing.sm),
   },
   buttonContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: ms(280),
     marginTop: vs(spacing.xl),
   },

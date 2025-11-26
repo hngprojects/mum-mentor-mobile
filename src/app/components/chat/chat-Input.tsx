@@ -1,15 +1,15 @@
-import React from 'react';
-import { 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  KeyboardAvoidingView, 
+import { colors } from "@/src/core/styles";
+import { rbr, rfs, s, vs } from "@/src/core/styles/scaling";
+import React from "react";
+import {
+  Image,
+  KeyboardAvoidingView,
   Platform,
-  Image
-} from 'react-native';
-import { colors } from '@/src/core/styles';
-import { s, vs, rfs, rbr } from '@/src/core/styles/scaling';
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface ChatInputProps {
   value: string;
@@ -19,18 +19,18 @@ interface ChatInputProps {
   isAiSpeaking?: boolean;
 }
 
-export const ChatInput = ({ 
-  value, 
-  onChangeText, 
+export const ChatInput = ({
+  value,
+  onChangeText,
   onSend,
-  placeholder = 'Ask anything...',
-  isAiSpeaking = false
+  placeholder = "Ask anything...",
+  isAiSpeaking = false,
 }: ChatInputProps) => {
   const hasText = value.trim().length > 0;
-  
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={90}
     >
       <View style={styles.container}>
@@ -48,16 +48,18 @@ export const ChatInput = ({
               editable={!isAiSpeaking}
             />
           </View>
-          
+
           {/* Send/Stop Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.sendButton, 
-              { 
-                backgroundColor: isAiSpeaking 
-                  ? colors.primary 
-                  : (hasText ? colors.primary : colors.outlineVariant) 
-              }
+              styles.sendButton,
+              {
+                backgroundColor: isAiSpeaking
+                  ? colors.primary
+                  : hasText
+                    ? colors.primary
+                    : colors.outlineVariant,
+              },
             ]}
             onPress={onSend}
             disabled={!hasText && !isAiSpeaking}
@@ -69,7 +71,7 @@ export const ChatInput = ({
             ) : (
               // Send icon
               <Image
-                source={require('../../assets/images/ai-chat/send-message-icon.png')}
+                source={require("../../assets/images/ai-chat/send-message-icon.png")}
                 style={styles.sendIcon}
               />
             )}
@@ -87,8 +89,8 @@ const styles = StyleSheet.create({
     paddingVertical: vs(8),
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     height: vs(56),
     backgroundColor: colors.textWhite,
     borderRadius: rbr(8),
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: s(16),
     paddingVertical: vs(8),
     height: vs(56),
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   input: {
     fontSize: rfs(15),
@@ -116,8 +118,8 @@ const styles = StyleSheet.create({
     width: s(44),
     height: s(44),
     borderRadius: rbr(6.29),
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   sendIcon: {
     width: s(20),

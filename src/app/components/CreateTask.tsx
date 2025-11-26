@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Modal,
   Platform,
   StyleSheet,
@@ -18,6 +17,7 @@ import SecondaryButton from "../components/SecondaryButton";
 
 // --- REQUIRED STYLE IMPORTS ---
 import { createTask, updateTask } from "@/src/core/services/tasksService";
+import { showToast } from "@/src/core/utils/toast";
 import { colors } from "../../core/styles/index";
 import { ms } from "../../core/styles/scaling";
 import DatePickerInput from "./DatePickerInput";
@@ -56,12 +56,18 @@ const CustomDatePicker: React.FC<{
     return isVisible ? (
       <input
         type={mode}
-        defaultValue={date ? (mode === "date" ? date.toISOString().split('T')[0] : date.toTimeString().slice(0, 5)) : undefined}
+        defaultValue={
+          date
+            ? mode === "date"
+              ? date.toISOString().split("T")[0]
+              : date.toTimeString().slice(0, 5)
+            : undefined
+        }
         onChange={(e) => {
           if (mode === "date") {
             onConfirm(new Date(e.target.value));
           } else {
-            const [hours, minutes] = e.target.value.split(':');
+            const [hours, minutes] = e.target.value.split(":");
             const newDate = date ? new Date(date) : new Date();
             newDate.setHours(parseInt(hours), parseInt(minutes));
             onConfirm(newDate);
@@ -121,7 +127,7 @@ const CreateTaskForm: React.FC<{
 
   const combineDateAndTime = () => {
     if (!dueDate) return null;
-    
+
     const combined = new Date(dueDate);
     if (dueTime) {
       combined.setHours(dueTime.getHours());
@@ -137,13 +143,13 @@ const CreateTaskForm: React.FC<{
 
   const handleCreateTask = async () => {
     if (!taskName.trim() || !dueDate) {
-      Alert.alert("Error", "Task name and due date are required");
+      showToast.error("Error", "Task name and due date are required");
       return;
     }
 
     const finalDateTime = combineDateAndTime();
     if (!finalDateTime) {
-      Alert.alert("Error", "Invalid date/time");
+      showToast.error("Error", "Invalid date/time");
       return;
     }
 
@@ -162,20 +168,20 @@ const CreateTaskForm: React.FC<{
 
       onTaskCreated();
     } catch (error) {
-      Alert.alert("Error", "Failed to create task");
+      showToast.error("Error", "Failed to create task");
     }
     setIsCreating(false);
   };
 
   const handleUpdateTask = async () => {
     if (!taskName.trim() || !dueDate) {
-      Alert.alert("Error", "Task name and due date are required");
+      showToast.error("Error", "Task name and due date are required");
       return;
     }
 
     const finalDateTime = combineDateAndTime();
     if (!finalDateTime) {
-      Alert.alert("Error", "Invalid date/time");
+      showToast.error("Error", "Invalid date/time");
       return;
     }
 
@@ -195,7 +201,7 @@ const CreateTaskForm: React.FC<{
 
       onTaskCreated();
     } catch (error) {
-      Alert.alert("Error", "Failed to update task");
+      showToast.error("Error", "Failed to update task");
     }
     setIsCreating(false);
   };
@@ -218,10 +224,10 @@ const CreateTaskForm: React.FC<{
 
   const formatTime = (date: Date | null) => {
     if (!date) return "Select Time";
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -391,7 +397,7 @@ const taskStyles = StyleSheet.create({
   } as ViewStyle,
 
   formContentContainer: {
-    paddingBottom: Platform.OS === 'ios' ? ms(spacing.xl) : ms(spacing.lg),
+    paddingBottom: Platform.OS === "ios" ? ms(spacing.xl) : ms(spacing.lg),
   } as ViewStyle,
 
   formTitle: {

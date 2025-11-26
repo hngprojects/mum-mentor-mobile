@@ -1,28 +1,29 @@
 // src/app/gallery/photo-viewer.tsx
 
-import React, { useState, useEffect } from 'react';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
+  Alert,
   Dimensions,
+  FlatList,
+  Image,
   Modal,
   ScrollView,
-  Alert,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '@/src/core/styles/scaling';
-import PageHeader from '../components/shared/PageHeader';
-import EmptyState from '../components/shared/EmptyState';
-import PrimaryButton from '../components/PrimaryButton';
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import PrimaryButton from "../components/PrimaryButton";
+import EmptyState from "../components/shared/EmptyState";
+import PageHeader from "../components/shared/PageHeader";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const PHOTO_SIZE = (width - ms(spacing.lg * 2) - ms(spacing.sm * 2)) / 3;
 
 // Mock photo data - Replace with real data from your gallery service
@@ -48,51 +49,51 @@ interface Album {
 
 // Mock data
 const MOCK_ALBUM: Album = {
-  id: '1',
-  name: 'Baby Photos',
+  id: "1",
+  name: "Baby Photos",
   photos: [
     {
-      id: '1',
-      uri: 'https://picsum.photos/400/400?random=1',
-      date: '2024-01-15',
-      category: 'baby',
+      id: "1",
+      uri: "https://picsum.photos/400/400?random=1",
+      date: "2024-01-15",
+      category: "baby",
       memory: {
-        pregnancy: 'Week 20',
-        gender: 'Boy',
+        pregnancy: "Week 20",
+        gender: "Boy",
       },
     },
     {
-      id: '2',
-      uri: 'https://picsum.photos/400/400?random=2',
-      date: '2024-01-16',
-      category: 'smiles',
+      id: "2",
+      uri: "https://picsum.photos/400/400?random=2",
+      date: "2024-01-16",
+      category: "smiles",
     },
     {
-      id: '3',
-      uri: 'https://picsum.photos/400/400?random=3',
-      date: '2024-01-17',
-      category: 'toy',
+      id: "3",
+      uri: "https://picsum.photos/400/400?random=3",
+      date: "2024-01-17",
+      category: "toy",
     },
     {
-      id: '4',
-      uri: 'https://picsum.photos/400/400?random=4',
-      date: '2024-01-18',
-      category: 'baby',
+      id: "4",
+      uri: "https://picsum.photos/400/400?random=4",
+      date: "2024-01-18",
+      category: "baby",
     },
     {
-      id: '5',
-      uri: 'https://picsum.photos/400/400?random=5',
-      date: '2024-01-19',
-      category: 'milestones',
+      id: "5",
+      uri: "https://picsum.photos/400/400?random=5",
+      date: "2024-01-19",
+      category: "milestones",
     },
     {
-      id: '6',
-      uri: 'https://picsum.photos/400/400?random=6',
-      date: '2024-01-20',
-      category: 'family',
+      id: "6",
+      uri: "https://picsum.photos/400/400?random=6",
+      date: "2024-01-20",
+      category: "family",
     },
   ],
-  createdAt: '2024-01-15',
+  createdAt: "2024-01-15",
   isPrivate: false,
 };
 
@@ -113,7 +114,7 @@ export default function PhotoViewerScreen() {
   useEffect(() => {
     // If photoId is provided, open that photo in full screen
     if (photoId && album) {
-      const photo = album.photos.find(p => p.id === photoId);
+      const photo = album.photos.find((p) => p.id === photoId);
       if (photo) {
         setSelectedPhoto(photo);
         setIsFullScreenVisible(true);
@@ -126,13 +127,13 @@ export default function PhotoViewerScreen() {
     try {
       // TODO: Replace with actual API call
       // const albumData = await galleryService.getAlbum(albumId);
-      
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setAlbum(MOCK_ALBUM);
     } catch (error) {
-      console.error('Error loading album:', error);
-      Alert.alert('Error', 'Failed to load album');
+      console.error("Error loading album:", error);
+      showToast.error("Error", "Failed to load album");
     } finally {
       setIsLoading(false);
     }
@@ -150,50 +151,46 @@ export default function PhotoViewerScreen() {
 
   const handleAddPhoto = () => {
     router.push({
-      pathname: './gallery/SelectionGrid',
-      params: { type: 'categories', albumId },
+      pathname: "./gallery/SelectionGrid",
+      params: { type: "categories", albumId },
     });
   };
 
   const handleEditAlbum = () => {
     router.push({
-      pathname: './gallery/ModalForm',
-      params: { type: 'edit-album', albumId },
+      pathname: "./gallery/ModalForm",
+      params: { type: "edit-album", albumId },
     });
   };
 
   const handleDeletePhoto = (photoId: string) => {
-    Alert.alert(
-      'Delete Photo',
-      'Are you sure you want to delete this photo?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // TODO: Call delete API
-              console.log('Deleting photo:', photoId);
-              
-              // Update local state
-              if (album) {
-                setAlbum({
-                  ...album,
-                  photos: album.photos.filter(p => p.id !== photoId),
-                });
-              }
-              
-              handleCloseFullScreen();
-              Alert.alert('Success', 'Photo deleted successfully');
-            } catch (error) {
-              console.error('Error deleting photo:', error);
-              Alert.alert('Error', 'Failed to delete photo');
+    Alert.alert("Delete Photo", "Are you sure you want to delete this photo?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // TODO: Call delete API
+            console.log("Deleting photo:", photoId);
+
+            // Update local state
+            if (album) {
+              setAlbum({
+                ...album,
+                photos: album.photos.filter((p) => p.id !== photoId),
+              });
             }
-          },
+
+            handleCloseFullScreen();
+            showToast.success("Success", "Photo deleted successfully");
+          } catch (error) {
+            console.error("Error deleting photo:", error);
+            showToast.error("Error", "Failed to delete photo");
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const renderPhoto = ({ item }: { item: Photo }) => (
@@ -222,31 +219,39 @@ export default function PhotoViewerScreen() {
             <TouchableOpacity onPress={handleCloseFullScreen}>
               <Ionicons name="close" size={32} color={colors.textWhite} />
             </TouchableOpacity>
-            
+
             <View style={styles.fullScreenActions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.fullScreenActionButton}
                 onPress={() => {
                   // TODO: Implement share functionality
-                  Alert.alert('Share', 'Share functionality coming soon');
+                  showToast.warning("Share", "Share functionality coming soon");
                 }}
               >
-                <Ionicons name="share-outline" size={28} color={colors.textWhite} />
+                <Ionicons
+                  name="share-outline"
+                  size={28}
+                  color={colors.textWhite}
+                />
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.fullScreenActionButton}
                 onPress={() => handleDeletePhoto(selectedPhoto.id)}
               >
-                <Ionicons name="trash-outline" size={28} color={colors.textWhite} />
+                <Ionicons
+                  name="trash-outline"
+                  size={28}
+                  color={colors.textWhite}
+                />
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Image */}
           <View style={styles.imageContainer}>
-            <Image 
-              source={{ uri: selectedPhoto.uri }} 
+            <Image
+              source={{ uri: selectedPhoto.uri }}
               style={styles.fullScreenImage}
               resizeMode="contain"
             />
@@ -255,33 +260,45 @@ export default function PhotoViewerScreen() {
           {/* Memory Details */}
           {selectedPhoto.memory && (
             <View style={styles.memoryDetails}>
-              <ScrollView 
+              <ScrollView
                 contentContainerStyle={styles.memoryDetailsContent}
                 showsVerticalScrollIndicator={false}
               >
                 <Text style={styles.memoryDate}>{selectedPhoto.date}</Text>
-                
+
                 {selectedPhoto.memory.pregnancy && (
                   <View style={styles.memoryItem}>
-                    <Ionicons name="calendar-outline" size={20} color={colors.textWhite} />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={20}
+                      color={colors.textWhite}
+                    />
                     <Text style={styles.memoryText}>
                       Pregnancy: {selectedPhoto.memory.pregnancy}
                     </Text>
                   </View>
                 )}
-                
+
                 {selectedPhoto.memory.gender && (
                   <View style={styles.memoryItem}>
-                    <Ionicons name="male-female-outline" size={20} color={colors.textWhite} />
+                    <Ionicons
+                      name="male-female-outline"
+                      size={20}
+                      color={colors.textWhite}
+                    />
                     <Text style={styles.memoryText}>
                       Gender: {selectedPhoto.memory.gender}
                     </Text>
                   </View>
                 )}
-                
+
                 {selectedPhoto.category && (
                   <View style={styles.memoryItem}>
-                    <Ionicons name="pricetag-outline" size={20} color={colors.textWhite} />
+                    <Ionicons
+                      name="pricetag-outline"
+                      size={20}
+                      color={colors.textWhite}
+                    />
                     <Text style={styles.memoryText}>
                       Category: {selectedPhoto.category}
                     </Text>
@@ -325,8 +342,8 @@ export default function PhotoViewerScreen() {
     <>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        <PageHeader 
-          title={album.name} 
+        <PageHeader
+          title={album.name}
           showBack
           rightIcon="ellipsis-horizontal"
           onRightPress={handleEditAlbum}
@@ -335,7 +352,8 @@ export default function PhotoViewerScreen() {
         {/* Album Info */}
         <View style={styles.albumInfo}>
           <Text style={styles.photoCount}>
-            {album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}
+            {album.photos.length}{" "}
+            {album.photos.length === 1 ? "photo" : "photos"}
           </Text>
           {album.isPrivate && (
             <View style={styles.privateBadge}>
@@ -368,10 +386,7 @@ export default function PhotoViewerScreen() {
         {/* Add Photo Button */}
         {album.photos.length > 0 && (
           <View style={styles.addPhotoButton}>
-            <PrimaryButton
-              title="Add Photo"
-              onPress={handleAddPhoto}
-            />
+            <PrimaryButton title="Add Photo" onPress={handleAddPhoto} />
           </View>
         )}
 
@@ -389,17 +404,17 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     ...typography.bodyLarge,
     color: colors.textGrey1,
   },
   albumInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: ms(spacing.lg),
     paddingBottom: vs(spacing.md),
   },
@@ -408,8 +423,8 @@ const styles = StyleSheet.create({
     color: colors.textGrey1,
   },
   privateBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.primary,
     paddingHorizontal: ms(spacing.sm),
     paddingVertical: vs(spacing.xs),
@@ -430,15 +445,15 @@ const styles = StyleSheet.create({
     height: PHOTO_SIZE,
     margin: ms(spacing.xs),
     borderRadius: ms(8),
-    overflow: 'hidden',
+    overflow: "hidden",
     backgroundColor: colors.backgroundSubtle,
   },
   photoImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   addPhotoButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -447,28 +462,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
     borderTopWidth: 1,
     borderTopColor: colors.backgroundSubtle,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
   },
-  
+
   // Full Screen Styles
   fullScreenContainer: {
     flex: 1,
     backgroundColor: colors.textPrimary,
   },
   fullScreenHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: ms(spacing.lg),
     paddingTop: vs(60),
     paddingBottom: vs(spacing.md),
   },
   fullScreenActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: ms(spacing.md),
   },
   fullScreenActionButton: {
@@ -476,15 +491,15 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   fullScreenImage: {
     width: width,
-    height: '100%',
+    height: "100%",
   },
   memoryDetails: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: ms(spacing.lg),
     paddingVertical: vs(spacing.lg),
     maxHeight: vs(200),
@@ -498,8 +513,8 @@ const styles = StyleSheet.create({
     marginBottom: vs(spacing.md),
   },
   memoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: ms(spacing.sm),
     marginBottom: vs(spacing.sm),
   },

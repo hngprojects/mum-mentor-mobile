@@ -2,16 +2,15 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,6 +21,7 @@ import { ms } from "../../core/styles/scaling";
 import { fetchTasks } from "@/src/core/services/tasksService";
 import { getCurrentUser } from "@/src/core/services/userService";
 
+import { showToast } from "@/src/core/utils/toast";
 import TaskCreationFlow from "../components/CreateTask";
 import ListTasks from "../components/ListTasks";
 import PrimaryButton from "../components/PrimaryButton";
@@ -92,7 +92,6 @@ const Home = () => {
   const [greeting, setGreeting] = useState<string>(getGreeting());
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  
 
   // --- Data Fetching Functions ---
 
@@ -123,7 +122,7 @@ const Home = () => {
       setTasks(response.data.details || []);
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
-      Alert.alert(
+      showToast.error(
         "Unable to load tasks",
         error?.response?.data?.message ||
           "Something went wrong while fetching your tasks."
@@ -148,7 +147,6 @@ const Home = () => {
   const handleSuccessDone = useCallback(() => {
     setIsSuccessModalVisible(false);
   }, []);
-
 
   /** Effect to initialize data loading and set up the greeting timer. */
   useEffect(() => {
@@ -240,8 +238,7 @@ const Home = () => {
                 style={styles.quickActionCard}
                 activeOpacity={0.9}
                 onPress={() => {
-                  if (action.id === "resources")
-                    router.push("/resources");
+                  if (action.id === "resources") router.push("/resources");
                   // Add journal navigation here
                 }}
                 accessibilityRole="button"

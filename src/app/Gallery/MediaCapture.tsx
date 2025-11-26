@@ -1,23 +1,16 @@
 // src/app/gallery/media-capture.tsx
 
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Image,
-  Platform,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { colors, typography, spacing } from '@/src/core/styles';
-import { ms, vs, rfs } from '../../core/styles/scaling';
-import PageHeader from '../components/shared/PageHeader';
-import PrimaryButton from '../components/PrimaryButton';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { showToast } from "@/src/core/utils/toast";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ms, vs } from "../../core/styles/scaling";
+import PrimaryButton from "../components/PrimaryButton";
+import PageHeader from "../components/shared/PageHeader";
 
 export default function MediaCaptureScreen() {
   const params = useLocalSearchParams();
@@ -35,14 +28,15 @@ export default function MediaCaptureScreen() {
   const requestPermissions = async () => {
     // Request camera permission
     const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-    if (cameraPermission.status !== 'granted') {
-      console.warn('Camera permission not granted');
+    if (cameraPermission.status !== "granted") {
+      console.warn("Camera permission not granted");
     }
 
     // Request media library permission
-    const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (mediaPermission.status !== 'granted') {
-      console.warn('Media library permission not granted');
+    const mediaPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (mediaPermission.status !== "granted") {
+      console.warn("Media library permission not granted");
     }
   };
 
@@ -60,8 +54,8 @@ export default function MediaCaptureScreen() {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+      console.error("Error taking photo:", error);
+      showToast.error("Error", "Failed to take photo. Please try again.");
     }
   };
 
@@ -80,23 +74,23 @@ export default function MediaCaptureScreen() {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      Alert.alert('Error', 'Failed to upload photo. Please try again.');
+      console.error("Error uploading photo:", error);
+      showToast.error("Error", "Failed to upload photo. Please try again.");
     }
   };
 
   // Proceed to add memory details
   const handleNext = () => {
     if (!selectedImage) {
-      Alert.alert('No Image', 'Please select or take a photo first.');
+      showToast.error("No Image", "Please select or take a photo first.");
       return;
     }
 
     // Navigate to add memory form with the image
     router.push({
-      pathname: './gallery/ModalForm',
+      pathname: "./gallery/ModalForm",
       params: {
-        type: 'add-memory',
+        type: "add-memory",
         albumId,
         category,
         imageUri: selectedImage,
@@ -113,22 +107,26 @@ export default function MediaCaptureScreen() {
     <>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        <PageHeader 
-          title={selectedImage ? 'Preview' : 'Add Photo'} 
-          showBack 
-        />
+        <PageHeader title={selectedImage ? "Preview" : "Add Photo"} showBack />
 
         {/* Image Preview or Upload Options */}
         {selectedImage ? (
           <View style={styles.previewContainer}>
-            <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-            
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.previewImage}
+            />
+
             <View style={styles.previewActions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.retakeButton}
                 onPress={handleRetake}
               >
-                <Ionicons name="refresh-outline" size={24} color={colors.primary} />
+                <Ionicons
+                  name="refresh-outline"
+                  size={24}
+                  color={colors.primary}
+                />
                 <Text style={styles.retakeText}>Retake</Text>
               </TouchableOpacity>
             </View>
@@ -140,12 +138,16 @@ export default function MediaCaptureScreen() {
             </Text>
 
             {/* Take Photo Button */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.optionCard}
               onPress={handleTakePhoto}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons name="camera-outline" size={48} color={colors.primary} />
+                <Ionicons
+                  name="camera-outline"
+                  size={48}
+                  color={colors.primary}
+                />
               </View>
               <Text style={styles.optionTitle}>Take a photo</Text>
               <Text style={styles.optionDescription}>
@@ -154,12 +156,16 @@ export default function MediaCaptureScreen() {
             </TouchableOpacity>
 
             {/* Upload Photo Button */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.optionCard}
               onPress={handleUploadPhoto}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons name="images-outline" size={48} color={colors.primary} />
+                <Ionicons
+                  name="images-outline"
+                  size={48}
+                  color={colors.primary}
+                />
               </View>
               <Text style={styles.optionTitle}>Upload from gallery</Text>
               <Text style={styles.optionDescription}>
@@ -193,7 +199,7 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
     paddingHorizontal: ms(spacing.xl),
     marginBottom: vs(spacing.xl * 2),
   },
@@ -201,14 +207,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: ms(spacing.lg),
     paddingTop: vs(spacing.xl),
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   optionCard: {
     backgroundColor: colors.backgroundSubtle,
     borderRadius: ms(16),
     padding: ms(spacing.xl),
     marginBottom: vs(spacing.lg),
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.outline,
   },
@@ -217,8 +223,8 @@ const styles = StyleSheet.create({
     height: ms(80),
     borderRadius: ms(40),
     backgroundColor: colors.secondaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: vs(spacing.md),
   },
   optionTitle: {
@@ -229,7 +235,7 @@ const styles = StyleSheet.create({
   optionDescription: {
     ...typography.bodySmall,
     color: colors.textGrey1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   previewContainer: {
     flex: 1,
@@ -237,19 +243,19 @@ const styles = StyleSheet.create({
     paddingTop: vs(spacing.md),
   },
   previewImage: {
-    width: '100%',
+    width: "100%",
     height: vs(400),
     borderRadius: ms(16),
-    resizeMode: 'cover',
+    resizeMode: "cover",
     backgroundColor: colors.backgroundSubtle,
   },
   previewActions: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: vs(spacing.xl),
   },
   retakeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: ms(spacing.xs),
     paddingVertical: vs(spacing.sm),
     paddingHorizontal: ms(spacing.lg),
@@ -262,7 +268,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   bottomButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -271,7 +277,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
     borderTopWidth: 1,
     borderTopColor: colors.backgroundSubtle,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
