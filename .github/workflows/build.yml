@@ -257,7 +257,18 @@ jobs:
 
       - name: Build iOS App
         run: |
-          npx eas-cli build --platform ios --non-interactive
-        env:
-          EAS_BUILD_PROFILE: production
-          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          xcodebuild \
+            -workspace ios/MumMentor.xcworkspace \
+            -scheme MumMentor \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath ios/build/MumMentor.xcarchive \
+            archive
+
+      - name: Export .ipa File
+        run: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath ios/build/MumMentor.xcarchive \
+            -exportPath ios/build \
+            -exportOptionsPlist ios/ExportOptions.plist
