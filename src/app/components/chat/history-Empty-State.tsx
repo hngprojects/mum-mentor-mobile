@@ -1,21 +1,22 @@
+import { colors, typography } from "@/src/core/styles";
+import { rbr, s, vs } from "@/src/core/styles/scaling";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  Image,
-  TextInput,
+  Alert,
   FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { colors, typography } from "@/src/core/styles";
-import { s, vs, rbr } from "@/src/core/styles/scaling";
 
 interface ChatItem {
   id: string;
   title: string;
-  timestamp: Date;
+  created_at: string;
 }
 
 interface HistoryEmptyStateProps {
@@ -24,8 +25,11 @@ interface HistoryEmptyStateProps {
   onNewChat: () => void;
   chats: ChatItem[];
   onChatPress: (chatId: string) => void;
-  onRenameChat: (chatId: string, newTitle: string) => void;
+  onRenameChat: (chatId: string, newTitle: string) => Promise<void>;
+  // onDeleteChat: (chatId: string) => void;
 }
+
+type ModalView = "list" | "rename" | "delete" | "success";
 
 export const HistoryEmptyState = ({
   visible,
@@ -34,25 +38,76 @@ export const HistoryEmptyState = ({
   chats,
   onChatPress,
   onRenameChat,
+  // onDeleteChat,
 }: HistoryEmptyStateProps) => {
-  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<ModalView>("list");
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
 
+  // const selectedChat = chats.find((c) => c.id === selectedChatId);
+
   const startRenaming = (chatId: string, currentTitle: string) => {
-    setRenamingChatId(chatId);
+    setSelectedChatId(chatId);
     setRenameTitle(currentTitle);
+    setCurrentView("rename");
   };
 
-  const cancelRenaming = () => {
-    setRenamingChatId(null);
+  // const startDeleting = (chatId: string) => {
+  //   setSelectedChatId(chatId);
+  //   setCurrentView("delete");
+  // };
+
+  const cancelAction = () => {
+    setCurrentView("list");
+    setSelectedChatId(null);
     setRenameTitle("");
   };
 
-  const saveRename = () => {
-    if (renamingChatId && renameTitle.trim()) {
-      onRenameChat(renamingChatId, renameTitle.trim());
-      setRenamingChatId(null);
-      setRenameTitle("");
+  const saveRename = async () => {
+    try {
+      if (selectedChatId) {
+        await onRenameChat(selectedChatId, renameTitle?.trim());
+        setCurrentView("list");
+        setSelectedChatId(null);
+        setRenameTitle("");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to rename chat");
+      console.error(error);
+    }
+  };
+
+  // const confirmDelete = () => {
+  //   try {
+  //     if (selectedChatId) {
+  //       onDeleteChat(selectedChatId);
+  //       setCurrentView("success");
+  //       setTimeout(() => {
+  //         setCurrentView("list");
+  //         setSelectedChatId(null);
+  //       }, 2000);
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Error", "Failed to delete chat");
+  //     console.error(error);
+  //   }
+  // };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+      });
     }
   };
 
@@ -64,53 +119,57 @@ export const HistoryEmptyState = ({
         onClose();
       }}
       activeOpacity={0.7}
-      disabled={renamingChatId !== null}
     >
       <View style={styles.chatItemContent}>
-        <Text style={styles.chatTitle}>{item.title}</Text>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={(e) => {
-            e.stopPropagation();
-            startRenaming(item.id, item.title);
-          }}
-        >
-          <Image
-            source={require("../../assets/images/ai-chat/edit-2.png")}
-            style={styles.editIcon}
-          />
-        </TouchableOpacity>
+        <View style={styles.chatTextContainer}>
+          <Text style={styles.chatTitle}>{item.title}</Text>
+          <Text style={styles.chatDate}>{formatDate(item.created_at)}</Text>
+        </View>
+        <View style={styles.chatActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              startRenaming(item.id, item.title);
+            }}
+          >
+            <Image
+              source={require("../../assets/images/ai-chat/edit-2.png")}
+              style={styles.actionIcon}
+            />
+          </TouchableOpacity>
+          {/* <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              startDeleting(item.id);
+            }}
+          >
+            <Image
+              source={require("../../assets/images/ai-chat/delete.png")}
+              style={styles.actionIcon}
+            />
+          </TouchableOpacity> */}
+        </View>
       </View>
     </TouchableOpacity>
   );
 
-  // Show rename view when renaming
-  if (renamingChatId) {
-    return (
-      <Modal
-        visible={visible}
-        transparent
-        animationType="slide"
-        onRequestClose={onClose}
-      >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={onClose}
-        >
+  // Render different views based on currentView
+  const renderContent = () => {
+    switch (currentView) {
+      case "rename":
+        return (
           <TouchableOpacity
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
-            style={styles.renameContentBox}
+            style={styles.actionContentBox}
           >
-            {/* Drag Handle */}
             <View style={styles.dragHandle} />
 
-            {/* Rename Title Header */}
-            <Text style={styles.renameTitle}>Rename Title</Text>
-            <Text style={styles.renameSubtitle}>Edit your title name</Text>
+            <Text style={styles.actionTitle}>Rename Title</Text>
+            <Text style={styles.actionSubtitle}>Edit your title name</Text>
 
-            {/* Title Input with Icon */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Title Name</Text>
               <View style={styles.inputWrapper}>
@@ -129,31 +188,157 @@ export const HistoryEmptyState = ({
               </View>
             </View>
 
-            {/* Buttons - Stacked Vertically */}
-            <View style={styles.renameButtons}>
+            <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={cancelRenaming}
+                onPress={cancelAction}
                 activeOpacity={0.7}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.saveButton}
+                style={styles.primaryButton}
                 onPress={saveRename}
                 activeOpacity={0.7}
               >
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.primaryButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-    );
-  }
+        );
 
-  // Normal view (search, new chat, list)
+      case "delete":
+        return (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={styles.actionContentBox}
+          >
+            <View style={styles.dragHandle} />
+
+            <Text style={styles.actionTitle}>Delete Conversation?</Text>
+            <Text style={styles.actionSubtitle}>
+              This will permanently delete this conversation. This action cannot
+              be undone.
+            </Text>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                // onPress={confirmDelete}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.primaryButtonText}>Delete</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={cancelAction}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        );
+
+      case "success":
+        return (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={styles.actionContentBox}
+          >
+            <View style={styles.dragHandle} />
+
+            <View style={styles.successContainer}>
+              <View style={styles.successIconContainer}>
+                <Image
+                  source={require("../../../assets/images/success-icon.png")}
+                  style={styles.successIcon}
+                />
+              </View>
+              <Text style={styles.successTitle}>
+                Conversation deleted successfully
+              </Text>
+
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => {
+                  setCurrentView("list");
+                  setSelectedChatId(null);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.primaryButtonText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        );
+
+      default: // "list"
+        return (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={styles.contentBox}
+          >
+            <View style={styles.dragHandle} />
+
+            <View style={styles.searchContainer}>
+              <Image
+                source={require("../../assets/images/ai-chat/search-normal.png")}
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search"
+                placeholderTextColor={colors.textGrey1}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.newChatButton}
+              onPress={() => {
+                onNewChat();
+                onClose();
+              }}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={require("../../assets/images/ai-chat/edit.png")}
+                style={styles.newChatIcon}
+              />
+              <Text style={styles.newChatText}>New Chat</Text>
+            </TouchableOpacity>
+
+            {chats?.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <View style={styles.emptyState}>
+                  <Image
+                    source={require("../../assets/images/ai-chat/message-remove.png")}
+                    style={styles.emptyIcon}
+                  />
+                  <Text style={styles.emptyText}>No recent chats</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.chatsContainer}>
+                <Text style={styles.chatsLabel}>Chats</Text>
+                <FlatList
+                  data={chats}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderChatItem}
+                  showsVerticalScrollIndicator={false}
+                />
+              </View>
+            )}
+          </TouchableOpacity>
+        );
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -166,67 +351,7 @@ export const HistoryEmptyState = ({
         activeOpacity={1}
         onPress={onClose}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
-          style={styles.contentBox}
-        >
-          {/* Drag Handle */}
-          <View style={styles.dragHandle} />
-
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <Image
-              source={require("../../assets/images/ai-chat/search-normal.png")}
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search"
-              placeholderTextColor={colors.textGrey1}
-            />
-          </View>
-
-          {/* New Chat Button */}
-          <TouchableOpacity
-            style={styles.newChatButton}
-            onPress={() => {
-              onNewChat();
-              onClose();
-            }}
-            activeOpacity={0.7}
-          >
-            <Image
-              source={require("../../assets/images/ai-chat/edit.png")}
-              style={styles.newChatIcon}
-            />
-            <Text style={styles.newChatText}>New Chat</Text>
-          </TouchableOpacity>
-
-          {chats.length === 0 ? (
-            // Empty State
-            <View style={styles.emptyStateContainer}>
-              <View style={styles.emptyState}>
-                <Image
-                  source={require("../../assets/images/ai-chat/message-remove.png")}
-                  style={styles.emptyIcon}
-                />
-                <Text style={styles.emptyText}>No recent chats</Text>
-              </View>
-            </View>
-          ) : (
-            // Chat List
-            <View style={styles.chatsContainer}>
-              <Text style={styles.chatsLabel}>Chats</Text>
-              <FlatList
-                data={chats}
-                keyExtractor={(item) => item.id}
-                renderItem={renderChatItem}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-          )}
-        </TouchableOpacity>
+        {renderContent()}
       </TouchableOpacity>
     </Modal>
   );
@@ -247,7 +372,7 @@ const styles = StyleSheet.create({
     paddingBottom: vs(40),
     maxHeight: "70%",
   },
-  renameContentBox: {
+  actionContentBox: {
     backgroundColor: colors.textWhite,
     borderTopLeftRadius: rbr(24),
     borderTopRightRadius: rbr(24),
@@ -345,31 +470,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  chatTitle: {
+  chatTextContainer: {
     flex: 1,
+  },
+  chatTitle: {
     ...typography.bodyMedium,
     color: colors.textPrimary,
+    marginBottom: vs(2),
   },
-  editButton: {
+  chatDate: {
+    ...typography.bodySmall,
+    color: colors.textGrey1,
+    fontSize: s(12),
+  },
+  chatActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: s(8),
+  },
+  actionButton: {
     padding: s(4),
   },
-  editIcon: {
+  actionIcon: {
     width: s(20),
     height: s(20),
   },
 
-  // Rename View
-  renameTitle: {
+  // Action Views (Rename/Delete)
+  actionTitle: {
     ...typography.heading3,
     color: colors.textPrimary,
-    marginBottom: vs(4),
+    marginBottom: vs(8),
     textAlign: "center",
   },
-  renameSubtitle: {
-    ...typography.bodySmall,
+  actionSubtitle: {
+    ...typography.bodyMedium,
     color: colors.textGrey1,
     marginBottom: vs(32),
     textAlign: "center",
+    lineHeight: vs(20),
   },
   inputContainer: {
     marginBottom: vs(32),
@@ -399,7 +538,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textPrimary,
   },
-  renameButtons: {
+  actionButtons: {
     gap: vs(16),
   },
   cancelButton: {
@@ -415,15 +554,48 @@ const styles = StyleSheet.create({
     ...typography.buttonText,
     color: colors.textPrimary,
   },
-  saveButton: {
+  primaryButton: {
     width: "100%",
     paddingVertical: vs(16),
     borderRadius: rbr(14),
     backgroundColor: colors.primary,
     alignItems: "center",
   },
-  saveButtonText: {
+  primaryButtonText: {
     ...typography.buttonText,
     color: colors.textWhite,
+  },
+  deleteButton: {
+    width: "100%",
+    paddingVertical: vs(16),
+    borderRadius: rbr(14),
+    backgroundColor: "#E53E3E",
+    alignItems: "center",
+  },
+
+  // Success View
+  successContainer: {
+    alignItems: "center",
+    paddingVertical: vs(24),
+  },
+  successIconContainer: {
+    width: s(80),
+    height: s(80),
+    borderRadius: rbr(40),
+    backgroundColor: "#D1FAE5",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: vs(24),
+  },
+  successIcon: {
+    width: s(40),
+    height: s(40),
+    tintColor: "#10B981",
+  },
+  successTitle: {
+    ...typography.bodyLarge,
+    color: colors.textPrimary,
+    textAlign: "center",
+    marginBottom: vs(32),
   },
 });

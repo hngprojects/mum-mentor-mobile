@@ -1,125 +1,145 @@
-import React, { useState } from "react";
+import { colors } from "@/src/core/styles";
+import { rfs, s, vs } from "@/src/core/styles/scaling";
+import { router } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Image,
-  Clipboard,
   Alert,
+  Clipboard,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { ChatWelcome } from "../components/chat/chat-Welcome";
-import { ChatMessage } from "../components/chat/chat-Message";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  useChatList,
+  useChatMessages,
+  useCreateChat,
+  useRenameConversation,
+  useSendAiMessage,
+} from "../../core/hooks/useAiChat";
 import { ChatInput } from "../components/chat/chat-Input";
+import { ChatMessage } from "../components/chat/chat-Message";
+import { ChatWelcome } from "../components/chat/chat-Welcome";
+import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { MessageActions } from "../components/chat/message-Action";
 import { TypingIndicator } from "../components/chat/typing-Indicator";
-import { HistoryEmptyState } from "../components/chat/history-Empty-State";
-import { colors } from "@/src/core/styles";
-import { s, vs, rfs } from "@/src/core/styles/scaling";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-  link?: {
-    url: string;
-    title: string;
-  };
-}
 
 interface Chat {
   id: string;
   title: string;
-  messages: Message[];
-  timestamp: Date;
+  created_at: string;
+  user_id: string;
+}
+
+interface StreamingMessage {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: string;
+  isStreaming?: boolean;
 }
 
 export default function ChatScreen() {
   const [currentView, setCurrentView] = useState<"welcome" | "chat">("welcome");
-  const [chats, setChats] = useState<Chat[]>([]);
+  const { data: chats } = useChatList();
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [inputText, setInputText] = useState("");
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [showHistoryEmpty, setShowHistoryEmpty] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
+  const flatListRef = useRef<FlatList>(null);
+
+  const createChat = useCreateChat();
+  const sendMessage = useSendAiMessage();
+  // const deleteConversation = useDeleteConversation();
+  const renameConversation = useRenameConversation();
+  const { data: chatMessages } = useChatMessages(currentChat?.id);
+
+  // Update currentChat title when messages are loaded
+  useEffect(() => {
+    if (
+      chatMessages?.conversation &&
+      currentChat?.id === chatMessages.conversation.id
+    ) {
+      setCurrentChat(chatMessages.conversation);
+    }
+  }, [chatMessages?.conversation, currentChat?.id]);
+
+  // Combine real messages with streaming message
+  const displayMessages: StreamingMessage[] = [
+    ...(chatMessages?.messages || []),
+    ...(streamingText
+      ? [
+          {
+            id: "streaming",
+            text: streamingText,
+            isUser: false,
+            timestamp: new Date().toISOString(),
+            isStreaming: true,
+          },
+        ]
+      : []),
+  ];
 
   // Handle sending a message
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputText.trim() || isAiSpeaking) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    // Create new chat if none exists
-    if (!currentChat) {
-      const newChat: Chat = {
-        id: Date.now().toString(),
-        title: inputText.trim().substring(0, 30) + (inputText.length > 30 ? "..." : ""),
-        messages: [userMessage],
-        timestamp: new Date(),
-      };
-      setCurrentChat(newChat);
-      setChats((prev) => [newChat, ...prev]);
-    } else {
-      // Add to existing chat
-      const updatedChat = {
-        ...currentChat,
-        messages: [...currentChat.messages, userMessage],
-      };
-      setCurrentChat(updatedChat);
-      
-      // Update in chats list
-      setChats((prev) =>
-        prev.map((chat) => (chat.id === currentChat.id ? updatedChat : chat))
-      );
-    }
-
+    const userMessage = inputText.trim();
     setInputText("");
-    setCurrentView("chat");
     setIsAiSpeaking(true);
+    setStreamingText("");
 
-    // Simulate AI response with link
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Here's something you might find helpful:",
-        isUser: false,
-        timestamp: new Date(),
-        link: {
-          url: "https://example.com/guide",
-          title: "Making_Mealtimes_Fun_for_Picky_Eaters - CalmParent Guide"
-        }
-      };
+    try {
+      let chatId = currentChat?.id;
 
-      setCurrentChat((prev) => {
-        if (!prev) return null;
-        const updated = {
-          ...prev,
-          messages: [...prev.messages, botMessage],
-        };
-        
-        // Update in chats list
-        setChats((prevChats) =>
-          prevChats.map((chat) => (chat.id === prev.id ? updated : chat))
-        );
-        
-        return updated;
+      // 1. Create a new chat if needed
+      if (!chatId) {
+        const newChat = await createChat.mutateAsync();
+        chatId = newChat.id;
+        setCurrentChat(newChat);
+      }
+
+      // 2. Send message to backend with streaming
+      await sendMessage.mutateAsync({
+        session_id: chatId!,
+        message: userMessage,
+        onChunk: (chunk: string) => {
+          setStreamingText((prev) => prev + chunk);
+          // Auto-scroll to bottom as chunks arrive
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        },
+        onComplete: (messageId: string) => {
+          console.log("Message complete:", messageId);
+          setStreamingText("");
+        },
       });
-      
+    } catch (error) {
+      Alert.alert("Error", "Failed to send message");
+      console.error(error);
+    } finally {
       setIsAiSpeaking(false);
-    }, 2000);
+    }
   };
 
   // Handle category selection
-  const handleCategoryPress = (category: string) => {
+  const handleCategoryPress = async (category: string) => {
     setInputText(category);
-    setShowHistoryEmpty(true);
+    setCurrentView("chat");
+
+    if (!currentChat) {
+      try {
+        const newChat = await createChat.mutateAsync();
+        setCurrentChat(newChat);
+      } catch {
+        Alert.alert("Error", "Failed to start chat");
+      }
+    }
   };
 
   // Handle new chat from history
@@ -127,6 +147,7 @@ export default function ChatScreen() {
     setCurrentChat(null);
     setCurrentView("chat");
     setInputText("");
+    setStreamingText("");
   };
 
   // Ask Anything opens the HistoryEmptyState modal
@@ -136,24 +157,69 @@ export default function ChatScreen() {
 
   // Handle chat selection from history
   const handleChatPress = (chatId: string) => {
-    const chat = chats.find((c) => c.id === chatId);
+    const chat = chats?.conversations.find((c) => c.id === chatId);
     if (chat) {
       setCurrentChat(chat);
       setCurrentView("chat");
+      setStreamingText("");
     }
   };
 
-  // Handle rename - NOW takes chatId AND newTitle
-  const handleRenameChat = (chatId: string, newTitle: string) => {
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === chatId ? { ...chat, title: newTitle } : chat
-      )
-    );
-    if (currentChat?.id === chatId) {
-      setCurrentChat((prev) => (prev ? { ...prev, title: newTitle } : null));
+  // Handle rename
+  const handleRenameChat = async (chatId: string, newTitle: string) => {
+    try {
+      await renameConversation.mutateAsync({
+        conversation_id: chatId,
+        newTitle,
+      });
+
+      // Update current chat if it's the one being renamed
+      if (currentChat?.id === chatId) {
+        setCurrentChat((prev) => (prev ? { ...prev, title: newTitle } : null));
+      }
+
+      Alert.alert("Success", "Chat renamed successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to rename chat");
+      console.error(error);
     }
   };
+
+  // Handle delete
+  // const handleDeleteChat = async (chatId: string) => {
+  //   Alert.alert(
+  //     "Delete Chat",
+  //     "Are you sure you want to delete this chat? This action cannot be undone.",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "Delete",
+  //         style: "destructive",
+  //         onPress: async () => {
+  //           try {
+  //             await deleteConversation.mutateAsync(chatId);
+
+  //             // If deleting current chat, reset to welcome screen
+  //             if (currentChat?.id === chatId) {
+  //               setCurrentChat(null);
+  //               setCurrentView("welcome");
+  //               setInputText("");
+  //               setStreamingText("");
+  //             }
+
+  //             Alert.alert("Success", "Chat deleted successfully");
+  //           } catch (error) {
+  //             Alert.alert("Error", "Failed to delete chat");
+  //             console.error(error);
+  //           }
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
 
   // Message actions
   const handleLike = () => {
@@ -165,22 +231,16 @@ export default function ChatScreen() {
   };
 
   const handleRefresh = () => {
-    setIsAiSpeaking(true);
-    setTimeout(() => {
-      Alert.alert("Refreshed", "New response generated");
-      setIsAiSpeaking(false);
-    }, 2000);
+    Alert.alert("Refresh", "This would regenerate the last response");
   };
 
   const handleCopy = () => {
-    if (currentChat && currentChat.messages.length > 0) {
-      const lastBotMessage = [...currentChat.messages]
-        .reverse()
-        .find((m) => !m.isUser);
-      if (lastBotMessage) {
-        Clipboard.setString(lastBotMessage.text);
-        Alert.alert("Copied", "Message copied to clipboard");
-      }
+    const lastBotMessage = [...displayMessages]
+      .reverse()
+      .find((m) => !m.isUser);
+    if (lastBotMessage) {
+      Clipboard.setString(lastBotMessage.text);
+      Alert.alert("Copied", "Message copied to clipboard");
     }
   };
 
@@ -189,7 +249,11 @@ export default function ChatScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => setShowHistoryEmpty(true)}
+          onPress={() =>
+            currentView === "welcome"
+              ? router.back()
+              : setCurrentView("welcome")
+          }
           style={styles.backTouchable}
         >
           <Image
@@ -217,7 +281,7 @@ export default function ChatScreen() {
         visible={showHistoryEmpty}
         onClose={() => setShowHistoryEmpty(false)}
         onNewChat={handleNewChat}
-        chats={chats}
+        chats={chats?.conversations || []}
         onChatPress={handleChatPress}
         onRenameChat={handleRenameChat}
       />
@@ -234,29 +298,30 @@ export default function ChatScreen() {
       {currentView === "chat" && (
         <>
           <FlatList
-            data={currentChat?.messages || []}
+            ref={flatListRef}
+            data={displayMessages}
             keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => (
-              <>
-                <ChatMessage 
-                  message={item.text} 
-                  isUser={item.isUser}
-                  link={item.link}
-                />
-                
-                {/* Show typing indicator after last user message */}
-                {item.isUser && 
-                 index === (currentChat?.messages.length || 0) - 1 && 
-                 isAiSpeaking && (
-                  <TypingIndicator isAiSpeaking={true} />
-                )}
-              </>
+            renderItem={({ item }) => (
+              <ChatMessage
+                message={item.text}
+                isUser={item.isUser}
+                link={item.link}
+              />
             )}
             contentContainerStyle={styles.messagesList}
             showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }}
           />
 
-          {!isAiSpeaking && currentChat && currentChat.messages.length > 0 && (
+          {/* Show typing indicator when waiting for first chunk */}
+          {isAiSpeaking && !streamingText && (
+            <TypingIndicator isAiSpeaking={true} />
+          )}
+
+          {/* Message Actions */}
+          {!isAiSpeaking && displayMessages.length > 0 && (
             <MessageActions
               onLike={handleLike}
               onDislike={handleDislike}

@@ -1,6 +1,17 @@
 // src/contexts/SetupContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { setupStorage, SetupData, MomSetupData, ChildData } from '../services/setupStorageService';
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import {
+  ChildData,
+  MomSetupData,
+  SetupData,
+  setupStorage,
+} from "../services/setupStorageService";
 
 interface SetupContextType {
   setupData: SetupData | null;
@@ -16,7 +27,9 @@ interface SetupContextType {
 
 const SetupContext = createContext<SetupContextType | undefined>(undefined);
 
-export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const SetupProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [setupData, setSetupData] = useState<SetupData | null>(null);
   const [momSetupData, setMomSetupData] = useState<MomSetupData | null>(null);
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
@@ -38,13 +51,13 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       setIsSetupCompleted(completed);
       setSetupData(data);
-      
+
       // Load mom setup from temp if exists
       if (tempData?.momSetup) {
         setMomSetupData(tempData.momSetup);
       }
     } catch (error) {
-      console.error('Error loading setup data:', error);
+      console.error("Error loading setup data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -54,9 +67,9 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       await setupStorage.saveMomSetup(data);
       setMomSetupData(data);
-      console.log('Mom setup saved to context');
+      console.log("Mom setup saved to context");
     } catch (error) {
-      console.error('Error saving mom setup:', error);
+      console.error("Error saving mom setup:", error);
       throw error;
     }
   };
@@ -64,7 +77,7 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const completeSetup = async (children: ChildData[], userId: string) => {
     try {
       if (!momSetupData) {
-        throw new Error('Mom setup data is missing');
+        throw new Error("Mom setup data is missing");
       }
 
       const completeSetupData: SetupData = {
@@ -72,15 +85,15 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         momSetup: momSetupData,
         children,
         completedAt: new Date().toISOString(),
-        version: '1.0',
+        version: "1.0",
       };
 
       await setupStorage.completeSetup(completeSetupData);
       setSetupData(completeSetupData);
       setIsSetupCompleted(true);
-      console.log('Complete setup saved');
+      console.log("Complete setup saved");
     } catch (error) {
-      console.error('Error completing setup:', error);
+      console.error("Error completing setup:", error);
       throw error;
     }
   };
@@ -96,7 +109,7 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setMomSetupData(null);
       setIsSetupCompleted(false);
     } catch (error) {
-      console.error('Error clearing setup:', error);
+      console.error("Error clearing setup:", error);
     }
   };
 
@@ -104,9 +117,9 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       await setupStorage.resetSetup();
       setIsSetupCompleted(false);
-      console.log('Setup reset - user will go through onboarding again');
+      console.log("Setup reset - user will go through onboarding again");
     } catch (error) {
-      console.error('Error resetting setup:', error);
+      console.error("Error resetting setup:", error);
     }
   };
 
@@ -132,7 +145,7 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 export const useSetup = () => {
   const context = useContext(SetupContext);
   if (context === undefined) {
-    throw new Error('useSetup must be used within a SetupProvider');
+    throw new Error("useSetup must be used within a SetupProvider");
   }
   return context;
 };
