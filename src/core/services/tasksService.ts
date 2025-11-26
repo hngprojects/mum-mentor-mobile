@@ -93,26 +93,3 @@ export async function toggleTaskStatus(taskId: string, status: boolean) {
     return null;
   }
 }
-
-/**
- * Update the order of tasks
- * @param tasksOrder - Array of objects with task id and new order position
- */
-export async function updateTasksOrder(
-  tasksOrder: Array<{ id: string; order: number }>
-) {
-  try {
-    const response = await apiClient.put(`${TASKS_ENDPOINT}/reorder`, {
-      tasks: tasksOrder,
-    });
-
-    if (response.status >= 200 && response.status < 300) {
-      return response.data;
-    } else {
-      throw new Error(response.data?.message || "Failed to update task order");
-    }
-  } catch (error) {
-    console.debug("Error updating task order:", error);
-    throw error;
-  }
-}
