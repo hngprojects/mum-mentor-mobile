@@ -270,6 +270,8 @@ jobs:
             -sdk iphoneos \
             -configuration Release \
             -archivePath ios/build/MumMentor.xcarchive \
+            DEVELOPMENT_TEAM=36CFL54G89 \
+            PRODUCT_BUNDLE_IDENTIFIER=36CFL54G89.com.hng.mummentor \
             archive
 
       - name: Export .ipa File
