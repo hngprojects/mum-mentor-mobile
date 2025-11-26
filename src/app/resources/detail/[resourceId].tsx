@@ -80,8 +80,14 @@ const ResourceDetailScreen: React.FC = () => {
   };
 
   const handleWatchNow = () => {
-    // TODO: Implement video player or navigation
-    console.log("Watch now pressed:", resource.videoUrl);
+    if (!resource?.videoUrl) {
+      return;
+    }
+
+    router.push({
+      pathname: "/resources/detail/[resourceId]/watch",
+      params: { resourceId: resource.id },
+    });
   };
 
   const handleRelatedResourcePress = (relatedResourceId: string) => {
