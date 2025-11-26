@@ -1,11 +1,18 @@
 // app/_layout.tsx
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Redirect, router, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { AuthProvider, useAuth } from "../core/services/authContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SetupProvider } from "../core/hooks/setupContext";
+import { AuthProvider, useAuth } from "../core/services/authContext";
+import { colors } from "../core/styles";
+import { store } from "@/src/store/store";
+import { Provider } from "react-redux";
 import { useAssetLoading } from "../core/utils/assetsLoading";
 
 SplashScreen.preventAutoHideAsync();
@@ -56,8 +63,10 @@ const queryClient = new QueryClient({
 function RootLayoutContent() {
   const isLoaded = useAssetLoading();
   const { user, isSessionLoading } = useAuth();
+
   const { onboardingComplete, isCheckingOnboarding } =
     useOnboardingStatusLoader();
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   // Hide splash only when EVERYTHING is ready
   useEffect(() => {
@@ -114,47 +123,19 @@ function RootLayoutContent() {
     );
   }
 
-  // ----------------------------------------------------
-  // USER NOT LOGGED IN
-  // ----------------------------------------------------
-  if (!user) {
-    if (onboardingComplete) {
-      return (
-        <>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(onboarding)" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="setup" />
-          </Stack>
-          <Redirect href="/(auth)/SignInScreen" />
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="setup" />
-        </Stack>
-        <Redirect href="/(onboarding)" />
-      </>
-    );
-  }
-
-  // ----------------------------------------------------
-  // USER LOGGED IN
-  // ----------------------------------------------------
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="resources" />
-        <Stack.Screen name="setup" />
-      </Stack>
-      <Redirect href="/(tabs)/Home" />
-    </>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(onboarding)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="setup" />
+      <Stack.Screen name="Gallery" />
+      <Stack.Screen name="notifications" />
+      <Stack.Screen name="profile" />
+      <Stack.Screen name="resources" />
+      <Stack.Screen name="components" />
+      <Stack.Screen name="categories/[categoryId]" />
+    </Stack>
   );
 }
 
@@ -164,11 +145,13 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <SetupProvider>
-          <RootLayoutContent />
-        </SetupProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SetupProvider>
+            <RootLayoutContent />
+          </SetupProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
