@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as SecureStore from "expo-secure-store";
+import { setAuthToken, removeAuthToken, getAuthToken } from "./authStorage";
+import { getCurrentUser, UserProfile } from "./userService";
 
 const API_BASE_URL = "https://api.staging.kaizen.emerj.net";
 
@@ -17,6 +19,7 @@ export interface GoogleAuthResult {
     name: string;
     photo?: string;
   };
+  userProfile?: UserProfile; // Backend user profile data
   tokens?: {
     accessToken: string;
     refreshToken: string;
@@ -107,9 +110,24 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
 
       const { access_token, refresh_token } = data.data;
 
-      // Store tokens securely
-      await SecureStore.setItemAsync("access_token", access_token);
+      // ✅ FIX: Use standard setAuthToken() to store token in "NoraAppAuthToken" key
+      // This ensures the token is stored in the same place as email login
+      await setAuthToken(access_token);
+      console.log("✅ Token stored using setAuthToken()");
+
+      // Also store refresh_token separately for token refresh functionality
       await SecureStore.setItemAsync("refresh_token", refresh_token);
+
+      // ✅ FIX: Fetch user profile from backend after successful authentication
+      // This ensures we have complete user data like email login
+      console.log("📥 Fetching user profile from backend...");
+      const userProfile = await getCurrentUser();
+
+      if (userProfile) {
+        console.log("✅ User profile fetched successfully:", userProfile.email);
+      } else {
+        console.warn("⚠️ Failed to fetch user profile after Google login");
+      }
 
       return {
         success: true,
@@ -118,6 +136,7 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
           name: user?.name || "",
           photo: user?.photo || undefined,
         },
+        userProfile: userProfile || undefined, // Include backend user profile
         tokens: {
           accessToken: access_token,
           refreshToken: refresh_token,
@@ -188,8 +207,10 @@ export const signOutFromGoogle = async (): Promise<{
     // Sign out from Google
     await GoogleSignin.signOut();
 
-    // Clear stored tokens
-    await SecureStore.deleteItemAsync("access_token");
+    // ✅ FIX: Use standard removeAuthToken() to clear the auth token
+    await removeAuthToken();
+
+    // Clear refresh token and device ID
     await SecureStore.deleteItemAsync("refresh_token");
     await SecureStore.deleteItemAsync("device_id");
 
@@ -219,7 +240,8 @@ export const isSignedInToGoogle = async (): Promise<boolean> => {
  */
 export const isAuthenticated = async (): Promise<boolean> => {
   try {
-    const accessToken = await SecureStore.getItemAsync("access_token");
+    // ✅ FIX: Use standard getAuthToken() to check for authentication
+    const accessToken = await getAuthToken();
     return !!accessToken;
   } catch (error) {
     console.log(error);
@@ -306,7 +328,8 @@ export const makeAuthenticatedRequest = async (
   options: RequestInit = {}
 ): Promise<Response> => {
   try {
-    let accessToken = await SecureStore.getItemAsync("access_token");
+    // ✅ FIX: Use standard getAuthToken() to retrieve token
+    let accessToken = await getAuthToken();
 
     if (!accessToken) {
       throw new Error("No access token available. Please sign in.");
