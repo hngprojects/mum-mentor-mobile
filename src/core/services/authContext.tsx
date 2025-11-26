@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { setAuthToken, removeAuthToken, getAuthToken } from './authStorage';
-import { getCurrentUser, UserProfile } from './userService';
-import { router } from 'expo-router';
+import { router } from "expo-router";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { getAuthToken, removeAuthToken } from "./authStorage";
+import { getCurrentUser, UserProfile } from "./userService";
 // Import the login function directly from authService
-import { login as apiLogin } from './authService'; 
-
+import { login as apiLogin } from "./authService";
 
 // --- CONTEXT TYPES ---
 interface AuthContextType {
@@ -21,13 +26,17 @@ export const AuthSessionContext = createContext<AuthContextType | null>(null);
 export function useAuth(): AuthContextType {
   const context = useContext(AuthSessionContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
 
 // --- PROVIDER COMPONENT ---
-export function AuthProvider({ children }: { children: React.ReactNode }): React.ReactElement {
+export function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.ReactElement {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -37,20 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       try {
         const storedToken = await getAuthToken();
         if (storedToken) {
-          // getCurrentUser relies on the token being available in storage, 
+          // getCurrentUser relies on the token being available in storage,
           // which is loaded by the interceptor.
-          const profile = await getCurrentUser(); 
+          const profile = await getCurrentUser();
           if (profile) {
             setUser(profile);
-            console.log('Session restored successfully.');
+            console.log("Session restored successfully.");
           } else {
-            console.warn('Stored token rejected or expired. Cleaning up.');
-            await removeAuthToken(); 
+            console.warn("Stored token rejected or expired. Cleaning up.");
+            await removeAuthToken();
             setUser(null);
           }
         }
       } catch (error) {
-        console.error('Error restoring session:', error);
+        console.error("Error restoring session:", error);
       } finally {
         setIsSessionLoading(false);
       }
@@ -62,25 +71,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   // --- 2. Sign In ---
   const signIn = async (email: string, password: string) => {
     try {
-      // 1. Call login. The internal `authService.login` function is responsible for 
+      // 1. Call login. The internal `authService.login` function is responsible for
       //    calling the API, retrieving the token, and storing it via `setAuthToken`.
       //    We rely entirely on that function to manage storage.
-      await apiLogin({ email, password }); 
-      
+      await apiLogin({ email, password });
+
       // 2. Immediately validate the newly stored token by fetching the profile.
       //    The apiClient interceptor will now successfully grab the token stored by apiLogin.
       const profile = await getCurrentUser();
-      
+
       if (profile) {
         setUser(profile);
       } else {
-        // If profile fetch fails, it means the stored token is invalid, 
+        // If profile fetch fails, it means the stored token is invalid,
         // so we must clean up and throw an error.
         await removeAuthToken();
-        throw new Error('Failed to fetch user profile after successful login.');
+        throw new Error("Failed to fetch user profile after successful login.");
       }
     } catch (error) {
-      console.error('Sign-in failed:', error);
+      console.error("Sign-in failed:", error);
       await removeAuthToken();
       setUser(null);
       throw error;
@@ -91,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const signOut = async () => {
     await removeAuthToken();
     setUser(null);
-    router.replace('/(auth)/SignInScreen');
+    router.replace("/(auth)/SignInScreen");
   };
 
   const value = useMemo(
@@ -104,5 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     [user, isSessionLoading]
   );
 
-  return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;
+  return (
+    <AuthSessionContext.Provider value={value}>
+      {children}
+    </AuthSessionContext.Provider>
+  );
 }

@@ -391,32 +391,6 @@ export const makeAuthenticatedRequest = async (
 };
 
 /**
- * Get current user info from your backend
- */
-export const getCurrentUser = async (): Promise<{
-  success: boolean;
-  user?: any;
-  error?: string;
-}> => {
-  try {
-    const response = await makeAuthenticatedRequest("/auth/user");
-    const data = await response.json();
-
-    if (data.status === "success" && data.data) {
-      return { success: true, user: data.data };
-    }
-
-    throw new Error(data.message || "Failed to get user info");
-  } catch (error: any) {
-    console.error("❌ Get user error:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to get user info",
-    };
-  }
-};
-
-/**
  * Check and handle Google Sign-In status
  * Useful for checking on app startup
  */
