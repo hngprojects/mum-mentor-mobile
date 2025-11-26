@@ -47,19 +47,27 @@ jobs:
        run: |
         # write secret contents to android app folder
         mkdir -p android/app
-        SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
-        # Try treating secret as raw JSON first
-        printf "%s" "$SECRET" > android/app/google-services.json
-        echo "Wrote android/app/google-services.json (attempt as raw JSON)"
 
-        # test JSON validity; if it fails, try base64 decode then re-test
-        if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
-          echo "google-services.json is valid JSON"
+        # Prefer a base64-encoded secret if provided (more robust for multiline)
+        if [ -n "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" ]; then
+          echo "Decoding google-services.json from GOOGLE_SERVICES_JSON_BASE64"
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+          echo "Wrote android/app/google-services.json (from base64 secret)"
         else
-          echo "Initial JSON parse failed — attempting base64 decode of secret"
-          echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
-          echo "Wrote android/app/google-services.json (after base64 decode)"
-          jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
+          # Fallback: try raw JSON secret, else try base64 text stored in the same secret
+          SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
+          printf "%s" "$SECRET" > android/app/google-services.json
+          echo "Wrote android/app/google-services.json (attempt as raw JSON)"
+
+          # test JSON validity; if it fails, try base64 decode then re-test
+          if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
+            echo "google-services.json is valid JSON"
+          else
+            echo "Initial JSON parse failed — attempting base64 decode of secret"
+            echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+            echo "Wrote android/app/google-services.json (after base64 decode)"
+            jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
+          fi
         fi
 
         # final check: ensure project_info exists
