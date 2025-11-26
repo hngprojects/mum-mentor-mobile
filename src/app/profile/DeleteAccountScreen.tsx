@@ -1,165 +1,168 @@
 // src/screens/DeleteAccountScreen.tsx
 
-import { colors, typography } from "@/src/core/styles";
-import { ms, rbr, vs } from "@/src/core/styles/scaling";
-import { Ionicons } from "@expo/vector-icons";
+import { colors, fontFamilies, spacing, typography } from "@/src/core/styles";
+import { ms } from "@/src/core/styles/scaling";
+import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  FlatList,
-  Image,
+  Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import CustomInput from "../components/CustomInput";
 import PrimaryButton from "../components/PrimaryButton";
 
-const checkedIcon = require("@/src/assets/images/checkbox_checked.png");
-const uncheckedIcon = require("@/src/assets/images/checkbox_unchecked.png");
-
-const reasons = [
-  "I don't use this account anymore",
-  "I have another account",
-  "I'm not satisfied with the service",
-  "I no longer need the app",
-  "I'm taking a break",
-  "I'm switching to a different platform",
-  "I didn't find what I was looking for",
-  "I'm worried about how my data is used",
-  "I had a security concern or issue",
-  "I want to remove my personal information",
-  "Others",
-];
-
 const DeleteAccountScreen = () => {
-  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
-  const [otherReason, setOtherReason] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmationPhrase, setConfirmationPhrase] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const toggleReason = (reason: string) => {
-    if (selectedReasons.includes(reason)) {
-      setSelectedReasons(selectedReasons.filter((r) => r !== reason));
-      // Clear other reason text if unchecking "Others"
-      if (reason === "Others") {
-        setOtherReason("");
-      }
-    } else {
-      setSelectedReasons([...selectedReasons, reason]);
+  const REQUIRED_PHRASE = "DELETE MY ACCOUNT";
+
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    }
+
+    if (!confirmationPhrase.trim()) {
+      newErrors.confirmationPhrase = "Confirmation phrase is required";
+    } else if (confirmationPhrase.trim() !== REQUIRED_PHRASE) {
+      newErrors.confirmationPhrase = `Please type exactly: ${REQUIRED_PHRASE}`;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleContinue = () => {
+    if (validateForm()) {
+      // Navigate to ConfirmDelete screen with the data
+      router.push({
+        pathname: "/profile/ConfirmDelete",
+        params: {
+          confirmationPhrase: confirmationPhrase.trim(),
+          password: password,
+        },
+      });
     }
   };
 
-  const handleDelete = async () => {
-    setIsLoading(true);
-    try {
-      // Your delete account API call here
-      console.log("Selected Reasons:", selectedReasons);
-      router.push("/profile/ConfirmDelete");
-      if (selectedReasons.includes("Others")) {
-        console.log("Other Reason:", otherReason);
-      }
-      // await deleteAccountAPI(selectedReasons, otherReason);
-      // router.replace('/account-deleted'); // Navigate to success screen
-    } catch (error) {
-      console.error("Error deleting account:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const renderItem = ({ item }: { item: string }) => {
-    const isChecked = selectedReasons.includes(item);
-
-    return (
-      <View>
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => toggleReason(item)}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={isChecked ? checkedIcon : uncheckedIcon}
-            style={styles.checkbox}
-          />
-          <Text style={styles.label}>{item}</Text>
-        </TouchableOpacity>
-
-        {/* Show TextArea when "Others" is selected */}
-        {item === "Others" && isChecked && (
-          <View style={styles.textAreaContainer}>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Please tell us more about your reason..."
-              placeholderTextColor={colors.textGrey2}
-              value={otherReason}
-              onChangeText={setOtherReason}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const hasSelectedReasons = selectedReasons.length > 0;
-  const buttonTitle = hasSelectedReasons ? "Delete" : "Continue";
-  // const isDeleteDisabled =
-  //   !hasSelectedReasons ||
-  //   (selectedReasons.includes('Others') && !otherReason.trim()) ||
-  //   isLoading;
+  const isButtonDisabled =
+    !password.trim() ||
+    !confirmationPhrase.trim() ||
+    confirmationPhrase.trim() !== REQUIRED_PHRASE;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Feather name="arrow-left" size={ms(24)} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Delete Account</Text>
           <View style={styles.headerSpacer} />
         </View>
 
-        {/* Warning Text */}
-        <View style={styles.deleteTextContainer}>
-          <Text style={styles.deleteText}>
-            Deleting your account will permanently remove your data and cannot
-            be undone. Please confirm your reason before proceeding.
-          </Text>
-        </View>
-
-        {/* Reasons List */}
-        <FlatList
-          data={reasons}
-          renderItem={renderItem}
-          keyExtractor={(item) => item}
+        {/* Scrollable Content */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
           keyboardShouldPersistTaps="handled"
-        />
+        >
+          {/* Warning Text */}
+          <View style={styles.warningContainer}>
+            <Feather name="alert-circle" size={ms(48)} color={colors.error} />
+            <Text style={styles.warningTitle}>This action is permanent</Text>
+            <Text style={styles.warningText}>
+              Deleting your account will permanently remove all your data including:
+            </Text>
+            <View style={styles.warningList}>
+              <Text style={styles.warningListItem}>• Your profile information</Text>
+              <Text style={styles.warningListItem}>• All your posts and content</Text>
+              <Text style={styles.warningListItem}>• Your task history</Text>
+              <Text style={styles.warningListItem}>• All associated data</Text>
+            </View>
+            <Text style={styles.warningSubtext}>
+              This action cannot be undone.
+            </Text>
+          </View>
 
-        {/* Continue/Delete Button */}
+          {/* Confirmation Instructions */}
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructionsTitle}>
+              To confirm deletion, please:
+            </Text>
+            <Text style={styles.instructionsText}>
+              1. Type the phrase: <Text style={styles.requiredPhrase}>{REQUIRED_PHRASE}</Text>
+            </Text>
+            <Text style={styles.instructionsText}>
+              2. Enter your current password
+            </Text>
+          </View>
+
+          {/* Confirmation Phrase Input */}
+          <CustomInput
+            label="Confirmation Phrase"
+            placeholder={`Type: ${REQUIRED_PHRASE}`}
+            value={confirmationPhrase}
+            onChangeText={(text) => {
+              setConfirmationPhrase(text);
+              if (errors.confirmationPhrase) {
+                setErrors({ ...errors, confirmationPhrase: "" });
+              }
+            }}
+            isError={!!errors.confirmationPhrase}
+            errorMessage={errors.confirmationPhrase}
+            iconName="alert-triangle"
+          />
+
+          {/* Password Input */}
+          <CustomInput
+            label="Current Password"
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errors.password) {
+                setErrors({ ...errors, password: "" });
+              }
+            }}
+            isError={!!errors.password}
+            errorMessage={errors.password}
+            iconName="lock"
+            secureTextEntry
+          />
+        </ScrollView>
+
+        {/* Continue Button */}
         <View style={styles.buttonContainer}>
           <PrimaryButton
-            title={buttonTitle}
-            onPress={handleDelete}
-            isLoading={isLoading}
-            // disabled={isDeleteDisabled}
+            title="Continue"
+            onPress={handleContinue}
+            disabled={isButtonDisabled}
           />
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -170,77 +173,102 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundMain,
   },
+  keyboardView: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: ms(20),
-    paddingTop: vs(50),
-    paddingBottom: vs(16),
-    backgroundColor: colors.backgroundMain,
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.md),
+    backgroundColor: colors.textWhite,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outlineVariant,
   },
   backButton: {
-    width: ms(40),
-    height: ms(40),
-    justifyContent: "center",
-    alignItems: "flex-start",
+    padding: ms(spacing.xs),
   },
   headerTitle: {
-    ...typography.heading2,
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.bold,
     color: colors.textPrimary,
     flex: 1,
+    textAlign: "center",
   },
   headerSpacer: {
-    width: ms(40),
-  },
-  deleteTextContainer: {
-    marginHorizontal: ms(20),
-    marginTop: vs(12),
-    marginBottom: vs(20),
-  },
-  deleteText: {
-    ...typography.bodyMedium,
-    color: colors.textGrey1,
-    lineHeight: 22,
-  },
-  listContent: {
-    paddingHorizontal: ms(20),
-    paddingBottom: vs(20),
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: vs(14),
-  },
-  checkbox: {
     width: ms(24),
-    height: ms(24),
-    marginRight: ms(12),
-    resizeMode: "contain",
+    padding: ms(spacing.xs),
   },
-  label: {
-    ...typography.bodyMedium,
-    color: colors.textPrimary,
+  scrollView: {
     flex: 1,
   },
-  textAreaContainer: {
-    marginTop: vs(8),
-    marginBottom: vs(12),
+  scrollContent: {
+    paddingHorizontal: ms(spacing.lg),
+    paddingTop: ms(spacing.lg),
+    paddingBottom: ms(spacing.lg),
   },
-  textArea: {
-    ...typography.bodyMedium,
+  warningContainer: {
+    backgroundColor: colors.errorLight,
+    borderRadius: ms(12),
+    padding: ms(spacing.lg),
+    marginBottom: ms(spacing.xl),
+    alignItems: "center",
+  },
+  warningTitle: {
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.bold,
+    color: colors.error,
+    marginTop: ms(spacing.sm),
+    marginBottom: ms(spacing.sm),
+  },
+  warningText: {
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
     color: colors.textPrimary,
-    backgroundColor: colors.textWhite,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: rbr(10),
-    padding: ms(12),
-    minHeight: vs(100),
-    maxHeight: vs(150),
+    textAlign: "center",
+    marginBottom: ms(spacing.sm),
+  },
+  warningList: {
+    alignSelf: "stretch",
+    marginBottom: ms(spacing.sm),
+  },
+  warningListItem: {
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textPrimary,
+    marginBottom: ms(spacing.xs / 2),
+  },
+  warningSubtext: {
+    fontSize: typography.bodySmall.fontSize,
+    fontFamily: fontFamilies.semiBold,
+    color: colors.error,
+    marginTop: ms(spacing.xs),
+  },
+  instructionsContainer: {
+    marginBottom: ms(spacing.lg),
+  },
+  instructionsTitle: {
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
+    color: colors.textPrimary,
+    marginBottom: ms(spacing.sm),
+  },
+  instructionsText: {
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
+    marginBottom: ms(spacing.xs / 2),
+  },
+  requiredPhrase: {
+    fontFamily: fontFamilies.bold,
+    color: colors.error,
   },
   buttonContainer: {
-    paddingHorizontal: ms(20),
-    paddingVertical: vs(16),
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.md),
     backgroundColor: colors.backgroundMain,
+    borderTopWidth: 1,
+    borderTopColor: colors.outlineVariant,
   },
 });

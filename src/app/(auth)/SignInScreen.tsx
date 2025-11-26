@@ -1,5 +1,6 @@
 // src/screens/(auth)/SignInScreen.tsx
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -103,6 +104,10 @@ export default function SignInScreen() {
       const loginPayload = { email: email.toLowerCase(), password };
       await login(loginPayload);
 
+      // Mark onboarding as complete after successful login
+      await AsyncStorage.setItem("@OnboardingComplete", "true");
+      console.log("✅ Login successful - onboarding marked complete");
+
       // Refresh setup data and check if setup is completed
       await refreshSetupData();
       const isSetupDone = await setupStorage.isSetupCompleted();
@@ -161,6 +166,10 @@ export default function SignInScreen() {
         device_name: deviceInfo.device_name,
       });
 
+      // Mark onboarding as complete after successful Google login
+      await AsyncStorage.setItem("@OnboardingComplete", "true");
+      console.log("✅ Google login successful - onboarding marked complete");
+
       // Refresh setup data and check if setup is completed
       await refreshSetupData();
       const isSetupDone = await setupStorage.isSetupCompleted();
@@ -208,7 +217,7 @@ export default function SignInScreen() {
   };
 
   const handleSignUp = () => {
-    router.replace("/(auth)/SignUpScreen");
+    router.push("/(auth)/SignUpScreen");
   };
 
   return (

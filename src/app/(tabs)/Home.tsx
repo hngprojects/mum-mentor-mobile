@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StatusBar,
@@ -11,7 +12,6 @@ import {
   TouchableOpacity,
   View,
   ViewStyle,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -92,7 +92,7 @@ const Home = () => {
   const [greeting, setGreeting] = useState<string>(getGreeting());
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
 
   // --- Data Fetching Functions ---
 
@@ -149,22 +149,6 @@ const Home = () => {
     setIsSuccessModalVisible(false);
   }, []);
 
-  // --- Authentication Handlers ---
-
-  /** Handles the user logout process. */
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      // NOTE: Placeholder for actual logout service call
-      router.replace("/(auth)/SignInScreen");
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  // --- Effects ---
 
   /** Effect to initialize data loading and set up the greeting timer. */
   useEffect(() => {
@@ -203,7 +187,10 @@ const Home = () => {
                   accessibilityLabel="User Profile Picture"
                 />
                 <Text style={styles.greetingLabel}>
-                  Hi, {isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"}
+                  Hi,{" "}
+                  {isLoadingUser
+                    ? "..."
+                    : user?.full_name?.split(" ")[0] || "User"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -215,10 +202,7 @@ const Home = () => {
             accessibilityLabel="Notifications"
             accessibilityRole="button"
           >
-            <Image
-              source={notificationIcon}
-              style={styles.notificationIcon}
-            />
+            <Image source={notificationIcon} style={styles.notificationIcon} />
           </TouchableOpacity>
         </View>
 
@@ -234,11 +218,13 @@ const Home = () => {
           <View style={styles.heroText}>
             <Text style={styles.heroTitle}>You are Amazing</Text>
             <Text style={styles.heroSubtitle}>
-              {"You're growing right alongside your child,\nand that's something to be proud of"}
+              {
+                "You're growing right alongside your child,\nand that's something to be proud of"
+              }
             </Text>
             <PrimaryButton
               title="Chat with Nora AI"
-              onPress={() => {}} // Navigate to chat
+              onPress={() => router.push("./AiChat")}
               style={styles.heroButton}
             />
           </View>
@@ -254,7 +240,8 @@ const Home = () => {
                 style={styles.quickActionCard}
                 activeOpacity={0.9}
                 onPress={() => {
-                  if (action.id === "resources") router.push("/resources");
+                  if (action.id === "resources")
+                    router.push("/resources/index");
                   // Add journal navigation here
                 }}
                 accessibilityRole="button"
@@ -264,18 +251,26 @@ const Home = () => {
                 {action.id === "journal" ? (
                   <Image
                     source={journalIcon}
-                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
                     resizeMode="contain"
                   />
                 ) : (
                   <Image
                     source={resourceIcon}
-                    style={[styles.quickActionImage, styles.quickActionIconSpacing]}
+                    style={[
+                      styles.quickActionImage,
+                      styles.quickActionIconSpacing,
+                    ]}
                     resizeMode="contain"
                   />
                 )}
                 <Text style={styles.quickActionTitle}>{action.title}</Text>
-                <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
+                <Text style={styles.quickActionSubtitle}>
+                  {action.subtitle}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -318,16 +313,6 @@ const Home = () => {
               setAppAction={() => setIsAppAction(true)}
             />
           )}
-        </View>
-
-        {/* === Logout Section === */}
-        <View style={styles.logoutSection}>
-          <SecondaryButton
-            title={isLoggingOut ? "Logging out..." : "Logout"}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-            disabled={isLoggingOut}
-          />
         </View>
       </ScrollView>
 
@@ -549,7 +534,7 @@ const styles = StyleSheet.create({
     right: 20,
     width: ms(50),
     height: ms(50),
-    borderRadius: ms(25),
+    borderRadius: ms(8),
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",

@@ -3,7 +3,6 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,20 +10,30 @@ import {
   View,
 } from "react-native";
 import CustomToggle from "../components/CustomToggle";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// --- Style Imports ---
+import { colors, fontFamilies, spacing, typography } from "../../core/styles";
+import { ms } from "../../core/styles/scaling";
 
 export default function DataPrivacyScreen() {
   const [shareData, setShareData] = useState(false);
   const [personalizedAds, setPersonalizedAds] = useState(false);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#000" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Feather name="arrow-left" size={ms(24)} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Data & Privacy</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: ms(24) }} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -49,21 +58,32 @@ export default function DataPrivacyScreen() {
         </View>
 
         {/* Download Data */}
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          accessibilityRole="button"
+          accessibilityLabel="Download your data"
+        >
           <Text style={styles.settingLabel}>Download Data</Text>
-          <Feather name="download-cloud" size={20} color="#666" />
+          <Feather name="download-cloud" size={ms(20)} color={colors.textGrey1} />
         </TouchableOpacity>
 
         {/* Delete Account */}
         <TouchableOpacity
           style={[styles.settingItem, styles.deleteItem]}
           onPress={() => router.push("/profile/DeleteAccountScreen")}
+          accessibilityRole="button"
+          accessibilityLabel="Delete your account"
         >
           <Text style={styles.deleteLabel}>Delete Account</Text>
         </TouchableOpacity>
 
         {/* Privacy Policy Link */}
-        <TouchableOpacity style={styles.privacyLink}>
+        <TouchableOpacity
+          style={styles.privacyLink}
+          accessibilityRole="link"
+          onPress={() => router.push("./PrivacyPolicy")}
+          accessibilityLabel="View privacy policy"
+        >
           <Text style={styles.privacyLinkText}>Privacy Policy</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -74,60 +94,68 @@ export default function DataPrivacyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFF",
+    backgroundColor: colors.backgroundMain,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: ms(spacing.lg),
+    paddingVertical: ms(spacing.md),
+    backgroundColor: colors.textWhite,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: colors.outlineVariant,
+  },
+  backButton: {
+    padding: ms(spacing.xs),
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: typography.heading3.fontSize,
+    fontFamily: fontFamilies.bold,
+    color: colors.textPrimary,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: ms(spacing.lg),
+    paddingTop: ms(spacing.lg),
   },
   description: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 32,
-    lineHeight: 20,
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.regular,
+    color: colors.textSecondary,
+    marginBottom: ms(spacing.xl),
+    lineHeight: typography.bodyMedium.fontSize * 1.4,
   },
   settingItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: ms(spacing.md),
     borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
+    borderBottomColor: colors.outlineVariant,
   },
   settingLabel: {
-    fontSize: 16,
-    color: "#000",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.medium,
+    color: colors.textPrimary,
   },
   deleteItem: {
-    marginTop: 24,
+    marginTop: ms(spacing.lg),
     borderBottomWidth: 0,
   },
   deleteLabel: {
-    fontSize: 16,
-    color: "#E63946",
-    fontWeight: "500",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.semiBold,
+    color: colors.error,
   },
   privacyLink: {
     alignItems: "center",
-    paddingVertical: 32,
+    paddingVertical: ms(spacing.xl),
   },
   privacyLinkText: {
-    fontSize: 14,
-    color: "#E63946",
+    fontSize: typography.bodyMedium.fontSize,
+    fontFamily: fontFamilies.medium,
+    color: colors.primary,
     textDecorationLine: "underline",
   },
 });

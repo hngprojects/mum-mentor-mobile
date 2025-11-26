@@ -1,16 +1,11 @@
 // app/_layout.tsx
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Redirect, Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SetupProvider } from "../core/hooks/setupContext";
 import { AuthProvider, useAuth } from "../core/services/authContext";
-import { colors } from "../core/styles";
+import { SetupProvider } from "../core/hooks/setupContext";
 import { useAssetLoading } from "../core/utils/assetsLoading";
 
 SplashScreen.preventAutoHideAsync();
@@ -29,6 +24,10 @@ function useOnboardingStatusLoader() {
       try {
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
         setOnboardingComplete(value === "true");
+        console.log(
+          "📱 Onboarding status:",
+          value === "true" ? "Complete" : "Not complete"
+        );
       } catch (error) {
         console.error("Failed to load onboarding status:", error);
       }
@@ -67,6 +66,45 @@ function RootLayoutContent() {
     }
   }, [isLoaded, isSessionLoading, isCheckingOnboarding]);
 
+  // Handle initial navigation ONLY ONCE
+  useEffect(() => {
+    if (!isLoaded || isSessionLoading || isCheckingOnboarding || hasNavigated) {
+      return;
+    }
+
+    console.log("🚀 Initial navigation check:", {
+      user: !!user,
+      onboardingComplete,
+    });
+
+    // Perform initial navigation only once
+    setHasNavigated(true);
+
+    if (user) {
+      // User is logged in - go to home
+      console.log("✅ User logged in - redirecting to Home");
+      router.replace("/(tabs)/Home");
+    } else {
+      // User is not logged in
+      if (onboardingComplete) {
+        // Onboarding done - go to sign in
+        console.log("✅ Onboarding complete - redirecting to SignIn");
+        router.replace("/(auth)/SignInScreen");
+      } else {
+        // Show onboarding
+        console.log("✅ Onboarding not complete - showing onboarding");
+        router.replace("/(onboarding)");
+      }
+    }
+  }, [
+    isLoaded,
+    isSessionLoading,
+    isCheckingOnboarding,
+    user,
+    onboardingComplete,
+    hasNavigated,
+  ]);
+
   // Still loading assets or session state
   if (!isLoaded || isSessionLoading || isCheckingOnboarding) {
     return (
@@ -82,14 +120,14 @@ function RootLayoutContent() {
   if (!user) {
     if (onboardingComplete) {
       return (
-        <QueryClientProvider client={queryClient}>
+        <>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="setup" />
           </Stack>
           <Redirect href="/(auth)/SignInScreen" />
-        </QueryClientProvider>
+        </>
       );
     }
 
@@ -126,13 +164,11 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SetupProvider>
-            <RootLayoutContent />
-          </SetupProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <AuthProvider>
+        <SetupProvider>
+          <RootLayoutContent />
+        </SetupProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

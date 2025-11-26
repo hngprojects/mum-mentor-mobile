@@ -4,6 +4,7 @@ import { Animated, StyleSheet, TouchableOpacity } from "react-native";
 interface Props {
   value: boolean;
   onValueChange: (v: boolean) => void;
+  disabled?: boolean;
 }
 
 export default function CustomToggle({ value, onValueChange }: Props) {
