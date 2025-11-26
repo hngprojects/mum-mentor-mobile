@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/src/core/services/userService";
 import { colors } from "@/src/core/styles";
 import { rfs, s, vs } from "@/src/core/styles/scaling";
 import { showToast } from "@/src/core/utils/toast";
@@ -25,7 +26,6 @@ import { ChatMessage } from "../components/chat/chat-Message";
 import { ChatWelcome } from "../components/chat/chat-Welcome";
 import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { TypingIndicator } from "../components/chat/typing-Indicator";
-import { getCurrentUser } from "@/src/core/services/userService";
 
 interface Chat {
   id: string;
@@ -142,9 +142,6 @@ export default function ChatScreen() {
         },
       });
     } catch (error) {
-      if (!hasReceivedChunkRef.current) {
-        showToast.error("Error", "Failed to send message");
-      }
       console.error(error);
     } finally {
       setIsAiSpeaking(false);
