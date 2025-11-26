@@ -1,3 +1,5 @@
+// src/screens/auth/SignInScreen.tsx
+
 import { AxiosError } from "axios";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -13,6 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // --- Imports from Core Components and Styles ---
 import { colors, spacing, typography } from "../../core/styles/index";
@@ -30,7 +34,6 @@ import { showToast } from "@/src/core/utils/toast";
 import { ApiErrorResponse, login } from "../../core/services/authService";
 
 export default function SignInScreen() {
-  // --- Local State Management ---
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +52,21 @@ export default function SignInScreen() {
     checkAppleAuth();
   }, []);
 
+  // Helper to redirect after login
+  const redirectAfterLogin = async () => {
+    try {
+      const isSetupComplete = await AsyncStorage.getItem("isSetupComplete");
+      if (isSetupComplete === "true") {
+        router.replace("/(tabs)/Home");
+      } else {
+        router.replace("/setup/Mum");
+      }
+    } catch (err) {
+      console.error("Error reading setup status:", err);
+      router.replace("/(tabs)/Home"); // fallback
+    }
+  };
+
   // Handle Apple Sign-In
   const handleApplePress = async () => {
     setIsAppleLoading(true);
@@ -65,7 +83,7 @@ export default function SignInScreen() {
             ? `Signed in as ${result.user.name}`
             : "Apple login successful."
         );
-        router.replace("/(tabs)/Home");
+        await redirectAfterLogin();
       } else {
         setGeneralError(
           result.error || "Apple sign in failed. Please try again."
@@ -79,6 +97,7 @@ export default function SignInScreen() {
     }
   };
 
+  // Handle Google Sign-In
   const handleGooglePress = async () => {
     setIsGoogleLoading(true);
     setErrors({});
@@ -94,7 +113,7 @@ export default function SignInScreen() {
             ? `Signed in as ${result.user.name}`
             : "Google login successful."
         );
-        router.replace("/(tabs)/Home");
+        await redirectAfterLogin();
       } else {
         setGeneralError(
           result.error || "Google sign in failed. Please try again."
@@ -108,7 +127,7 @@ export default function SignInScreen() {
     }
   };
 
-  // --- Validation Logic (Client-Side Check) ---
+  // --- Validation Logic ---
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
     let isValid = true;
@@ -129,9 +148,7 @@ export default function SignInScreen() {
   };
 
   const handleLogin = async () => {
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
 
     setIsLoading(true);
     setErrors({});
@@ -142,7 +159,7 @@ export default function SignInScreen() {
       await login(loginPayload);
 
       showToast.success("Welcome Back!", "Login successful.");
-      router.replace("/(tabs)/Home");
+      await redirectAfterLogin();
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;
@@ -172,13 +189,8 @@ export default function SignInScreen() {
   };
 
   // --- Navigation Handlers ---
-  const handleForgotPassword = () => {
-    router.push("/(auth)/ForgotPasswordScreen");
-  };
-
-  const handleSignUp = () => {
-    router.replace("/(auth)/SignUpScreen");
-  };
+  const handleForgotPassword = () => router.push("/(auth)/ForgotPasswordScreen");
+  const handleSignUp = () => router.replace("/(auth)/SignUpScreen");
 
   return (
     <KeyboardAvoidingView
@@ -191,12 +203,10 @@ export default function SignInScreen() {
         <View style={styles.innerContainer}>
           <Text style={styles.header}>Log In</Text>
 
-          {/* General Error Message Display */}
           {generalError && (
             <Text style={styles.generalErrorText}>{generalError}</Text>
           )}
 
-          {/* Email Input */}
           <CustomInput
             label="Email"
             placeholder="Enter Email Address"
@@ -209,7 +219,6 @@ export default function SignInScreen() {
             isValid={email.includes("@") && email.length > 0 && !errors.email}
           />
 
-          {/* Password Input */}
           <CustomInput
             label="Enter Password"
             placeholder="Enter Password"
@@ -221,7 +230,6 @@ export default function SignInScreen() {
             isValid={password.length > 0 && !errors.password}
           />
 
-          {/* Forgot Password Link */}
           <TouchableOpacity
             style={styles.forgotPasswordLink}
             onPress={handleForgotPassword}
@@ -230,7 +238,6 @@ export default function SignInScreen() {
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
 
-          {/* Log In Button */}
           <PrimaryButton
             title="Log In"
             onPress={handleLogin}
@@ -238,7 +245,6 @@ export default function SignInScreen() {
             disabled={!email || !password || isLoading}
           />
 
-          {/* Don't have an account */}
           <Text style={styles.signupText}>
             Don&apos;t have an account?{" "}
             <Text style={styles.signupLink} onPress={handleSignUp}>
@@ -248,7 +254,6 @@ export default function SignInScreen() {
 
           <Text style={styles.socialLoginText}>OR CONTINUE WITH</Text>
 
-          {/* Social Login Buttons */}
           <View style={styles.socialButtonsContainer}>
             <TouchableOpacity
               style={styles.socialButton}

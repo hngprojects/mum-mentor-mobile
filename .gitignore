@@ -50,4 +50,7 @@ app-example
 # Keep iOS folder ignored but track CI scripts needed for automation
 !/ios/ci_scripts/
 !/ios/ci_scripts/ci_post_clone.sh
+# Allow tracking of ios directory and Podfile
+!/ios
+!/ios/Podfile
 
