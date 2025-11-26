@@ -26,7 +26,7 @@ interface HistoryEmptyStateProps {
   chats: ChatItem[];
   onChatPress: (chatId: string) => void;
   onRenameChat: (chatId: string, newTitle: string) => Promise<void>;
-  // onDeleteChat: (chatId: string) => void;
+  onDeleteChat: (chatId: string) => Promise<void>;
 }
 
 type ModalView = "list" | "rename" | "delete" | "success";
@@ -38,13 +38,16 @@ export const HistoryEmptyState = ({
   chats,
   onChatPress,
   onRenameChat,
-  // onDeleteChat,
+  onDeleteChat,
 }: HistoryEmptyStateProps) => {
   const [currentView, setCurrentView] = useState<ModalView>("list");
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
 
-  // const selectedChat = chats.find((c) => c.id === selectedChatId);
+  // Sort chats by created_at in descending order (newest first)
+  const sortedChats = [...(chats || [])].sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   const startRenaming = (chatId: string, currentTitle: string) => {
     setSelectedChatId(chatId);
@@ -52,10 +55,10 @@ export const HistoryEmptyState = ({
     setCurrentView("rename");
   };
 
-  // const startDeleting = (chatId: string) => {
-  //   setSelectedChatId(chatId);
-  //   setCurrentView("delete");
-  // };
+  const startDeleting = (chatId: string) => {
+    setSelectedChatId(chatId);
+    setCurrentView("delete");
+  };
 
   const cancelAction = () => {
     setCurrentView("list");
@@ -77,21 +80,25 @@ export const HistoryEmptyState = ({
     }
   };
 
-  // const confirmDelete = () => {
-  //   try {
-  //     if (selectedChatId) {
-  //       onDeleteChat(selectedChatId);
-  //       setCurrentView("success");
-  //       setTimeout(() => {
-  //         setCurrentView("list");
-  //         setSelectedChatId(null);
-  //       }, 2000);
-  //     }
-  //   } catch (error) {
-  //     Alert.alert("Error", "Failed to delete chat");
-  //     console.error(error);
-  //   }
-  // };
+  const confirmDelete = async () => {
+    if (!selectedChatId) return;
+
+    try {
+      await onDeleteChat(selectedChatId);
+
+      // Only shown if API succeeded
+      setCurrentView("success");
+
+      setTimeout(() => {
+        setCurrentView("list");
+        setSelectedChatId(null);
+      }, 2000);
+    } catch (error) {
+      setCurrentView("list"); // prevent stuck modal
+      Alert.alert("Error", "Failed to delete chat");
+      console.error(error);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -226,7 +233,7 @@ export const HistoryEmptyState = ({
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.deleteButton}
-                // onPress={confirmDelete}
+                onPress={confirmDelete}
                 activeOpacity={0.7}
               >
                 <Text style={styles.primaryButtonText}>Delete</Text>
@@ -313,7 +320,7 @@ export const HistoryEmptyState = ({
               <Text style={styles.newChatText}>New Chat</Text>
             </TouchableOpacity>
 
-            {chats?.length === 0 ? (
+            {sortedChats?.length === 0 ? (
               <View style={styles.emptyStateContainer}>
                 <View style={styles.emptyState}>
                   <Image
@@ -327,7 +334,7 @@ export const HistoryEmptyState = ({
               <View style={styles.chatsContainer}>
                 <Text style={styles.chatsLabel}>Chats</Text>
                 <FlatList
-                  data={chats}
+                  data={sortedChats}
                   keyExtractor={(item) => item.id}
                   renderItem={renderChatItem}
                   showsVerticalScrollIndicator={false}

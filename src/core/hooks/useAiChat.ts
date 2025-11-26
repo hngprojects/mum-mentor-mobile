@@ -89,6 +89,7 @@ export const useCreateChat = () => {
       return res.data.data as ChatSession;
     },
     onSuccess: () => {
+      // Invalidate the chat list to show the new chat immediately
       qc.invalidateQueries({ queryKey: CHAT_KEYS.all });
     },
   });
@@ -235,9 +236,11 @@ export const useSendAiMessage = () => {
         );
       }
     },
-    // Always refetch after error or success
+    // Always refetch after error or success to get the updated title
     onSettled: (_, __, { session_id }) => {
       qc.invalidateQueries({ queryKey: CHAT_KEYS.session(session_id) });
+      // Also invalidate the chat list to show updated title
+      qc.invalidateQueries({ queryKey: CHAT_KEYS.all });
     },
   });
 };
@@ -250,11 +253,33 @@ export const useDeleteConversation = () => {
 
   return useMutation({
     mutationFn: async (conversation_id: string) => {
-      const res = await authApi.delete(
-        `/api/v1/ai-chat/conversations/${conversation_id}`
-      );
-      return res.data;
+      try {
+        const res = await authApi.delete(
+          `/api/v1/ai-chat/conversations/${conversation_id}`
+        );
+
+        // 1. Force failure if server didn't return 200-299
+        if (res.status < 200 || res.status >= 300) {
+          throw new Error(`Delete failed with status ${res.status}`);
+        }
+
+        // 2. If the server wraps success in JSON
+        if (res.data?.success === false) {
+          throw new Error(res.data?.message || "Delete failed");
+        }
+
+        return res.data;
+      } catch (err: any) {
+        // 3. Ensure mutation throws for React Query
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Unable to delete conversation";
+
+        throw new Error(message);
+      }
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CHAT_KEYS.all });
     },

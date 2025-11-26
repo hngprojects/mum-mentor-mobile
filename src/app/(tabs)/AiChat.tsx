@@ -17,6 +17,7 @@ import {
   useChatList,
   useChatMessages,
   useCreateChat,
+  useDeleteConversation,
   useRenameConversation,
   useSendAiMessage,
 } from "../../core/hooks/useAiChat";
@@ -51,10 +52,11 @@ export default function ChatScreen() {
   const [showHistoryEmpty, setShowHistoryEmpty] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const flatListRef = useRef<FlatList>(null);
+  const hasReceivedChunkRef = useRef(false);
 
   const createChat = useCreateChat();
   const sendMessage = useSendAiMessage();
-  // const deleteConversation = useDeleteConversation();
+  const deleteConversation = useDeleteConversation();
   const renameConversation = useRenameConversation();
   const { data: chatMessages } = useChatMessages(currentChat?.id);
 
@@ -93,34 +95,36 @@ export default function ChatScreen() {
     setIsAiSpeaking(true);
     setStreamingText("");
 
+    hasReceivedChunkRef.current = false;
+
     try {
       let chatId = currentChat?.id;
 
-      // 1. Create a new chat if needed
       if (!chatId) {
         const newChat = await createChat.mutateAsync();
         chatId = newChat.id;
         setCurrentChat(newChat);
       }
 
-      // 2. Send message to backend with streaming
       await sendMessage.mutateAsync({
         session_id: chatId!,
         message: userMessage,
         onChunk: (chunk: string) => {
+          hasReceivedChunkRef.current = true;
           setStreamingText((prev) => prev + chunk);
-          // Auto-scroll to bottom as chunks arrive
           setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
           }, 100);
         },
-        onComplete: (messageId: string) => {
-          console.log("Message complete:", messageId);
+
+        onComplete: () => {
           setStreamingText("");
         },
       });
     } catch (error) {
-      Alert.alert("Error", "Failed to send message");
+      if (!hasReceivedChunkRef.current) {
+        Alert.alert("Error", "Failed to send message");
+      }
       console.error(error);
     } finally {
       setIsAiSpeaking(false);
@@ -186,40 +190,21 @@ export default function ChatScreen() {
   };
 
   // Handle delete
-  // const handleDeleteChat = async (chatId: string) => {
-  //   Alert.alert(
-  //     "Delete Chat",
-  //     "Are you sure you want to delete this chat? This action cannot be undone.",
-  //     [
-  //       {
-  //         text: "Cancel",
-  //         style: "cancel",
-  //       },
-  //       {
-  //         text: "Delete",
-  //         style: "destructive",
-  //         onPress: async () => {
-  //           try {
-  //             await deleteConversation.mutateAsync(chatId);
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      await deleteConversation.mutateAsync(chatId);
 
-  //             // If deleting current chat, reset to welcome screen
-  //             if (currentChat?.id === chatId) {
-  //               setCurrentChat(null);
-  //               setCurrentView("welcome");
-  //               setInputText("");
-  //               setStreamingText("");
-  //             }
-
-  //             Alert.alert("Success", "Chat deleted successfully");
-  //           } catch (error) {
-  //             Alert.alert("Error", "Failed to delete chat");
-  //             console.error(error);
-  //           }
-  //         },
-  //       },
-  //     ]
-  //   );
-  // };
+      // success only if no error thrown:
+      if (currentChat?.id === chatId) {
+        setCurrentChat(null);
+        setCurrentView("welcome");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to delete chat");
+      console.error(error);
+      throw error; // OPTIONAL but recommended
+    }
+  };
 
   // Message actions
   const handleLike = () => {
@@ -284,6 +269,7 @@ export default function ChatScreen() {
         chats={chats?.conversations || []}
         onChatPress={handleChatPress}
         onRenameChat={handleRenameChat}
+        onDeleteChat={handleDeleteChat}
       />
 
       {/* Content Views */}
