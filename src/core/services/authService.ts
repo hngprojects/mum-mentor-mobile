@@ -1,6 +1,7 @@
 import { AxiosError, isAxiosError } from "axios";
 import apiClient from "./apiClient";
 import { getAuthToken, removeAuthToken, setAuthToken } from "./authStorage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- TYPES ---
 export interface AuthTokenData {
@@ -10,6 +11,7 @@ export interface AuthTokenData {
     id: string;
     email: string;
     full_name: string;
+    profile_setup_id?: string; // ✅ ADDED: profile_setup_id
   };
 }
 
@@ -121,6 +123,12 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
       "/api/v1/auth/login",
       payload
     );
+    
+    console.log('='.repeat(60));
+    console.log('🔐 LOGIN RESPONSE RECEIVED');
+    console.log('='.repeat(60));
+    console.log('Full response:', JSON.stringify(response.data, null, 2));
+    
     const tokenData = response.data.data;
     const token = tokenData?.access_token;
 
@@ -139,7 +147,62 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
       throw new Error("API response missing access token.");
     }
 
+    // ✅ STORE profile_setup_id if it exists in the response
+    if (tokenData?.user?.profile_setup_id) {
+      console.log('✅ Found profile_setup_id in login response:', tokenData.user.profile_setup_id);
+      await AsyncStorage.setItem('profile_setup_id', tokenData.user.profile_setup_id);
+      console.log('✅ Stored profile_setup_id in AsyncStorage');
+    } else {
+      console.warn('⚠️ profile_setup_id NOT found in login response');
+      console.warn('⚠️ Login response structure:', JSON.stringify(response.data, null, 2));
+      
+      // ✅ FALLBACK: Use user.id as profile_setup_id if not provided
+      if (tokenData?.user?.id) {
+        console.log('💡 Using user.id as fallback profile_setup_id:', tokenData.user.id);
+        await AsyncStorage.setItem('profile_setup_id', tokenData.user.id);
+      }
+    }
+
     return tokenData;
+  } catch (error) {
+    throw error as AxiosError<ApiErrorResponse> | Error;
+  }
+}
+
+/**
+ * Google Authentication
+ * Sends Google ID token to backend for verification and login
+ */
+export async function loginWithGoogle(
+  payload: GoogleAuthPayload
+): Promise<GoogleAuthResponse> {
+  try {
+    const response = await apiClient.post<GoogleAuthResponse>(
+      "/api/v1/google/login",
+      payload
+    );
+    
+    const token = response.data.access_token;
+
+    if (token && token.length > 0) {
+      await setAuthToken(token);
+
+      // Verify token was actually stored
+      const storedToken = await getAuthToken();
+      console.log("Google auth token verification - stored:", storedToken ? "YES" : "NO");
+
+      if (!storedToken) {
+        console.error("CRITICAL: Token was not stored despite no errors!");
+      }
+    } else {
+      console.error("Google login response missing access_token:", response.data);
+      throw new Error("API response missing access token.");
+    }
+
+    // ✅ TODO: Handle profile_setup_id for Google login if needed
+    console.log('📝 Google login response:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
   } catch (error) {
     throw error as AxiosError<ApiErrorResponse> | Error;
   }
@@ -147,6 +210,8 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
 
 export async function logout(): Promise<void> {
   await removeAuthToken();
+  // ✅ Clear profile_setup_id on logout
+  await AsyncStorage.removeItem('profile_setup_id');
 }
 
 // --- VERIFICATION AND RECOVERY ---
@@ -190,53 +255,71 @@ export async function verifyValue(
       throw new Error("Invalid verification type provided.");
     }
 
-    const response = await apiClient.post<{
-      data: TokenResponse;
-      message: string;
-      status: string;
-      status_code: number;
-    }>(apiUrl, requestBody);
+    const response = await apiClient.post(apiUrl, requestBody);
 
-    const tokenData = response.data.data;
+    // ✅ Handle different response formats based on verification type
+    let tokenData: TokenResponse;
 
-    console.log("🔍 Raw tokenData:", tokenData);
-    console.log("🔍 access_token raw:", tokenData?.access_token);
-    console.log("🔍 Is array?:", Array.isArray(tokenData?.access_token));
-
-    // 🔥 EXTRACT TOKEN - DOUBLE CHECK
-    let token: string | undefined;
-
-    if (tokenData?.access_token) {
-      if (Array.isArray(tokenData.access_token)) {
-        token = tokenData.access_token[0]; // Get first element
-        console.log("✅ Extracted from array:", token);
-      } else if (typeof tokenData.access_token === "string") {
-        token = tokenData.access_token;
-        console.log("✅ Already string:", token);
+    if (payload.type === "email_verification") {
+      // Email verification returns full TokenResponse object
+      const responseData = response.data.data;
+      
+      if (Array.isArray(responseData)) {
+        // Handle array format [token, expiry]
+        const token = responseData[0];
+        tokenData = {
+          access_token: token,
+          refresh_token: '',
+          user: {
+            id: '',
+            email: payload.email,
+            full_name: ''
+          }
+        };
+      } else {
+        // Handle object format
+        tokenData = responseData;
       }
-    }
-
-    console.log("🎯 Final token to store:", token);
-    console.log("🎯 Token type:", typeof token);
-
-    // Only set auth token for email_verification (user logging in)
-    if (
-      payload.type === "email_verification" &&
-      token &&
-      typeof token === "string"
-    ) {
-      await setAuthToken(token); // Pass ONLY the string
-      console.log("✅ Token stored for email verification");
+      
+      const token = tokenData?.access_token;
+      console.log("✅ Email verification token:", token?.substring(0, 20) + "...");
+      
+      if (token && token.length > 0) {
+        await setAuthToken(token);
+        console.log("Email verification successful. Token stored.");
+      } else {
+        console.warn("Email verification returned no access token:", response.data);
+      }
+      
     } else if (payload.type === "password_reset") {
-      console.log("✅ Password reset verification successful");
+      // ✅ Password reset OTP verify returns just a string message, NOT a token
+      // The OTP code itself will be used as the "token" for the reset-password endpoint
+      console.log("Password reset OTP verified successfully");
+      console.log("API Response:", response.data);
+      
+      // Use the OTP code as the verification token for the next step
+      const otpCode = payload.verification_value;
+      tokenData = {
+        access_token: otpCode, // Use OTP as token
+        refresh_token: '',
+        user: {
+          id: '',
+          email: payload.email,
+          full_name: ''
+        }
+      };
+      
+      console.log("✅ Using OTP code as verification token for password reset");
+    } else {
+      throw new Error("Invalid verification type provided.");
     }
 
     return { success: true, data: tokenData };
   } catch (error) {
-    console.error("❌ Error during verification:", error);
     return { success: false, error: error as AxiosError<ApiErrorResponse> };
   }
 }
+
 export async function resetPassword(
   payload: ResetPasswordPayload
 ): Promise<MessageResponse> {
@@ -246,6 +329,7 @@ export async function resetPassword(
   );
   return response.data;
 }
+
 
 export async function changePassword(
   payload: ChangePasswordPayload
@@ -267,9 +351,12 @@ export async function logoutUser(): Promise<MessageResponse> {
       "/api/v1/auth/logout"
     );
     await removeAuthToken();
+    // ✅ Clear profile_setup_id on logout
+    await AsyncStorage.removeItem('profile_setup_id');
     return response.data;
   } catch (error) {
     await removeAuthToken();
+    await AsyncStorage.removeItem('profile_setup_id');
     throw error as AxiosError<ApiErrorResponse>;
   }
 }
@@ -284,10 +371,12 @@ export async function deleteAccount(
   payload: DeleteAccountPayload
 ): Promise<string> {
   try {
-    const response = await apiClient.delete<string>("/api/v1/auth/delete", {
-      data: payload,
-    });
+    const response = await apiClient.delete<string>(
+      "/api/v1/auth/delete",
+      { data: payload }
+    );
     await removeAuthToken();
+    await AsyncStorage.removeItem('profile_setup_id');
     return response.data;
   } catch (error) {
     throw error as AxiosError<ApiErrorResponse>;
