@@ -233,7 +233,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.menuItemWrapper}>
             <TouchableOpacity
               style={styles.childCard}
-              onPress={() => router.push("/profile/ChildInfoScreen")}
+              onPress={() => router.push("/setup/Mum")}
               accessibilityRole="button"
               accessibilityLabel="Manage child's profile details"
             >

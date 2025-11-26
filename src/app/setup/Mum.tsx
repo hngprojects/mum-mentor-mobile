@@ -190,6 +190,10 @@ const MomSetupScreen: React.FC = () => {
     }
   };
 
+  const isFormBasicValid = () => {
+    return selectedStatus.trim().length > 0 && selectedGoals.length > 0;
+  };
+
   return (
     <>
       <StatusBar style="dark" />
@@ -338,7 +342,7 @@ const MomSetupScreen: React.FC = () => {
             title="Next"
             onPress={handleNext}
             isLoading={isLoading}
-            disabled={isLoading}
+            disabled={isLoading || !isFormBasicValid()}
           />
         </ScrollView>
       </KeyboardAvoidingView>
