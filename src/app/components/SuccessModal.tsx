@@ -17,6 +17,8 @@ interface SuccessModalProps {
   buttonText?: string;
   onClose: () => void;
   iconComponent?: React.ReactNode;
+  secondaryButtonText?: string;
+  onSecondaryAction?: () => void;
 }
 
 export const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -26,6 +28,8 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
   buttonText = "Done",
   onClose,
   iconComponent,
+  secondaryButtonText,
+  onSecondaryAction,
 }) => {
   const scaleValue = React.useRef(new Animated.Value(0)).current;
 
@@ -77,10 +81,20 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
           {/* Optional Message */}
           {message && <Text style={styles.message}>{message}</Text>}
 
-          {/* Done Button */}
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>{buttonText}</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonsStack}>
+            {secondaryButtonText ? (
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={onSecondaryAction || onClose}
+              >
+                <Text style={styles.secondaryButtonText}>{secondaryButtonText}</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            <TouchableOpacity style={styles.button} onPress={onClose}>
+              <Text style={styles.buttonText}>{buttonText}</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -154,6 +168,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: vs(24),
   },
+  buttonsStack: {
+    width: '100%',
+    gap: vs(12),
+  },
   button: {
     backgroundColor: colors.primary,
     paddingVertical: vs(16),
@@ -165,6 +183,20 @@ const styles = StyleSheet.create({
   buttonText: {
     ...typography.buttonText,
     color: colors.textWhite,
+  },
+  secondaryButton: {
+    backgroundColor: colors.textWhite,
+    paddingVertical: vs(16),
+    paddingHorizontal: ms(48),
+    borderRadius: ms(8),
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.outline,
+  },
+  secondaryButtonText: {
+    ...typography.buttonText,
+    color: colors.primary,
   },
 });
 

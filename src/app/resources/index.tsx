@@ -2,12 +2,12 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -52,6 +52,13 @@ const ResourcesScreen: React.FC = () => {
     router.push({ pathname: "/resources/[sectionId]", params: { sectionId } });
   };
 
+  const handleResourcePress = (resourceId: string) => {
+    router.push({
+      pathname: "/resources/detail/[resourceId]",
+      params: { resourceId },
+    });
+  };
+
   const hasResults = filteredSections.length > 0;
 
   return (
@@ -77,7 +84,7 @@ const ResourcesScreen: React.FC = () => {
 
           <TouchableOpacity
             onPress={() => {
-              // TODO: Navigate to saved resources when feature is available.
+              router.push("/resources/saved");
             }}
             style={styles.viewSavedButton}
             accessibilityRole="button"
@@ -105,15 +112,22 @@ const ResourcesScreen: React.FC = () => {
 
         {/* Resource sections or empty state */}
         {hasResults ? (
-          filteredSections.map((section) => (
-            <ResourceSection
-              key={section.id}
-              title={section.title}
-              resources={section.resources}
-              onPressViewAll={() => handleViewAll(section.id)}
-              style={styles.sectionSpacing}
-            />
-          ))
+          filteredSections.map((section) => {
+            const displayedResources = searchQuery
+              ? section.resources
+              : section.resources.slice(0, 2);
+
+            return (
+              <ResourceSection
+                key={section.id}
+                title={section.title}
+                resources={displayedResources}
+                onPressViewAll={() => handleViewAll(section.id)}
+                onPressResource={handleResourcePress}
+                style={styles.sectionSpacing}
+              />
+            );
+          })
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No resources found</Text>

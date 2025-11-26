@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     color: colors.textGrey1,
   },
   thumbnail: {
-    width: ms(64),
+    width: ms(96),
     height: ms(64),
     borderRadius: ms(12),
     resizeMode: "cover",

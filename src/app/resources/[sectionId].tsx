@@ -19,6 +19,13 @@ const SectionResourcesScreen: React.FC = () => {
     [normalizedSectionId],
   );
 
+  const handleResourcePress = (resourceId: string) => {
+    router.push({
+      pathname: "/resources/detail/[resourceId]",
+      params: { resourceId },
+    });
+  };
+
   if (!section) {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -42,6 +49,7 @@ const SectionResourcesScreen: React.FC = () => {
           resources={section.resources}
           searchPlaceholder={section.searchPlaceholder}
           onBack={() => router.back()}
+          onResourcePress={handleResourcePress}
         />
       </View>
     </SafeAreaView>

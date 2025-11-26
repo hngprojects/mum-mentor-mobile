@@ -2,16 +2,16 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -241,7 +241,7 @@ const Home = () => {
                 activeOpacity={0.9}
                 onPress={() => {
                   if (action.id === "resources")
-                    router.push("/resources/index");
+                    router.push("/resources");
                   // Add journal navigation here
                 }}
                 accessibilityRole="button"

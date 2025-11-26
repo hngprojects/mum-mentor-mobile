@@ -10,6 +10,9 @@ export interface ResourceListItem {
   title: string;
   description: string;
   image: ImageSourcePropType;
+  fullContent?: string;
+  steps?: string[];
+  videoUrl?: string;
 }
 
 export interface ResourceSectionData {
