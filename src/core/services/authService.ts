@@ -145,42 +145,6 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
   }
 }
 
-/**
- * Google Authentication
- * Sends Google ID token to backend for verification and login
- */
-export async function loginWithGoogle(
-  payload: GoogleAuthPayload
-): Promise<GoogleAuthResponse> {
-  try {
-    const response = await apiClient.post<GoogleAuthResponse>(
-      "/api/v1/google/login",
-      payload
-    );
-    
-    const token = response.data.access_token;
-
-    if (token && token.length > 0) {
-      await setAuthToken(token);
-
-      // Verify token was actually stored
-      const storedToken = await getAuthToken();
-      console.log("Google auth token verification - stored:", storedToken ? "YES" : "NO");
-
-      if (!storedToken) {
-        console.error("CRITICAL: Token was not stored despite no errors!");
-      }
-    } else {
-      console.error("Google login response missing access_token:", response.data);
-      throw new Error("API response missing access token.");
-    }
-
-    return response.data;
-  } catch (error) {
-    throw error as AxiosError<ApiErrorResponse> | Error;
-  }
-}
-
 export async function logout(): Promise<void> {
   await removeAuthToken();
 }
@@ -234,21 +198,45 @@ export async function verifyValue(
     }>(apiUrl, requestBody);
 
     const tokenData = response.data.data;
-    const token = tokenData?.access_token;
 
-    if (token && token.length > 0) {
-      await setAuthToken(token);
-      console.log("Verification successful. Token stored.");
-    } else {
-      console.warn("Verification returned no access token:", response.data);
+    console.log("🔍 Raw tokenData:", tokenData);
+    console.log("🔍 access_token raw:", tokenData?.access_token);
+    console.log("🔍 Is array?:", Array.isArray(tokenData?.access_token));
+
+    // 🔥 EXTRACT TOKEN - DOUBLE CHECK
+    let token: string | undefined;
+
+    if (tokenData?.access_token) {
+      if (Array.isArray(tokenData.access_token)) {
+        token = tokenData.access_token[0]; // Get first element
+        console.log("✅ Extracted from array:", token);
+      } else if (typeof tokenData.access_token === "string") {
+        token = tokenData.access_token;
+        console.log("✅ Already string:", token);
+      }
+    }
+
+    console.log("🎯 Final token to store:", token);
+    console.log("🎯 Token type:", typeof token);
+
+    // Only set auth token for email_verification (user logging in)
+    if (
+      payload.type === "email_verification" &&
+      token &&
+      typeof token === "string"
+    ) {
+      await setAuthToken(token); // Pass ONLY the string
+      console.log("✅ Token stored for email verification");
+    } else if (payload.type === "password_reset") {
+      console.log("✅ Password reset verification successful");
     }
 
     return { success: true, data: tokenData };
   } catch (error) {
+    console.error("❌ Error during verification:", error);
     return { success: false, error: error as AxiosError<ApiErrorResponse> };
   }
 }
-
 export async function resetPassword(
   payload: ResetPasswordPayload
 ): Promise<MessageResponse> {
@@ -258,7 +246,6 @@ export async function resetPassword(
   );
   return response.data;
 }
-
 
 export async function changePassword(
   payload: ChangePasswordPayload
@@ -297,10 +284,9 @@ export async function deleteAccount(
   payload: DeleteAccountPayload
 ): Promise<string> {
   try {
-    const response = await apiClient.delete<string>(
-      "/api/v1/auth/delete",
-      { data: payload }
-    );
+    const response = await apiClient.delete<string>("/api/v1/auth/delete", {
+      data: payload,
+    });
     await removeAuthToken();
     return response.data;
   } catch (error) {

@@ -1,5 +1,5 @@
-import apiClient from "./apiClient";
 import { AxiosError } from "axios";
+import apiClient from "./apiClient";
 import { ApiErrorResponse } from "./authService"; // Assuming this import path is correct
 
 // --- 1. ACCURATE USER PROFILE TYPE (Based on your API response) ---
@@ -36,9 +36,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 
   try {
     // We explicitly type the response as the wrapper structure
-    const response = await apiClient.get<ProfileResponseWrapper>(
-      PROFILE_ENDPOINT
-    );
+    const response =
+      await apiClient.get<ProfileResponseWrapper>(PROFILE_ENDPOINT);
 
     // --- FIX APPLIED HERE ---
     const profileData = response.data.data;

@@ -19,17 +19,31 @@ import { colors, typography } from "../../core/styles/index";
 import { ms, rfs, vs } from "../../core/styles/scaling";
 
 // --- API Service and Types ---
+import { setAuthToken } from "@/src/core/services/authStorage";
 import { showToast } from "@/src/core/utils/toast";
 import {
   ApiErrorResponse,
   EmailPayload,
   resendVerification,
   ServiceResponse,
-  TokenResponse,
   VerificationPayload,
   verifyValue,
 } from "../../core/services/authService";
 import PrimaryButton from "../components/PrimaryButton";
+
+interface TokenResponse {
+  access_token: [string, string] | string; // Can be either array or string
+  refresh_token?: [string, string] | string;
+  user_id?: string;
+}
+
+// Add this helper function before your component or at the top
+const extractToken = (
+  tokenData: [string, string] | string | undefined
+): string | undefined => {
+  if (!tokenData) return undefined;
+  return Array.isArray(tokenData) ? tokenData[0] : tokenData;
+};
 
 const OTP_LENGTH = 6;
 const INITIAL_TIMER = 60;
@@ -129,14 +143,27 @@ function OtpScreen() {
       try {
         const result: ServiceResponse<TokenResponse> =
           await verifyValue(payload);
+        console.log("📦 Result:", result);
 
         if (result.success) {
+          // 🔥 Change back to result.success, not result.status
           const response = result.data;
 
           if (context === "register") {
-            const tokenResponse = response as TokenResponse;
+            // Extract token safely (handles both string and array formats)
+            const accessToken = extractToken(response.access_token);
 
-            if (tokenResponse.access_token) {
+            if (accessToken) {
+              // 🔥 SET AUTH TOKEN HERE, after extracting the string
+              await setAuthToken(accessToken);
+
+              // Optionally store refresh token too
+              const refreshToken = extractToken(response.refresh_token);
+              if (refreshToken) {
+                // Store refresh token if needed
+                // await SecureStore.setItemAsync('refresh_token', refreshToken);
+              }
+
               showToast.success(
                 "Success",
                 "Email verified and logged in! Welcome to NORA."
@@ -156,7 +183,9 @@ function OtpScreen() {
               );
             }
           } else if (context === "reset") {
-            const verificationToken = response.access_token || resetToken;
+            // Extract token safely for password reset
+            const verificationToken =
+              extractToken(response.access_token) || resetToken;
 
             if (!verificationToken) {
               setVerificationError(
@@ -177,6 +206,7 @@ function OtpScreen() {
             }
           }
         } else {
+          // Error handling
           const error = result.error;
           let serverMessage =
             "A network or unexpected error occurred. Please check your connection.";
@@ -209,11 +239,14 @@ function OtpScreen() {
     },
     [isLoading, otp, context, email, resetToken]
   );
-
   const handleResendCode = useCallback(async () => {
+    // Add more defensive checks
     if (timer > 0 || isResending || isLoading || !email) {
+      console.log("Resend blocked:", { timer, isResending, isLoading });
       return;
     }
+
+    console.log("🔄 Resend code initiated");
 
     setIsResending(true);
     setVerificationError("");

@@ -114,15 +114,11 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
 
       // ✅ FIX: Use standard setAuthToken() to store token in "NoraAppAuthToken" key
       // This ensures the token is stored in the same place as email login
+      // ✅ This part should be in your code
       await setAuthToken(access_token);
       console.log("✅ Token stored using setAuthToken()");
 
-      // Also store refresh_token separately for token refresh functionality
-      await SecureStore.setItemAsync("refresh_token", refresh_token);
-      console.log("✅ Refresh token stored");
-
-      // ✅ FIX: Fetch user profile from backend after successful authentication
-      // This ensures we have complete user data like email login
+      // ✅ This part should fetch user profile
       console.log("📥 Fetching user profile from backend...");
       const userProfile = await getCurrentUser();
 
@@ -139,7 +135,7 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
           name: user?.name || "",
           photo: user?.photo || undefined,
         },
-        userProfile: userProfile || undefined, // Include backend user profile
+        userProfile: userProfile || undefined, // ✅ Include backend user profile
         tokens: {
           accessToken: access_token,
           refreshToken: refresh_token,

@@ -1,25 +1,27 @@
 // src/screens/ChangePasswordScreen.tsx
 
+import {
+  ApiErrorResponse,
+  changePassword,
+} from "@/src/core/services/authService";
 import { colors, typography } from "@/src/core/styles";
 import { ms, vs } from "@/src/core/styles/scaling";
 import { Ionicons } from "@expo/vector-icons";
+import { AxiosError } from "axios";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Modal,
 } from "react-native";
-import { AxiosError } from "axios";
 import CustomInput from "../components/CustomInput";
 import PrimaryButton from "../components/PrimaryButton";
-import { changePassword, ApiErrorResponse } from "@/src/core/services/authService";
 
 interface ChangePasswordPayload {
   old_password: string;
@@ -84,7 +86,7 @@ const ChangePassword = () => {
       };
 
       const response = await changePassword(payload);
-      
+
       console.log("✅ Password changed successfully:", response);
 
       // Clear form
@@ -96,32 +98,50 @@ const ChangePassword = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("❌ Error changing password:", error);
-      
+
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;
-      
+      const responseData = axiosError.response?.data;
+
       // Handle different error cases
       if (statusCode === 401) {
         setErrors({ oldPassword: "Old password is incorrect" });
       } else if (statusCode === 422) {
-        // Validation errors
-        const detail = axiosError.response?.data?.detail;
-        if (Array.isArray(detail)) {
-          const validationErrors: { [key: string]: string } = {};
-          detail.forEach((err: any) => {
+        // Check if errors are nested in error.errors (your backend structure)
+        const validationErrors =
+          //@ts-ignore
+          responseData?.error?.errors || responseData?.detail;
+
+        if (Array.isArray(validationErrors)) {
+          const fieldErrors: { [key: string]: string } = {};
+
+          validationErrors.forEach((err: any) => {
+            // Get the field name from the loc array (last item, converting snake_case to camelCase)
             const field = err.loc[err.loc.length - 1];
-            validationErrors[field] = err.msg;
+            const camelCaseField = field.replace(/_([a-z])/g, (g: string) =>
+              g[1].toUpperCase()
+            );
+
+            // Use the error message from the backend
+            fieldErrors[camelCaseField] = err.msg || "Invalid input";
           });
-          setErrors(validationErrors);
+
+          setErrors(fieldErrors);
         } else {
-          setErrors({ general: "Validation failed. Please check your inputs." });
+          setErrors({
+            general: "Validation failed. Please check your inputs.",
+          });
         }
-      } else if (axiosError.response?.data?.detail) {
-        // Handle string detail message
-        setErrors({ 
-          general: typeof axiosError.response.data.detail === 'string' 
-            ? axiosError.response.data.detail 
-            : "Failed to change password" 
+      } else if (responseData?.message) {
+        // Handle the top-level message field from your backend
+        setErrors({ general: responseData.message });
+      } else if (responseData?.detail) {
+        // Fallback to detail field
+        setErrors({
+          general:
+            typeof responseData.detail === "string"
+              ? responseData.detail
+              : "Failed to change password",
         });
       } else {
         setErrors({ general: "Failed to change password. Please try again." });
@@ -302,7 +322,9 @@ const ChangePassword = () => {
             </View>
 
             {/* Success Message */}
-            <Text style={styles.successTitle}>Password changed successfully</Text>
+            <Text style={styles.successTitle}>
+              Password changed successfully
+            </Text>
 
             {/* Done Button */}
             <TouchableOpacity
