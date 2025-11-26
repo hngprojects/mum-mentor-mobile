@@ -88,12 +88,21 @@ export default function SignInScreen() {
       const result = await signInWithGoogle();
 
       if (result.success) {
+        // ✅ Check if user profile was fetched
+        if (result.userProfile) {
+          console.log("✅ User profile available:", result.userProfile.email);
+        } else {
+          console.warn("⚠️ User profile not fetched, but proceeding anyway");
+        }
+
         showToast.success(
           "Welcome Back!",
-          result.user
+          result.user?.name
             ? `Signed in as ${result.user.name}`
             : "Google login successful."
         );
+
+        // ✅ Navigate to home
         router.replace("/(tabs)/Home");
       } else {
         setGeneralError(
@@ -107,7 +116,6 @@ export default function SignInScreen() {
       setIsGoogleLoading(false);
     }
   };
-
   // --- Validation Logic (Client-Side Check) ---
   const validate = () => {
     const newErrors: { [key: string]: string } = {};

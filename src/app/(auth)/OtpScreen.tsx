@@ -144,6 +144,7 @@ function OtpScreen() {
         const result: ServiceResponse<TokenResponse> =
           await verifyValue(payload);
         console.log("📦 Result:", result);
+        console.log(context);
 
         if (result.success) {
           // 🔥 Change back to result.success, not result.status
