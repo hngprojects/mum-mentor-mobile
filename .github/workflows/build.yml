@@ -44,7 +44,18 @@ jobs:
        run: npm ci
 
      - name: Create google-services.json from secret
-       run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > google-services.json
+       run: |
+         # write secret contents to android app folder
+         mkdir -p android/app
+         printf "%s" "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
+         echo "Wrote android/app/google-services.json"
+         # validate the file has project_info
+         if command -v jq >/dev/null 2>&1; then
+           jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
+         else
+           # best-effort python check if jq not available
+           python -c "import json,sys;obj=json.load(open('android/app/google-services.json'));\nif 'project_info' not in obj:\n    print('google-services.json missing project_info');sys.exit(1)"
+         fi
 
      - name: Create .env file with keystore credentials
        run: |
@@ -199,5 +210,5 @@ jobs:
        run: |
          rm -f .env
          rm -f keystore.jks
-         rm -f google-services.json
+         rm -f android/app/google-services.json
          echo "Sensitive files cleaned up"
