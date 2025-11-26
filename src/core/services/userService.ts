@@ -6,6 +6,7 @@ import { ApiErrorResponse } from "./authService"; // Assuming this import path i
 export interface UserProfile {
   // Note: ID is a string (UUID)
   id: string;
+  User_id: string;
   email: string;
   full_name: string;
   is_active: boolean;
