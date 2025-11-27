@@ -10,6 +10,7 @@ const TAB_ICONS = {
   Milestone: require("../../assets/images/milestone.png"),
   Gallery: require("../../assets/images/galery.png"),
   Community: require("../../assets/images/community.png"),
+  Journal: require("../../assets/images/note.png")
 } as const;
 
 const TabLayout = () => {
@@ -50,6 +51,7 @@ const TabLayout = () => {
       <Tabs.Screen name="Milestone" options={{ title: "Milestone" }} />
       <Tabs.Screen name="Gallery" options={{ title: "Gallery" }} />
       <Tabs.Screen name="Community" options={{ title: "Community" }} />
+      {/* <Tabs.Screen name="Journal" options={{ title: "Journal" }} /> */}
     </Tabs>
   );
 };
