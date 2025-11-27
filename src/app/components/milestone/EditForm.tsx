@@ -6,7 +6,6 @@ import Modal from "react-native-modal";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import {
   getMilestoneStates,
-  onEditMileStone,
   onToggleEditForm,
   onToggleEditSuccessModal,
 } from "@/src/store/milestoneSlice";
@@ -16,9 +15,8 @@ export default function EditForm() {
   const { isEditModalOpen, milestoneData, milestoneToEditId } =
     useAppSelector(getMilestoneStates);
   const dispatch = useAppDispatch();
-
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const isNameInputFilled = formData.name;
 
   const currentMilestone = milestoneData.find(
     (milestone) => milestone.id === milestoneToEditId
@@ -26,22 +24,22 @@ export default function EditForm() {
 
   useEffect(() => {
     if (currentMilestone) {
-      setTitle(currentMilestone.title);
-      setDesc(currentMilestone.desc);
+      setFormData((cur) => ({
+        name: currentMilestone.name,
+        description: currentMilestone.description,
+      }));
     }
   }, [currentMilestone]);
 
   function handleMilestoneUpdate() {
     const updatedMilestone = {
-      title,
-      desc,
+      ...formData,
     };
 
-    dispatch(onEditMileStone(updatedMilestone));
-    // if success, open success modal
+    // dispatch(onEditMileStone(updatedMilestone));
 
-    setTitle("");
-    setDesc("");
+    setFormData({ name: "", description: "" });
+
     dispatch(onToggleEditForm({ isOpenForm: false }));
     dispatch(onToggleEditSuccessModal(true));
   }
@@ -60,9 +58,7 @@ export default function EditForm() {
         {/* header */}
         <View style={styles.formHeaderBox}>
           <Text style={styles.formTitle}>edit milestones</Text>
-          <Text style={styles.formDescription}>
-            src/app/components/milestone/CreateForm.tsx
-          </Text>
+          <Text style={styles.formDescription}></Text>
         </View>
 
         {/* forms */}
@@ -73,8 +69,10 @@ export default function EditForm() {
             placeholderTextColor={colors.textGrey2}
             keyboardType="default"
             autoCapitalize="none"
-            value={title}
-            onChangeText={(text) => setTitle(text)}
+            value={formData.name}
+            onChangeText={(text) =>
+              setFormData((cur) => ({ ...cur, name: text }))
+            }
           />
         </FormInput>
 
@@ -85,16 +83,22 @@ export default function EditForm() {
             placeholderTextColor={colors.textGrey2}
             keyboardType="default"
             autoCapitalize="none"
-            value={desc}
-            onChangeText={(text) => setDesc(text)}
+            value={formData.description}
+            onChangeText={(text) =>
+              setFormData((cur) => ({ ...cur, description: text }))
+            }
           />
         </FormInput>
 
         <View style={styles.buttonsContainer}>
           <Pressable
-            style={[styles.buttons, styles.buttonSave]}
+            style={[
+              styles.buttons,
+              styles.buttonSave,
+              !isNameInputFilled && styles.buttonDisabled,
+            ]}
             onPress={handleMilestoneUpdate}
-            disabled={!title && !desc}
+            disabled={!isNameInputFilled}
           >
             Save
           </Pressable>
@@ -123,6 +127,9 @@ const styles = StyleSheet.create({
   buttonSave: {
     color: "white",
     backgroundColor: colors.primary,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 
   buttons: {

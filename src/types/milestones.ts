@@ -41,3 +41,26 @@ export type CategoriesType = {
   value: number;
   icon: ImageSourcePropType;
 };
+
+export interface CreateMilestoneType {
+  name: string;
+  description: string | null;
+  category: string;
+  child_id?: string;
+}
+
+export interface MilestoneDataType {
+  id: string;
+  owner_id: string;
+  owner_type: string;
+  name: string;
+  description: string;
+  status: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MilestoneDataDetails {
+  details: MilestoneDataType[];
+}

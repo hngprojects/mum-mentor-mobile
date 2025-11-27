@@ -28,13 +28,13 @@ apiClient.interceptors.request.use(
       "/auth/resend-verification",
       "/auth/verify-otp",
       "/auth/verify-email",
-      '/auth/reset-password',
+      "/auth/reset-password",
     ];
 
     // Check if the current request path ends with one of the unauthenticated paths.
     // config.url contains the relative path like '/auth/register'
     const isAuthFlow = unauthenticatedPaths.some((path) =>
-      config.url?.endsWith(path)
+      config.url?.includes(path)
     );
 
     if (isAuthFlow) {
