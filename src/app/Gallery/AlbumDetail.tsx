@@ -1,5 +1,6 @@
 // src/app/album-detail.tsx
 
+import { useGetAlbum } from "@/src/core/hooks/useGetAlbum";
 import * as galleryStorage from "@/src/core/services/galleryStorageService";
 import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, rfs, vs } from "@/src/core/styles/scaling";
@@ -20,9 +21,7 @@ import {
   View,
 } from "react-native";
 import CustomInput from "../components/CustomInput";
-import AddMemoryModal, {
-  MemoryData,
-} from "../components/GalleryComponents/AddMemoryModal";
+import AddMemoryModal from "../components/GalleryComponents/AddMemoryModal";
 
 const { width } = Dimensions.get("window");
 const PHOTO_SIZE = (width - ms(spacing.lg * 2) - ms(spacing.md)) / 2;
@@ -31,6 +30,8 @@ export default function AlbumDetailScreen() {
   const params = useLocalSearchParams();
   const albumId = params.albumId as string;
   const albumName = (params.albumName as string) || "Album";
+
+  const { data, isLoading: isGetAlbumLoading, error } = useGetAlbum(albumId);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddMemoryModalVisible, setIsAddMemoryModalVisible] = useState(false);
@@ -108,33 +109,6 @@ export default function AlbumDetailScreen() {
         },
       ]
     );
-  };
-
-  const handleSaveMemory = async (memoryData: MemoryData) => {
-    try {
-      console.log("Saving memory:", memoryData);
-
-      // Save photo to album
-      const newPhoto = await galleryStorage.addPhotoToAlbum(albumId, {
-        uri: memoryData.photoUri,
-        note: memoryData.note,
-        category: memoryData.category,
-        date: memoryData.date,
-      });
-
-      console.log("Photo saved:", newPhoto);
-
-      showToast.success("Success", "Your memory has been saved successfully!");
-
-      // Close modal
-      setIsAddMemoryModalVisible(false);
-
-      // Reload photos
-      await loadPhotos();
-    } catch (error) {
-      console.error("Error saving memory:", error);
-      showToast.error("Error", "Failed to save memory. Please try again.");
-    }
   };
 
   const handleCloseAddMemoryModal = () => {
@@ -298,7 +272,7 @@ export default function AlbumDetailScreen() {
         <AddMemoryModal
           visible={isAddMemoryModalVisible}
           onClose={handleCloseAddMemoryModal}
-          onSaveMemory={handleSaveMemory}
+          setIsAddMemoryModalVisible={setIsAddMemoryModalVisible}
           albumName={albumName}
         />
       </View>

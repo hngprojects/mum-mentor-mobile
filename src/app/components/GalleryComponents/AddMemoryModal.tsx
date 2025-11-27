@@ -1,10 +1,13 @@
 // src/components/GalleryComponents/AddMemoryModal.tsx
 
+import { useImageUpload } from "@/src/core/hooks/useImageUpload";
+import { useLinkImageToAlbum } from "@/src/core/hooks/useLinkImageToAlbum";
 import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, rfs, vs } from "@/src/core/styles/scaling";
 import { showToast } from "@/src/core/utils/toast";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -23,7 +26,7 @@ import CameraScreen from "./CameraScreen";
 interface AddMemoryModalProps {
   visible: boolean;
   onClose: () => void;
-  onSaveMemory: (memoryData: MemoryData) => void;
+  setIsAddMemoryModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   albumName?: string;
 }
 
@@ -39,7 +42,7 @@ const CATEGORIES = ["Baby Photos", "Pregnancy", "Videos", "Album"];
 const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   visible,
   onClose,
-  onSaveMemory,
+  setIsAddMemoryModalVisible,
   albumName,
 }) => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -48,6 +51,10 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
+  const { pickAndUpload, isUploading, data, upload } = useImageUpload({});
+  const { linkImage } = useLinkImageToAlbum("album-items");
+
+  const { albumId } = useLocalSearchParams();
 
   React.useEffect(() => {
     if (visible) {
@@ -93,26 +100,8 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
     setIsCameraVisible(false);
   };
 
-  const handleUploadFromGallery = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-        allowsMultipleSelection: false,
-      });
-
-      if (!result.canceled && result.assets?.length > 0) {
-        setPhotoUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      showToast.error("Error", "Failed to upload photo.");
-    }
-  };
-
-  const handleSaveMemory = () => {
-    if (!photoUri)
+  const handleSaveMemory = async () => {
+    if (!data?.data.id)
       return showToast.warning(
         "No Photo",
         "Please select or take a photo first."
@@ -120,18 +109,22 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
     setIsLoading(true);
 
-    const memoryData: MemoryData = {
-      photoUri,
-      note,
-      category: selectedCategory,
-      date: selectedDate,
-    };
+    await linkImage(
+      {
+        photoId: data?.data.id || "",
+        albumId: albumId as string,
+        note: note,
+      },
 
-    setTimeout(() => {
-      onSaveMemory(memoryData);
-      resetForm();
-      setIsLoading(false);
-    }, 500);
+      {
+        onSuccess(data, variables, onMutateResult, context) {
+          setIsAddMemoryModalVisible(false);
+        },
+        onSettled(data, error, variables, onMutateResult, context) {
+          setIsLoading(false);
+        },
+      }
+    );
   };
 
   const formatDate = (date: Date) => {
@@ -208,7 +201,7 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
                       <TouchableOpacity
                         style={styles.photoOption}
-                        onPress={handleUploadFromGallery}
+                        onPress={pickAndUpload}
                       >
                         <View style={styles.photoIconContainer}>
                           <Ionicons
@@ -300,8 +293,8 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
                   <PrimaryButton
                     title="Save Memory"
                     onPress={handleSaveMemory}
-                    isLoading={isLoading}
-                    disabled={!photoUri || isLoading}
+                    isLoading={isLoading || isUploading}
+                    disabled={!data?.data.id || isLoading || isUploading}
                   />
                 </View>
               </View>
