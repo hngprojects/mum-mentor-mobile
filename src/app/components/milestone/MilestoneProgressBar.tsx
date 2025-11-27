@@ -1,14 +1,28 @@
 import { colors, typography } from "@/src/core/styles";
+import { useAppSelector } from "@/src/store/hooks";
+import { getMilestoneStates } from "@/src/store/milestoneSlice";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import * as Progress from "react-native-progress";
 
 export default function MilestoneProgressBar() {
+  const { milestoneData } = useAppSelector(getMilestoneStates);
+
+  const completedMilestone = milestoneData.filter(
+    (milestone) => milestone.status === "completed"
+  ).length;
+
+  // const pendingMilestone = milestoneData.filter(
+  //   (milestone) => milestone.status === "completed"
+  // ).length;
+
+  const progress = completedMilestone / milestoneData.length;
+
   return (
     <View style={styles.milestoneProgressContainer}>
       {/* header */}
       <Text style={styles.milestonesProgressHeadingText}>
-        0/50 Milestones completed
+        {completedMilestone}/{milestoneData.length} Milestones completed
       </Text>
 
       <View style={styles.milestoneProgressBarContainer}>
@@ -21,7 +35,7 @@ export default function MilestoneProgressBar() {
 
         {/* progress bar */}
         <Progress.Bar
-          progress={0.5}
+          progress={progress}
           width={null}
           color="#2ECC71"
           borderColor="transparent"

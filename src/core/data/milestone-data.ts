@@ -1,5 +1,28 @@
 import { CategoriesType } from "@/src/types/milestones";
 
+export const MILESTONE_DATA = [
+  {
+    id: "1",
+    title: "Drank warm water",
+    desc: "Warm hydration to help digestion and relax muscles.",
+    status: "pending",
+  },
+
+  {
+    id: "2",
+    title: "Stretched the back",
+    desc: "A slow stretch to ease stiffness in the spine.",
+    status: "pending",
+  },
+
+  {
+    id: "3",
+    title: "Laid down to relax",
+    desc: "Took a short moment to lie flat and rest.",
+    status: "pending",
+  },
+];
+
 export const MILESTONE_SECTION = [
   { id: 1, type: "mother" },
   { id: 2, type: "child" },

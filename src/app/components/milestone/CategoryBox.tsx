@@ -1,4 +1,6 @@
 import { colors, typography } from "@/src/core/styles";
+import { useAppSelector } from "@/src/store/hooks";
+import { getMilestoneStates } from "@/src/store/milestoneSlice";
 import { CategoriesType } from "@/src/types/milestones";
 import { Link } from "expo-router";
 import React from "react";
@@ -10,6 +12,13 @@ interface CategoryBoxType {
 }
 
 export default function CategoryBox({ category }: CategoryBoxType) {
+  const { milestoneData } = useAppSelector(getMilestoneStates);
+
+  const completedMilestones = milestoneData.filter(
+    (milestone) => milestone.status === "completed"
+  ).length;
+
+  const progress = (completedMilestones / milestoneData.length) * 100;
   return (
     <Link
       href={{
@@ -24,7 +33,7 @@ export default function CategoryBox({ category }: CategoryBoxType) {
           <View style={styles.contentHeader}>
             <Image source={category.icon} style={styles.contentIcon} />
             <CircularProgress
-              value={category.value}
+              value={progress}
               radius={28}
               duration={1000}
               progressValueColor={colors.textGrey1}
@@ -33,7 +42,7 @@ export default function CategoryBox({ category }: CategoryBoxType) {
               activeStrokeWidth={5}
               inActiveStrokeWidth={5}
               showProgressValue={false}
-              title={`${category.value}%`}
+              title={`${progress}%`}
               titleColor={colors.textGrey1}
               titleStyle={{ fontSize: 16, fontWeight: "500" }}
             />

@@ -1,20 +1,60 @@
+import { MILESTONE_DATA } from "@/src/core/data/milestone-data";
 import { RootState } from "@/src/store/store";
-import { initialStateTypes } from "@/src/store/types";
+import { initialStateTypes, Milestone } from "@/src/store/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: initialStateTypes = {
   isCreateFormOpen: false,
   isDeleteModalOpen: false,
   isSuccessModalOpen: false,
+  isEditSuccessModalOpen: false,
+
   isEditModalOpen: false,
   milestoneToDelId: "",
   milestoneToEditId: "",
+  milestoneData: MILESTONE_DATA,
 };
 
 export const milestoneSlice = createSlice({
   name: "milestone",
   initialState,
   reducers: {
+    onAddMilestone(state, action: PayloadAction<Milestone>) {
+      state.milestoneData = [action.payload, ...state.milestoneData];
+    },
+
+    onDeleteMilestone(state) {
+      state.milestoneData = state.milestoneData.filter(
+        (milestone) => milestone.id !== state.milestoneToDelId
+      );
+    },
+
+    onEditMileStone(
+      state,
+      action: PayloadAction<{ title: string; desc: string }>
+    ) {
+      const { title, desc } = action?.payload;
+      state.milestoneData = state.milestoneData.map((milestone) =>
+        milestone.id === state.milestoneToEditId
+          ? { ...milestone, title, desc }
+          : milestone
+      );
+    },
+
+    onCheckMilestoneStatus(state, action: PayloadAction<{ id: string }>) {
+      state.milestoneData = state.milestoneData.map((milestone) =>
+        milestone.id === action.payload.id
+          ? {
+              ...milestone,
+              status: milestone.status === "pending" ? "completed" : "pending",
+            }
+          : milestone
+      );
+    },
+
+    onToggleEditSuccessModal(state, action: PayloadAction<boolean>) {
+      state.isEditSuccessModalOpen = action.payload;
+    },
     onToggleSuccessModal(state, action: PayloadAction<boolean>) {
       state.isSuccessModalOpen = action.payload;
     },
@@ -55,10 +95,15 @@ export const milestoneSlice = createSlice({
 });
 
 export const {
+  onAddMilestone,
+  onCheckMilestoneStatus,
+  onDeleteMilestone,
+  onEditMileStone,
   onToggleCreateForm,
   onToggleDeleteModal,
   onToggleEditForm,
   onToggleSuccessModal,
+  onToggleEditSuccessModal,
 } = milestoneSlice.actions;
 
 export const getMilestoneStates = (state: RootState) => state.milestone;
