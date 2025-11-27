@@ -40,6 +40,8 @@ type CommunityPost = {
 
 const avatar = require("../../assets/images/profile-image.png");
 const placeholderImage = require("../../assets/images/home-image.png");
+const likeIcon = require("../../assets/images/new-like.png");
+const commentIcon = require("../../assets/images/new-comment.png");
 
 // Mock gallery images just to simulate the "select photos" screen
 const GALLERY_IMAGES: ImageSource[] = [
@@ -242,13 +244,20 @@ const Community: React.FC = () => {
           style={styles.footerButton}
           onPress={() => handleToggleLike(item.id)}
         >
+          <Image 
+            source={likeIcon} 
+            style={[
+              styles.footerIcon,
+              item.isLiked && styles.footerIconActive
+            ]} 
+          />
           <Text
             style={[
               styles.footerButtonText,
               item.isLiked && styles.footerButtonTextActive,
             ]}
           >
-            ♥ {item.likes}
+            {item.likes}
           </Text>
         </TouchableOpacity>
 
@@ -256,7 +265,8 @@ const Community: React.FC = () => {
           style={styles.footerButton}
           onPress={() => openPostDetail(item.id)}
         >
-          <Text style={styles.footerButtonText}>💬 {item.comments}</Text>
+          <Image source={commentIcon} style={styles.footerIcon} />
+          <Text style={styles.footerButtonText}>{item.comments}</Text>
         </TouchableOpacity>
       </View>
     </Pressable>
@@ -625,11 +635,6 @@ const styles = StyleSheet.create({
     borderRadius: ms(16),
     padding: ms(spacing.md),
     marginTop: vs(12),
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
   },
   postHeader: {
     flexDirection: "row",
@@ -679,7 +684,18 @@ const styles = StyleSheet.create({
     marginTop: vs(8),
   },
   footerButton: {
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: ms(16),
+  },
+  footerIcon: {
+    width: ms(16),
+    height: ms(16),
+    marginRight: ms(4),
+    tintColor: colors.textGrey2,
+  },
+  footerIconActive: {
+    tintColor: colors.primary,
   },
   footerButtonText: {
     fontFamily: fontFamilies.medium,
@@ -696,19 +712,20 @@ const styles = StyleSheet.create({
     bottom: vs(30),
     width: ms(56),
     height: ms(56),
-    borderRadius: ms(28),
+    borderRadius: ms(8),
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
+    shadowColor: colors.textPrimary,
     shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 6,
-    elevation: 6,
+    elevation: 8,
   },
   fabText: {
     color: colors.textWhite,
-    fontSize: rfs(28),
+    fontSize: rfs(32),
+    fontWeight: "300" as any,
     marginTop: -2,
   },
 

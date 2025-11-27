@@ -1,7 +1,9 @@
 import React from "react";
 import { Modal, StyleSheet, Text, View, ViewStyle, TextStyle, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import PrimaryButton from '../components/PrimaryButton';
+import SecondaryButton from '../components/SecondaryButton';
 import { colors, fontFamilies, spacing, typography } from "../../core/styles";
 import { ms } from "../../core/styles/scaling";
 
@@ -32,11 +34,21 @@ const TaskCreationSuccessModal: React.FC<TaskCreationSuccessModalProps> = ({ isV
 
           <Text style={styles.successTitle}>Task created successfully</Text>
 
-          {/* Done Button using the imported PrimaryButton */}
+          {/* View Task Button */}
           <PrimaryButton
+            title="View Task"
+            onPress={() => {
+              onDone();
+              router.push("../components/TaskPage");
+            }}
+            style={styles.successButton}
+          />
+          
+          {/* Done Button */}
+          <SecondaryButton
             title="Done"
             onPress={onDone}
-            style={styles.successButton}
+            style={styles.doneButton}
           />
         </View>
       </TouchableOpacity>
@@ -82,7 +94,14 @@ const styles = StyleSheet.create({
   } as TextStyle,
   successButton: {
     width: "100%", 
-  
-    paddingVertical: ms(spacing.sm), 
+    paddingVertical: ms(spacing.sm),
+    marginBottom: ms(spacing.sm),
+  } as ViewStyle,
+  doneButton: {
+    width: "100%",
+    paddingVertical: ms(spacing.sm),
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: colors.primary,
   } as ViewStyle,
 });

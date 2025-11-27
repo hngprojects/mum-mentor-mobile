@@ -1,27 +1,26 @@
+import { colors, typography } from "@/src/core/styles";
+import { ms, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ScrollView,
-  Image,
-} from 'react-native';
-import React, { useState } from 'react';
-import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import PrimaryButton from '../components/PrimaryButton';
-import SecondaryButton from '../components/SecondaryButton';
-import { ms, rbr, vs } from '@/src/core/styles/scaling';
-import { colors, typography } from '@/src/core/styles';
-import { router } from 'expo-router';
-import CustomInput from '../components/CustomInput';
-import DeleteConfirmModal from '../components/DeleteConfirmationModal';
-import SuccessModal from '../components/SuccessModal';
+} from "react-native";
+import CustomInput from "../components/CustomInput";
+import DeleteConfirmModal from "../components/DeleteConfirmationModal";
+import PrimaryButton from "../components/PrimaryButton";
+import SuccessModal from "../components/SuccessModal";
 
 const ConfirmDelete = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -35,7 +34,7 @@ const ConfirmDelete = () => {
     if (validateEmail(email)) {
       setShowDeleteModal(true);
     } else {
-      setErrors({ email: 'Please enter a valid email address' });
+      setErrors({ email: "Please enter a valid email address" });
     }
   };
 
@@ -44,18 +43,18 @@ const ConfirmDelete = () => {
     setIsLoading(true);
     try {
       // Your delete account API call here
-      console.log('Deleting account for:', email);
+      console.log("Deleting account for:", email);
       // await deleteAccountAPI(email);
-      
+
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);
         setShowSuccessModal(true);
       }, 1500);
     } catch (error) {
-      console.error('Error deleting account:', error);
+      console.error("Error deleting account:", error);
       setIsLoading(false);
-      setErrors({ general: 'Failed to delete account' });
+      setErrors({ general: "Failed to delete account" });
     }
   };
 
@@ -70,7 +69,7 @@ const ConfirmDelete = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
         {/* Header */}
@@ -91,12 +90,11 @@ const ConfirmDelete = () => {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
         >
-
           {/* Warning Text */}
           <View style={styles.deleteTextContainer}>
             <Text style={styles.deleteText}>
-              Please note this is a permanent and can't be undone. To confirm
-              deleting your account please enter your email.
+              Please note this is a permanent and can&apos;t be undone. To
+              confirm deleting your account please enter your email.
             </Text>
           </View>
 
@@ -108,7 +106,7 @@ const ConfirmDelete = () => {
             onChangeText={(text) => {
               setEmail(text);
               if (errors.email) {
-                setErrors({ ...errors, email: '' });
+                setErrors({ ...errors, email: "" });
               }
             }}
             keyboardType="email-address"
@@ -144,8 +142,8 @@ const ConfirmDelete = () => {
           buttonText="Done"
           iconComponent={
             <Image
-              source={require('../../assets/images/success-icon.png')}
-              style={styles.successIcon}          
+              source={require("../../assets/images/success-icon.png")}
+              style={styles.successIcon}
             />
           }
         />
@@ -162,9 +160,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundMain,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: ms(20),
     paddingTop: vs(50),
     paddingBottom: vs(16),
@@ -173,8 +171,8 @@ const styles = StyleSheet.create({
   backButton: {
     width: ms(40),
     height: ms(40),
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    justifyContent: "center",
+    alignItems: "flex-start",
   },
   headerTitle: {
     ...typography.heading2,
@@ -210,8 +208,8 @@ const styles = StyleSheet.create({
     paddingVertical: vs(16),
     backgroundColor: colors.backgroundMain,
   },
-  successIcon:{
+  successIcon: {
     width: ms(60),
-    height: ms(60)
-  }
+    height: ms(60),
+  },
 });

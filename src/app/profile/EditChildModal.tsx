@@ -1,6 +1,6 @@
 // components/EditChildModal.tsx
 import { Feather } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dimensions,
   Image,
@@ -11,24 +11,28 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  Alert,
+  Platform,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+
+// API Imports
+import {
+  updateChildProfile,
+  uploadChildProfilePicture,
+  formatDateForApi,
+  parseDateFromApi,
+} from "../../core/services/childProfile.service";
+import { ChildProfile, UpdateChildProfileRequest } from "../../types/child.types";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-interface Child {
-  id: number;
-  name: string;
-  age: string;
-  image: string;
-  gender: string;
-  dateOfBirth: string;
-  birthOrder: string;
-}
 
 interface EditChildModalProps {
   visible: boolean;
   onClose: () => void;
-  child: Child | null;
+  child: ChildProfile | null;
 }
 
 export function EditChildModal({
@@ -36,21 +40,165 @@ export function EditChildModal({
   onClose,
   child,
 }: EditChildModalProps) {
-  const [name, setName] = useState(child?.name || "");
-  const [gender, setGender] = useState(child?.gender || "");
-  const [dateOfBirth, setDateOfBirth] = useState(child?.dateOfBirth || "");
-  const [age, setAge] = useState(child?.age || "");
-  const [birthOrder, setBirthOrder] = useState(child?.birthOrder || "");
+  const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [birthOrder, setBirthOrder] = useState("");
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  const handleSave = () => {
-    console.log("Saving child info...", {
-      name,
-      gender,
-      dateOfBirth,
-      age,
-      birthOrder,
+  // Update form when child prop changes
+  useEffect(() => {
+    if (child) {
+      setName(child.full_name);
+      setGender(child.gender);
+      setDateOfBirth(parseDateFromApi(child.date_of_birth));
+      setBirthOrder(child.birth_order.toString());
+      setProfilePicture(child.profile_picture_url || null);
+    }
+  }, [child]);
+
+  /**
+   * Request camera/gallery permissions
+   */
+  const requestPermissions = async () => {
+    if (Platform.OS !== "web") {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Sorry, we need camera roll permissions to upload photos."
+        );
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /**
+   * Handle image picker
+   */
+  const handlePickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setProfilePicture(imageUri);
+
+        // If we have a child ID, upload immediately
+        if (child?.id) {
+          await handleUploadImage(imageUri);
+        }
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
+
+  /**
+   * Handle image upload
+   */
+  const handleUploadImage = async (imageUri: string) => {
+    if (!child?.id) return;
+
+    try {
+      setUploadingImage(true);
+      
+      const imageFile = {
+        uri: imageUri,
+        name: `profile_${Date.now()}.jpg`,
+        type: "image/jpeg",
+      };
+
+      const response = await uploadChildProfilePicture(child.id, imageFile);
+      setProfilePicture(response.profile_picture_url);
+      Alert.alert("Success", "Profile picture uploaded successfully");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload profile picture");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  /**
+   * Handle date change
+   */
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setDateOfBirth(selectedDate);
+    }
+  };
+
+  /**
+   * Format date for display
+   */
+  const formatDateForDisplay = (date: Date): string => {
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
-    onClose();
+  };
+
+  /**
+   * Validate form
+   */
+  const validateForm = (): boolean => {
+    if (!name.trim()) {
+      Alert.alert("Validation Error", "Please enter child's name");
+      return false;
+    }
+    if (!gender.trim()) {
+      Alert.alert("Validation Error", "Please enter gender");
+      return false;
+    }
+    if (!birthOrder.trim() || isNaN(parseInt(birthOrder))) {
+      Alert.alert("Validation Error", "Please enter a valid birth order");
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * Handle save
+   */
+  const handleSave = async () => {
+    if (!child?.id) return;
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+
+      const updateData: UpdateChildProfileRequest = {
+        full_name: name.trim(),
+        gender: gender.trim(),
+        date_of_birth: formatDateForApi(dateOfBirth),
+        birth_order: parseInt(birthOrder),
+      };
+
+      await updateChildProfile(child.id, updateData);
+      Alert.alert("Success", "Child profile updated successfully");
+      onClose();
+    } catch (error) {
+      console.error("Error updating child:", error);
+      Alert.alert("Error", "Failed to update child profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,16 +229,24 @@ export function EditChildModal({
             <View style={styles.avatarSection}>
               <Image
                 source={{
-                  uri: child?.image || "https://i.pravatar.cc/150?img=1",
+                  uri: profilePicture || "https://i.pravatar.cc/150?img=1",
                 }}
                 style={styles.avatar}
               />
-              <TouchableOpacity style={styles.cameraButton}>
-                <Feather name="camera" size={20} color="#FFF" />
+              <TouchableOpacity
+                style={styles.cameraButton}
+                onPress={handlePickImage}
+                disabled={uploadingImage}
+              >
+                {uploadingImage ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Feather name="camera" size={20} color="#FFF" />
+                )}
               </TouchableOpacity>
             </View>
 
-            {/* Name/Nickname Field */}
+            {/* Name Field */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Name/Nickname</Text>
               <View style={styles.inputContainer}>
@@ -105,6 +261,7 @@ export function EditChildModal({
                   value={name}
                   onChangeText={setName}
                   placeholder="Enter name"
+                  editable={!loading}
                 />
               </View>
             </View>
@@ -124,6 +281,7 @@ export function EditChildModal({
                   value={gender}
                   onChangeText={setGender}
                   placeholder="Enter gender"
+                  editable={!loading}
                 />
               </View>
             </View>
@@ -131,40 +289,33 @@ export function EditChildModal({
             {/* Date of Birth Field */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Date of Birth</Text>
-              <View style={styles.inputContainer}>
+              <TouchableOpacity
+                style={styles.inputContainer}
+                onPress={() => setShowDatePicker(true)}
+                disabled={loading}
+              >
                 <Feather
                   name="calendar"
                   size={20}
                   color="#666"
                   style={styles.inputIcon}
                 />
-                <TextInput
-                  style={styles.input}
-                  value={dateOfBirth}
-                  onChangeText={setDateOfBirth}
-                  placeholder="DD/MM/YYYY"
-                />
-              </View>
+                <Text style={styles.dateText}>
+                  {formatDateForDisplay(dateOfBirth)}
+                </Text>
+              </TouchableOpacity>
             </View>
 
-            {/* Age Field */}
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Age</Text>
-              <View style={styles.inputContainer}>
-                <Feather
-                  name="clock"
-                  size={20}
-                  color="#666"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  value={age}
-                  onChangeText={setAge}
-                  placeholder="Enter age"
-                />
-              </View>
-            </View>
+            {/* Date Picker */}
+            {showDatePicker && (
+              <DateTimePicker
+                value={dateOfBirth}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
 
             {/* Birth Order Field */}
             <View style={styles.formSection}>
@@ -180,17 +331,31 @@ export function EditChildModal({
                   style={styles.input}
                   value={birthOrder}
                   onChangeText={setBirthOrder}
-                  placeholder="Enter birth order"
+                  placeholder="Enter birth order (e.g., 1, 2, 3)"
+                  keyboardType="number-pad"
+                  editable={!loading}
                 />
               </View>
             </View>
 
             {/* Buttons */}
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>Save</Text>
+            <TouchableOpacity
+              style={[styles.saveButton, loading && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={onClose}
+              disabled={loading}
+            >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -265,6 +430,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     borderRadius: 8,
     paddingHorizontal: 16,
+    minHeight: 56,
   },
   inputIcon: {
     marginRight: 12,
@@ -275,8 +441,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000",
   },
-  placeholderStyle: {
-    color: "#CCC",
+  dateText: {
+    flex: 1,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: "#000",
   },
   saveButton: {
     backgroundColor: "#E63946",
@@ -303,5 +472,8 @@ const styles = StyleSheet.create({
     color: "#E63946",
     fontSize: 16,
     fontWeight: "700",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });

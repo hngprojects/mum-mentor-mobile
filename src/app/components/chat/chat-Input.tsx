@@ -84,7 +84,8 @@ export const ChatInput = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.textWhite,
+    backgroundColor: colors.backgroundMain,
+    flex: 1,
     paddingHorizontal: s(16),
     paddingVertical: vs(8),
   },

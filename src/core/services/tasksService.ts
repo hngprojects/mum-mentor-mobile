@@ -6,11 +6,15 @@ export async function fetchTasks(params?: {
   page?: number;
   per_page?: number;
   task_status?: string;
+  order_by?: "due_date" | "created_at" | "updated_at" | "name" | "status";
+  order_direction?: "asc" | "desc";
 }) {
   const query: Record<string, any> = {};
   if (params?.page) query.page = params.page;
   if (params?.per_page) query.per_page = params.per_page;
   if (params?.task_status) query.task_status = params.task_status;
+  if (params?.order_by) query.order_by = params.order_by;
+  if (params?.order_direction) query.order_direction = params.order_direction;
 
   try {
     const response = await apiClient.get(TASKS_ENDPOINT, { params: query });
@@ -20,7 +24,6 @@ export async function fetchTasks(params?: {
     return null;
   }
 }
-
 export async function createTask({
   name,
   description,

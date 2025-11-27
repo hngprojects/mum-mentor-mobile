@@ -108,7 +108,7 @@ const Home = () => {
     }
   }, []);
 
-  /** Fetches the list of user tasks. */
+  /** Fetches the list of user tasks and filters for today's tasks. */
   const listUserTasks = useCallback(async () => {
     setIsLoadingTasks(true);
     setIsAppAction(true);
@@ -119,7 +119,20 @@ const Home = () => {
         setTasks([]);
         return;
       }
-      setTasks(response.data.details || []);
+
+      // Filter tasks to show only today's tasks
+      const allTasks = response.data.details || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todaysTasks = allTasks.filter((task: any) => {
+        if (!task.due_date) return false;
+        const taskDate = new Date(task.due_date);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      });
+
+      setTasks(todaysTasks);
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       showToast.error(
@@ -239,6 +252,7 @@ const Home = () => {
                 activeOpacity={0.9}
                 onPress={() => {
                   if (action.id === "resources") router.push("/resources");
+                  if (action.id === "journal") router.push("/journal");
                   // Add journal navigation here
                 }}
                 accessibilityRole="button"
@@ -529,19 +543,23 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 30,
     right: 20,
-    width: ms(50),
-    height: ms(50),
+    width: ms(56),
+    height: ms(56),
     borderRadius: ms(8),
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 12,
-    zIndex: 999,
+    shadowColor: colors.textPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   floatingButtonText: {
     color: colors.textWhite,
-    fontSize: ms(30),
-    marginTop: ms(-3),
+    fontSize: ms(32),
     fontFamily: fontFamilies.regular,
+    fontWeight: "300" as any,
+    marginTop: ms(-2),
   },
 });

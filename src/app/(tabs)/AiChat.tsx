@@ -26,6 +26,7 @@ import { ChatMessage } from "../components/chat/chat-Message";
 import { ChatWelcome } from "../components/chat/chat-Welcome";
 import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { TypingIndicator } from "../components/chat/typing-Indicator";
+import { KeyboardAvoidingView, Platform } from "react-native";
 
 interface Chat {
   id: string;
@@ -224,94 +225,100 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() =>
-            currentView === "welcome"
-              ? router.back()
-              : setCurrentView("welcome")
-          }
-          style={styles.backTouchable}
-        >
-          <Image
-            source={require("../assets/images/ai-chat/Line-arrow-left.png")}
-            style={styles.backButton}
-          />
-        </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} 
+    >
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() =>
+              currentView === "welcome"
+                ? router.back()
+                : setCurrentView("welcome")
+            }
+            style={styles.backTouchable}
+          >
+            <Image
+              source={require("../assets/images/ai-chat/Line-arrow-left.png")}
+              style={styles.backButton}
+            />
+          </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          {currentView === "welcome"
-            ? "NORA"
-            : currentChat?.title || "New Chat"}
-        </Text>
+          <Text style={styles.headerTitle}>
+            {currentView === "welcome"
+              ? "NORA"
+              : currentChat?.title || "New Chat"}
+          </Text>
 
-        <TouchableOpacity onPress={() => setShowHistoryEmpty(true)}>
-          <Image
-            source={require("../assets/images/ai-chat/menu.png")}
-            style={styles.menuButton}
-          />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity onPress={() => setShowHistoryEmpty(true)}>
+            <Image
+              source={require("../assets/images/ai-chat/menu.png")}
+              style={styles.menuButton}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* History Empty State Modal */}
-      <HistoryEmptyState
-        visible={showHistoryEmpty}
-        onClose={() => setShowHistoryEmpty(false)}
-        onNewChat={handleNewChat}
-        chats={chats?.conversations || []}
-        onChatPress={handleChatPress}
-        onRenameChat={handleRenameChat}
-        onDeleteChat={handleDeleteChat}
-      />
-
-      {/* Content Views */}
-      {currentView === "welcome" && (
-        <ChatWelcome
-          userName={
-            isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"
-          }
-          onCategoryPress={handleCategoryPress}
-          onAskAnything={handleAskAnything}
+        {/* History Empty State Modal */}
+        <HistoryEmptyState
+          visible={showHistoryEmpty}
+          onClose={() => setShowHistoryEmpty(false)}
+          onNewChat={handleNewChat}
+          chats={chats?.conversations || []}
+          onChatPress={handleChatPress}
+          onRenameChat={handleRenameChat}
+          onDeleteChat={handleDeleteChat}
         />
-      )}
 
-      {currentView === "chat" && (
-        <>
-          <FlatList
-            ref={flatListRef}
-            data={displayMessages}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <ChatMessage
-                message={item.text}
-                isUser={item.isUser}
-                link={item.link}
-              />
+        {/* Content Views */}
+        {currentView === "welcome" && (
+          <ChatWelcome
+            userName={
+              isLoadingUser ? "" : user?.full_name?.split(" ")[0] || "User"
+            }
+            onCategoryPress={handleCategoryPress}
+            onAskAnything={handleAskAnything}
+          />
+        )}
+
+        {currentView === "chat" && (
+          <>
+            <FlatList
+              ref={flatListRef}
+              data={displayMessages}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <ChatMessage
+                  message={item.text}
+                  isUser={item.isUser}
+                  link={item.link}
+                />
+              )}
+              contentContainerStyle={styles.messagesList}
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+              }}
+            />
+
+            {/* Show typing indicator when waiting for first chunk */}
+            {isAiSpeaking && !streamingText && (
+              <TypingIndicator isAiSpeaking={true} />
             )}
-            contentContainerStyle={styles.messagesList}
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => {
-              flatListRef.current?.scrollToEnd({ animated: true });
-            }}
-          />
 
-          {/* Show typing indicator when waiting for first chunk */}
-          {isAiSpeaking && !streamingText && (
-            <TypingIndicator isAiSpeaking={true} />
-          )}
-
-          {/* Chat Input */}
-          <ChatInput
-            value={inputText}
-            onChangeText={setInputText}
-            onSend={handleSend}
-            isAiSpeaking={isAiSpeaking}
-          />
-        </>
-      )}
-    </SafeAreaView>
+            {/* Chat Input */}
+            <ChatInput
+              value={inputText}
+              onChangeText={setInputText}
+              onSend={handleSend}
+              isAiSpeaking={isAiSpeaking}
+            />
+          </>
+        )}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
