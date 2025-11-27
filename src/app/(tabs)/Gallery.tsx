@@ -1,4 +1,4 @@
-// src/app/(tabs)/Gallery.tsx
+// src/app/(tabs)/Gallery.tsx - Updated with API integration
 
 import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, rfs, vs } from "@/src/core/styles/scaling";
@@ -8,6 +8,7 @@ import { router, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   RefreshControl,
@@ -17,7 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import * as galleryStorage from "../../core/services/galleryStorageService";
+import * as galleryService from "../../core/services/galleryService";
 import CustomInput from "../components/CustomInput";
 import AlbumCreatedModal from "../components/GalleryComponents/AlbumCreated";
 import CreateAlbumModal from "../components/GalleryComponents/CreateAlbumModal";
@@ -29,7 +30,8 @@ export default function GalleryScreen() {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [createdAlbumName, setCreatedAlbumName] = useState("");
-  const [albums, setAlbums] = useState<galleryStorage.Album[]>([]);
+  const [createdAlbumId, setCreatedAlbumId] = useState("");
+  const [albums, setAlbums] = useState<galleryService.Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -43,11 +45,14 @@ export default function GalleryScreen() {
   const loadAlbums = async () => {
     try {
       setIsLoading(true);
-      const loadedAlbums = await galleryStorage.getAlbums();
+      const loadedAlbums = await galleryService.fetchAlbums();
       setAlbums(loadedAlbums);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading albums:", error);
-      showToast.error("Error", "Failed to load albums");
+      showToast.error(
+        "Error",
+        error?.response?.data?.message || "Failed to load albums"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -65,10 +70,11 @@ export default function GalleryScreen() {
 
   const handleSaveAlbum = async (albumName: string) => {
     try {
-      const newAlbum = await galleryStorage.createAlbum(albumName);
+      const newAlbum = await galleryService.createAlbum(albumName);
       console.log("Album created:", newAlbum);
 
       setCreatedAlbumName(albumName);
+      setCreatedAlbumId(newAlbum.id);
       setIsCreateModalVisible(false);
 
       // Reload albums
@@ -76,9 +82,13 @@ export default function GalleryScreen() {
 
       // Show success modal
       setIsSuccessModalVisible(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating album:", error);
-      showToast.error("Error", "Failed to create album. Please try again.");
+      showToast.error(
+        "Error",
+        error?.response?.data?.message ||
+          "Failed to create album. Please try again."
+      );
     }
   };
 
@@ -89,21 +99,18 @@ export default function GalleryScreen() {
   const handleAddPhotos = () => {
     setIsSuccessModalVisible(false);
 
-    // Find the created album
-    const album = albums.find((a) => a.name === createdAlbumName);
-    if (album) {
-      router.push({
-        pathname: "../Gallery/AlbumDetail",
-        params: { albumId: album.id, albumName: album.name },
-      });
-    }
+    // Navigate to album detail with the created album
+    router.push({
+      pathname: "../Gallery/AlbumDetail",
+      params: { albumId: createdAlbumId, albumName: createdAlbumName },
+    });
   };
 
   const handleCancelSuccess = () => {
     setIsSuccessModalVisible(false);
   };
 
-  const handleViewAlbum = (album: galleryStorage.Album) => {
+  const handleViewAlbum = (album: galleryService.Album) => {
     router.push({
       pathname: "../Gallery/AlbumDetail",
       params: { albumId: album.id, albumName: album.name },
@@ -160,6 +167,7 @@ export default function GalleryScreen() {
           {/* Loading State */}
           {isLoading && !refreshing ? (
             <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
               <Text style={styles.emptySubtitle}>Loading albums...</Text>
             </View>
           ) : !hasAlbums ? (
@@ -199,9 +207,9 @@ export default function GalleryScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.albumCover}>
-                    {album.coverPhotoUri ? (
+                    {album.cover_photo_uri ? (
                       <Image
-                        source={{ uri: album.coverPhotoUri }}
+                        source={{ uri: album.cover_photo_uri }}
                         style={styles.albumCoverImage}
                       />
                     ) : (
@@ -216,8 +224,8 @@ export default function GalleryScreen() {
                     {album.name}
                   </Text>
                   <Text style={styles.albumCount}>
-                    {album.photoCount}{" "}
-                    {album.photoCount === 1 ? "photo" : "photos"}
+                    {album.photo_count}{" "}
+                    {album.photo_count === 1 ? "photo" : "photos"}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -305,6 +313,7 @@ const styles = StyleSheet.create({
     color: colors.textGrey1,
     textAlign: "center",
     fontSize: rfs(14),
+    marginTop: vs(8),
   },
   albumsGrid: {
     flexDirection: "row",
