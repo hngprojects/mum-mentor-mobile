@@ -1,7 +1,12 @@
+import { useAuth } from "@/src/core/services/authContext";
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -9,37 +14,34 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from "react-native";
-import { useAuth } from "@/src/core/services/authContext";
 import { useSetup } from "../../core/hooks/setupContext";
-import { colors, spacing, typography } from "@/src/core/styles";
-import { ms, vs, rfs } from "@/src/core/styles/scaling";
-import { showToast } from "@/src/core/utils/toast";
 // ✅ FIXED: ChildData interface is correctly imported here
+import { getProfileSetup } from "../../core/services/profileSetup.service";
+import { completeSetupFlow } from "../../core/services/setupService";
 import ChildSetupItem, { ChildData } from "../components/ChildSetupItem";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
 import { SuccessModal, useSuccessModal } from "../components/SuccessModal";
-import { completeSetupFlow } from "../../core/services/setupService";
-import { getProfileSetup } from "../../core/services/profileSetup.service";
 
 const ChildSetupScreen: React.FC = () => {
   const { user, isSessionLoading } = useAuth();
   const { momSetupData } = useSetup();
-  const [children, setChildren] = useState<ChildData[]>([{ fullName: "", age: "", dob: "", gender: "" }]);
+  const [children, setChildren] = useState<ChildData[]>([
+    { fullName: "", age: "", dob: "", gender: "" },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const { visible, show, hide } = useSuccessModal();
-  
+
   // ✅ STATE: Flag to ignore the initial state flicker
   const [isNavigatingFromSetup, setIsNavigatingFromSetup] = useState(true);
 
   // Set the flag to false after a brief moment to allow the context to settle
   useEffect(() => {
     const timer = setTimeout(() => {
-        setIsNavigatingFromSetup(false);
-        console.log("[ChildSetup] Initial navigation buffer complete (500ms).");
-    }, 500); 
+      setIsNavigatingFromSetup(false);
+      console.log("[ChildSetup] Initial navigation buffer complete (500ms).");
+    }, 500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -48,104 +50,143 @@ const ChildSetupScreen: React.FC = () => {
   useEffect(() => {
     // 1. Always wait for the context to finish its main check OR the buffer period to end.
     if (isSessionLoading || isNavigatingFromSetup) {
-        // 📢 AGGRESSIVE LOG: Track the waiting state
-        console.log(`[ChildSetup Guard] WAITING. Loading: ${isSessionLoading ? 'TRUE' : 'FALSE'}, Buffer: ${isNavigatingFromSetup ? 'TRUE' : 'FALSE'}.`);
-        return; 
+      // 📢 AGGRESSIVE LOG: Track the waiting state
+      console.log(
+        `[ChildSetup Guard] WAITING. Loading: ${isSessionLoading ? "TRUE" : "FALSE"}, Buffer: ${isNavigatingFromSetup ? "TRUE" : "FALSE"}.`
+      );
+      return;
     }
 
     // --- REDIRECT GUARDS ---
-    
+
     // 2. CRITICAL CHECK: User session is NULL AND MomData is NULL (Go back to Auth/Login)
-    if (!user && !momSetupData) { 
-        // 📢 CRITICAL LOG: This is the most likely failure point
-        console.error(`[ChildSetup Guard] REDIRECT: CRITICAL FAILURE. User: NULL, MomData: NULL. Redirecting to LOGIN.`);
-        router.replace("/(auth)/SignInScreen");
-        return;
-    }
-    
-    // 3. FLOW CHECK: User is VALID, but Mom data is missing (Go back to Mom setup)
-    if (user && !momSetupData) {
-        console.warn("[ChildSetup Guard] REDIRECT: FLOW BREAK. User is VALID but MomData is MISSING. Redirecting to Mum setup.");
-        router.replace("/setup/Mum"); 
-        return;
-    }
-    
-    // 4. EDGE CASE CHECK: User session LOST but Mom data exists (Go back to Login - This is the silent logout)
-    if (!user && momSetupData) {
-        // 📢 CRITICAL LOG: This captures the silent session failure
-        console.error("[ChildSetup Guard] REDIRECT: SESSION LOST. User is NULL but MomData EXISTS. Redirecting to LOGIN.");
-        router.replace("/(auth)/SignInScreen");
-        return;
+    if (!user && !momSetupData) {
+      // 📢 CRITICAL LOG: This is the most likely failure point
+      console.error(
+        `[ChildSetup Guard] REDIRECT: CRITICAL FAILURE. User: NULL, MomData: NULL. Redirecting to LOGIN.`
+      );
+      router.replace("/(auth)/SignInScreen");
+      return;
     }
 
-    // 5. Normal execution: Check if profile setup is already complete 
+    // 3. FLOW CHECK: User is VALID, but Mom data is missing (Go back to Mom setup)
+    if (user && !momSetupData) {
+      console.warn(
+        "[ChildSetup Guard] REDIRECT: FLOW BREAK. User is VALID but MomData is MISSING. Redirecting to Mum setup."
+      );
+      router.replace("/setup/Mum");
+      return;
+    }
+
+    // 4. EDGE CASE CHECK: User session LOST but Mom data exists (Go back to Login - This is the silent logout)
+    if (!user && momSetupData) {
+      // 📢 CRITICAL LOG: This captures the silent session failure
+      console.error(
+        "[ChildSetup Guard] REDIRECT: SESSION LOST. User is NULL but MomData EXISTS. Redirecting to LOGIN."
+      );
+      router.replace("/(auth)/SignInScreen");
+      return;
+    }
+
+    // 5. Normal execution: Check if profile setup is already complete
     (async () => {
       try {
         const profile = await getProfileSetup();
         if (profile?.id) {
-            console.log("[ChildSetup] Profile already exists. Redirecting to Home.");
-            router.replace("/(tabs)/Home"); 
+          console.log(
+            "[ChildSetup] Profile already exists. Redirecting to Home."
+          );
+          router.replace("/(tabs)/Home");
         }
       } catch (err) {
         // This is expected if the profile doesn't exist yet (i.e., this is the first time running setup)
-        console.log("[ChildSetup] Profile not found or error fetching (expected during setup), proceeding.");
+        console.log(
+          "[ChildSetup] Profile not found or error fetching (expected during setup), proceeding."
+        );
       }
     })();
-  }, [user, isSessionLoading, momSetupData, isNavigatingFromSetup]); 
-  
+  }, [user, isSessionLoading, momSetupData, isNavigatingFromSetup]);
+
   // ... rest of the component remains the same (handleDone, render, etc.)
-  
+
   const addChild = useCallback(() => {
-    setChildren(prev => [...prev, { fullName: "", age: "", dob: "", gender: "" }]);
-  }, []);
-
-  const updateChild = useCallback((index: number, updatedChild: ChildData) => {
-    setChildren(prev => prev.map((c, i) => (i === index ? updatedChild : c)));
-  }, []);
-
-  const removeChild = useCallback((index: number) => {
-    setChildren(prev => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const canceled = useCallback(() => {
-    Alert.alert("Cancel Setup", "Are you sure you want to cancel? Your progress will be lost.", [
-      { text: "No", style: "cancel" },
-      { text: "Yes", style: "destructive", onPress: () => router.back() },
+    setChildren((prev) => [
+      ...prev,
+      { fullName: "", age: "", dob: "", gender: "" },
     ]);
   }, []);
 
+  const updateChild = useCallback((index: number, updatedChild: ChildData) => {
+    setChildren((prev) => prev.map((c, i) => (i === index ? updatedChild : c)));
+  }, []);
+
+  const removeChild = useCallback((index: number) => {
+    setChildren((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const canceled = useCallback(() => {
+    Alert.alert(
+      "Cancel Setup",
+      "Are you sure you want to cancel? Your progress will be lost.",
+      [
+        { text: "No", style: "cancel" },
+        { text: "Yes", style: "destructive", onPress: () => router.back() },
+      ]
+    );
+  }, []);
+
   const areAllFilledChildrenComplete = useCallback(() => {
-    const filled = children.filter(child => child.fullName || child.age || child.dob || child.gender);
-    return filled.every(child => child.fullName && child.age && child.dob && child.gender);
+    const filled = children.filter(
+      (child) => child.fullName || child.age || child.dob || child.gender
+    );
+    return filled.every(
+      (child) => child.fullName && child.age && child.dob && child.gender
+    );
   }, [children]);
 
   const getCompleteChildren = useCallback(() => {
-    return children.filter(child => child.fullName && child.age && child.dob && child.gender);
+    return children.filter(
+      (child) => child.fullName && child.age && child.dob && child.gender
+    );
   }, [children]);
 
   const canSubmit = useCallback(() => {
-    return !!momSetupData && areAllFilledChildrenComplete() && !!user && !isSessionLoading;
+    return (
+      !!momSetupData &&
+      areAllFilledChildrenComplete() &&
+      !!user &&
+      !isSessionLoading
+    );
   }, [momSetupData, areAllFilledChildrenComplete, user, isSessionLoading]);
 
   const handleDone = async () => {
     if (!user) {
-      Alert.alert("Authentication Error", "User session not found. Please log in again.");
+      Alert.alert(
+        "Authentication Error",
+        "User session not found. Please log in again."
+      );
       router.replace("/(auth)/SignInScreen");
       return;
     }
 
     if (!momSetupData) {
-      showToast.error("Error", "Mom setup data is missing. Complete mom setup first.");
+      showToast.error(
+        "Error",
+        "Mom setup data is missing. Complete mom setup first."
+      );
       router.back();
       return;
     }
 
     if (!areAllFilledChildrenComplete()) {
-      Alert.alert("Incomplete Form", "Please complete all child details or remove partial entries.");
+      Alert.alert(
+        "Incomplete Form",
+        "Please complete all child details or remove partial entries."
+      );
       return;
     }
 
-    const childrenForAPI = getCompleteChildren().map(c => ({
+    const childrenForAPI = getCompleteChildren().map((c) => ({
       fullName: c.fullName,
       dob: c.dob,
       gender: c.gender.toLowerCase() as "male" | "female" | "other",
@@ -178,7 +219,7 @@ const ChildSetupScreen: React.FC = () => {
   }, [hide]);
 
   // Render a loading state if session is loading OR we are in the initial navigation buffer
-  if (isSessionLoading || isNavigatingFromSetup) { 
+  if (isSessionLoading || isNavigatingFromSetup) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -191,7 +232,10 @@ const ChildSetupScreen: React.FC = () => {
     <>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.title}>Set Up Children</Text>
           <Text style={styles.subtitle}>
             {children.length === 1
@@ -219,11 +263,15 @@ const ChildSetupScreen: React.FC = () => {
           onClose={handleSuccessClose}
           title="Setup Successful!"
           message="Your profile is ready. Let's get started!"
-          iconComponent={<Image source={require("../../assets/images/success-icon.png")} style={styles.successIcon} />}
+          iconComponent={
+            <Image
+              source={require("../../assets/images/success-icon.png")}
+              style={styles.successIcon}
+            />
+          }
         />
 
         <View style={styles.bottomButtons}>
-<<<<<<< HEAD
           <PrimaryButton
             title="Done"
             onPress={handleDone}
@@ -235,10 +283,6 @@ const ChildSetupScreen: React.FC = () => {
             onPress={canceled}
             disabled={isLoading}
           />
-=======
-          <PrimaryButton title="Done" onPress={handleDone} disabled={!canSubmit() || isLoading} isLoading={isLoading} />
-          <SecondaryButton title="Cancel" onPress={canceled} disabled={isLoading} />
->>>>>>> cc1838250b383e6cfadc73559854d6582c95e682
         </View>
       </View>
     </>
@@ -250,9 +294,24 @@ export default ChildSetupScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundMain },
-  scrollView: { paddingHorizontal: ms(spacing.lg), paddingTop: vs(60), paddingBottom: vs(180) },
-  title: { ...typography.heading1, color: colors.textPrimary, textAlign: "center", marginBottom: vs(spacing.sm) },
-  subtitle: { ...typography.bodyMedium, color: colors.textGrey1, textAlign: "center", marginBottom: vs(spacing.xl), paddingHorizontal: ms(spacing.md) },
+  scrollView: {
+    paddingHorizontal: ms(spacing.lg),
+    paddingTop: vs(60),
+    paddingBottom: vs(180),
+  },
+  title: {
+    ...typography.heading1,
+    color: colors.textPrimary,
+    textAlign: "center",
+    marginBottom: vs(spacing.sm),
+  },
+  subtitle: {
+    ...typography.bodyMedium,
+    color: colors.textGrey1,
+    textAlign: "center",
+    marginBottom: vs(spacing.xl),
+    paddingHorizontal: ms(spacing.md),
+  },
   addBtn: { alignSelf: "center", marginVertical: vs(spacing.lg) },
   addBtnText: { ...typography.labelLarge, color: colors.primary },
   bottomButtons: {
