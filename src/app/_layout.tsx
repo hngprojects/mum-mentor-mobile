@@ -58,7 +58,13 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5000,
+      networkMode: "offlineFirst",
+    },
+    mutations: {
+      retry: 1,
+      networkMode: "offlineFirst",
     },
   },
 });

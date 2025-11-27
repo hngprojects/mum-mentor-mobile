@@ -108,7 +108,7 @@ const Home = () => {
     }
   }, []);
 
-  /** Fetches the list of user tasks. */
+  /** Fetches the list of user tasks and filters for today's tasks. */
   const listUserTasks = useCallback(async () => {
     setIsLoadingTasks(true);
     setIsAppAction(true);
@@ -119,7 +119,20 @@ const Home = () => {
         setTasks([]);
         return;
       }
-      setTasks(response.data.details || []);
+      
+      // Filter tasks to show only today's tasks
+      const allTasks = response.data.details || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todaysTasks = allTasks.filter((task: any) => {
+        if (!task.due_date) return false;
+        const taskDate = new Date(task.due_date);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      });
+      
+      setTasks(todaysTasks);
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       showToast.error(

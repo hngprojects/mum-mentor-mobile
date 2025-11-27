@@ -1,4 +1,4 @@
-// TaskListItem.tsx - Updated with drag-and-drop support
+// TaskListItem.tsx
 import React from 'react';
 import {
   View,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { format, parseISO } from 'date-fns';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, fontFamilies } from '../../core/styles/index';
 import { ms, rfs } from '../../core/styles/scaling';
 
@@ -21,8 +20,6 @@ interface TaskListItemProps {
   onToggleStatus: (taskId: string, status: string) => void;
   onDelete: (taskId: string) => void;
   onPress: () => void;
-  onLongPress?: () => void; // For drag-and-drop
-  isActive?: boolean; // When being dragged
 }
 
 const TaskListItem: React.FC<TaskListItemProps> = ({
@@ -30,30 +27,14 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
   onToggleStatus,
   onDelete,
   onPress,
-  onLongPress,
-  isActive = false,
 }) => {
   return (
     <TouchableOpacity
-      style={[
-        styles.taskItem,
-        isActive && styles.taskItemActive,
-      ]}
+      style={styles.taskItem}
       onPress={onPress}
-      onLongPress={onLongPress}
       disabled={task.status === 'completed'}
       activeOpacity={0.7}
-      delayLongPress={200}
     >
-      {/* Drag Handle Icon */}
-      <View style={styles.dragHandle}>
-        <Ionicons
-          name="menu-outline"
-          size={20}
-          color={colors.textGrey2}
-        />
-      </View>
-
       {/* Checkbox */}
       <TouchableOpacity
         style={styles.checkboxContainer}
@@ -113,22 +94,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.textWhite,
     borderBottomWidth: 1,
     borderBottomColor: colors.backgroundSubtle,
-  },
-  taskItemActive: {
-    backgroundColor: colors.backgroundSubtle,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-  },
-  dragHandle: {
-    marginRight: ms(spacing.xs),
-    paddingTop: ms(2),
-    justifyContent: 'center',
   },
   checkboxContainer: {
     marginRight: ms(spacing.sm + 4),
