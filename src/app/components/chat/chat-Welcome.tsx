@@ -1,8 +1,8 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { CategoryButton } from "./category-Button";
 import { colors } from "@/src/core/styles";
-import { s, vs, rfs, rbr } from "@/src/core/styles/scaling";
+import { rbr, rfs, s, vs } from "@/src/core/styles/scaling";
+import React from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { CategoryButton } from "./category-Button";
 
 interface ChatWelcomeProps {
   userName: string;
@@ -33,7 +33,7 @@ export const ChatWelcome = ({
         />
       </View>
 
-      <Text style={styles.greeting}>Hi {userName}, how</Text>
+      <Text style={styles.greeting}>Hi{` ${userName}`}, how</Text>
       <Text style={styles.greeting}>can I help today?</Text>
 
       <View style={styles.grid}>
@@ -81,12 +81,12 @@ const styles = StyleSheet.create({
   },
 
   grid: {
-  marginTop: vs(36),
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "space-between",
-  flexGrow: 1,        // pushes Ask Anything button to bottom
-},
+    marginTop: vs(36),
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    flexGrow: 1, // pushes Ask Anything button to bottom
+  },
 
   askButton: {
     backgroundColor: colors.primary,
