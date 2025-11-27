@@ -1,6 +1,7 @@
 // TasksScreen.tsx - Updated with theme styles
 // TasksScreen.tsx - Updated with sorting, filtering, and search
 import { fetchTasks } from "@/src/core/services/tasksService";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -11,6 +12,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -19,8 +21,6 @@ import { colors, spacing, typography } from "../../core/styles/index";
 import CreateTaskFormModal from "../components/CreateTask";
 import ListTasks from "../components/ListTasks";
 import SortModal, { SortOption } from "../components/SortModal";
-import { TextInput } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 const arrowIcon = require("../../assets/images/arrow.png");
 const taskIcon = require("../../assets/images/task.png");
@@ -268,7 +268,7 @@ const TasksScreen = () => {
           {hasTasks && (
             <View style={styles.filterBar}>
               <View style={styles.searchContainer}>
-                <Ionicons style={styles.searchIcon} name="search"/>
+                <Ionicons style={styles.searchIcon} name="search" />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search"
