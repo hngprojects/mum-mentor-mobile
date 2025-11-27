@@ -3,10 +3,11 @@ import { colors, typography } from "@/src/core/styles";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import {
   getMilestoneStates,
+  onAddMilestone,
   onToggleCreateForm,
   onToggleSuccessModal,
 } from "@/src/store/milestoneSlice";
-import React from "react";
+import React, { useState } from "react";
 
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Modal from "react-native-modal";
@@ -14,10 +15,21 @@ import Modal from "react-native-modal";
 export default function CreateForm() {
   const { isCreateFormOpen } = useAppSelector(getMilestoneStates);
   const dispatch = useAppDispatch();
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
 
   function handleMilestoneCreation() {
-    // if success, open success modal
+    const newMilestone = {
+      id: crypto.randomUUID(),
+      title,
+      desc,
+      status: "pending",
+    };
 
+    dispatch(onAddMilestone(newMilestone));
+    // if success, open success modal
+    setTitle("");
+    setDesc("");
     dispatch(onToggleCreateForm(false));
     dispatch(onToggleSuccessModal(true));
   }
@@ -50,6 +62,8 @@ export default function CreateForm() {
             defaultValue=""
             keyboardType="default"
             autoCapitalize="none"
+            value={title}
+            onChangeText={(text) => setTitle(text)}
           />
         </FormInput>
 
@@ -61,6 +75,8 @@ export default function CreateForm() {
             defaultValue=""
             keyboardType="default"
             autoCapitalize="none"
+            value={desc}
+            onChangeText={(text) => setDesc(text)}
           />
         </FormInput>
 
@@ -68,6 +84,7 @@ export default function CreateForm() {
           <Pressable
             style={[styles.buttons, styles.buttonSave]}
             onPress={() => handleMilestoneCreation()}
+            disabled={!title && !desc}
           >
             Save
           </Pressable>

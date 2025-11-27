@@ -122,10 +122,7 @@ export default function EditProfileModal({
         );
         console.log("✅ PATCH successful:", patchResponse.data);
 
-        if (onProfileUpdated) {
-          onProfileUpdated();
-        }
-
+        if (onProfileUpdated) onProfileUpdated();
         showToast.success("Success", "Profile updated successfully!");
         onClose();
         return;
@@ -136,7 +133,7 @@ export default function EditProfileModal({
         console.log("❌ PATCH failed:", patchStatus);
         console.log("Error detail:", patchErrorDetail);
 
-        // Check if database table doesn't exist (500 error with specific message)
+        // Check for server setup issue
         if (
           patchStatus === 500 &&
           patchErrorDetail.includes("profile_setup") &&
@@ -145,31 +142,28 @@ export default function EditProfileModal({
           Alert.alert(
             "Feature Not Available",
             "Profile customization is currently being set up on our servers. This feature will be available soon. We apologize for the inconvenience.",
-            [
-              {
-                text: "OK",
-                onPress: () => onClose(),
-              },
-            ]
+            [{ text: "OK", onPress: () => onClose() }]
           );
           setLoading(false);
           return;
         }
 
-        // If it's 404 (not found), try POST to create
+        // If profile not found, try POST
         if (patchStatus === 404) {
           console.log("📤 Profile not found, trying POST to create...");
-
           try {
-            const createData = {
+            // Omit partner if empty
+            const createData: any = {
               mom_status: selectedMomStatus,
               goals: selectedGoals,
-              partner: {
-                name: "",
-                email: "",
-              },
               children: [],
             };
+
+            if (userProfile?.partner?.email) {
+              createData.partner = userProfile.partner;
+            }
+
+            console.log("📤 POST payload:", createData);
 
             const postResponse = await apiClient.post(
               "/api/v1/profile-setup/",
@@ -177,66 +171,47 @@ export default function EditProfileModal({
             );
             console.log("✅ POST successful:", postResponse.data);
 
-            if (onProfileUpdated) {
-              onProfileUpdated();
-            }
-
+            if (onProfileUpdated) onProfileUpdated();
             showToast.success("Success", "Profile created successfully!");
             onClose();
             return;
           } catch (postError: any) {
-            const postStatus = postError.response?.status;
-            const postErrorDetail =
-              postError.response?.data?.error?.detail || "";
+            console.log("❌ POST failed:", postError.response?.status);
+            console.log("POST error response:", postError.response?.data);
 
-            console.log("❌ POST failed:", postStatus);
-
-            // Check for database error on POST as well
             if (
-              postStatus === 500 &&
-              postErrorDetail.includes("profile_setup") &&
-              postErrorDetail.includes("does not exist")
+              postError.response?.status === 500 &&
+              postError.response?.data?.error?.detail?.includes(
+                "profile_setup"
+              )
             ) {
               Alert.alert(
                 "Feature Not Available",
                 "Profile customization is currently being set up on our servers. This feature will be available soon. We apologize for the inconvenience.",
-                [
-                  {
-                    text: "OK",
-                    onPress: () => onClose(),
-                  },
-                ]
+                [{ text: "OK", onPress: () => onClose() }]
               );
               setLoading(false);
               return;
             }
 
-            // Re-throw if it's a different error
             throw postError;
           }
         }
 
-        // If it's 405 (Method Not Allowed), the endpoint might not support the operation
         if (patchStatus === 405) {
           Alert.alert(
             "Feature Not Available",
             "This feature is currently unavailable. Please contact support if the issue persists.",
-            [
-              {
-                text: "OK",
-                onPress: () => onClose(),
-              },
-            ]
+            [{ text: "OK", onPress: () => onClose() }]
           );
           setLoading(false);
           return;
         }
 
-        // Re-throw for other errors
         throw patchError;
       }
     } catch (error: any) {
-      console.error("❌ Unexpected error:", error);
+      console.error("❌ Unexpected Global Error:", error);
       console.error("Error response:", error.response?.data);
       console.error("Error status:", error.response?.status);
 
@@ -244,14 +219,10 @@ export default function EditProfileModal({
 
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
-      } else if (error.response?.data?.detail) {
-        if (Array.isArray(error.response.data.detail)) {
-          errorMessage = error.response.data.detail
-            .map((err: any) => err.msg)
-            .join("\n");
-        } else if (typeof error.response.data.detail === "string") {
-          errorMessage = error.response.data.detail;
-        }
+      } else if (error.response?.data?.error?.errors) {
+        errorMessage = error.response.data.error.errors
+          .map((err: any) => err.msg)
+          .join("\n");
       }
 
       showToast.error("Error", errorMessage);
@@ -466,22 +437,10 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bold,
     color: colors.textPrimary,
   },
-  closeButton: {
-    padding: 4,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  avatarSection: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
+  closeButton: { padding: 4 },
+  content: { paddingHorizontal: 20, paddingTop: 20 },
+  avatarSection: { alignItems: "center", marginBottom: 24 },
+  avatar: { width: 120, height: 120, borderRadius: 60 },
   cameraButton: {
     position: "absolute",
     bottom: 0,
@@ -511,9 +470,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     lineHeight: typography.bodySmall.fontSize * 1.4,
   },
-  formSection: {
-    marginBottom: 24,
-  },
+  formSection: { marginBottom: 24 },
   label: {
     fontSize: typography.bodyMedium.fontSize,
     fontFamily: fontFamilies.semiBold,
@@ -528,12 +485,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
   },
-  disabledInput: {
-    backgroundColor: colors.backgroundMain,
-  },
-  inputIcon: {
-    marginRight: 8,
-  },
+  disabledInput: { backgroundColor: colors.backgroundMain },
+  inputIcon: { marginRight: 8 },
   input: {
     flex: 1,
     paddingVertical: 14,
@@ -541,20 +494,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.regular,
     color: colors.textPrimary,
   },
-  disabledInputText: {
-    color: colors.textGrey1,
-  },
+  disabledInputText: { color: colors.textGrey1 },
   helperText: {
     fontSize: typography.bodySmall.fontSize,
     fontFamily: fontFamilies.regular,
     color: colors.textSecondary,
     marginTop: 4,
   },
-  chipContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
+  chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     flexDirection: "row",
     alignItems: "center",
@@ -573,10 +520,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.regular,
     color: colors.textSecondary,
   },
-  chipTextSelected: {
-    color: colors.primary,
-    fontFamily: fontFamilies.semiBold,
-  },
+  chipTextSelected: { color: colors.primary, fontFamily: fontFamilies.semiBold },
   saveButton: {
     backgroundColor: colors.primary,
     paddingVertical: 16,
@@ -585,9 +529,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 12,
   },
-  disabledButton: {
-    opacity: 0.6,
-  },
+  disabledButton: { opacity: 0.6 },
   saveButtonText: {
     color: colors.textWhite,
     fontSize: typography.bodyMedium.fontSize,

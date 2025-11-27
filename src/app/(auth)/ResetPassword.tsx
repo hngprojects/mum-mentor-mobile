@@ -1,67 +1,86 @@
-import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
+  View,
+  Text,
+  StyleSheet,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+  Alert,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 // --- Theme and Utilities ---
-import { defaultTheme } from "../../core/styles/index";
-import { ms, vs } from "../../core/styles/scaling";
+import { defaultTheme } from '../../core/styles/index';
+import { ms, vs, rfs } from '../../core/styles/scaling';
 
 // --- Components ---
-import CustomInput from "../components/CustomInput";
-import PrimaryButton from "../components/PrimaryButton";
+import CustomInput from '../components/CustomInput';
+import PrimaryButton from '../components/PrimaryButton';
 
 // --- API Service ---
-import { showToast } from "@/src/core/utils/toast";
-import { AxiosError } from "axios";
-import {
-  ApiErrorResponse,
-  resetPassword,
-} from "../../core/services/authService";
+import { resetPassword, ApiErrorResponse } from '../../core/services/authService';
+import { AxiosError } from 'axios';
 
 // Destructure theme values outside component to prevent re-renders
 const { colors, typography } = defaultTheme;
 
 export default function ResetPassword() {
-  const params = useLocalSearchParams<{
-    verificationToken: string;
-    email: string;
-  }>();
+  const params = useLocalSearchParams<{ verificationToken: string; email: string }>();
   const verificationToken = params.verificationToken;
   const email = params.email;
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Password validation states
-  const [newPasswordError, setNewPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [newPasswordError, setNewPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
+  // ✅ Debug: Log token on mount (only once)
+  useEffect(() => {
+    console.log('🔍 ResetPassword Screen - Token received:', {
+      hasToken: !!verificationToken,
+      tokenLength: verificationToken?.length,
+      tokenPreview: verificationToken ? verificationToken.substring(0, 20) + '...' : 'N/A',
+      email: email
+    });
+
+    if (!verificationToken) {
+      Alert.alert(
+        'Error', 
+        'Verification token is missing. Please restart the password reset process.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(auth)/ForgotPasswordScreen')
+          }
+        ]
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ Run only once on mount
 
   const validatePassword = (password: string): boolean => {
     if (password.length < 8) {
-      setNewPasswordError("Password must be at least 8 characters");
+      setNewPasswordError('Password must be at least 8 characters');
       return false;
     }
-    setNewPasswordError("");
+    setNewPasswordError('');
     return true;
   };
 
   const validateConfirmPassword = (): boolean => {
     if (newPassword !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
+      setConfirmPasswordError('Passwords do not match');
       return false;
     }
-    setConfirmPasswordError("");
+    setConfirmPasswordError('');
     return true;
   };
 
@@ -75,41 +94,47 @@ export default function ResetPassword() {
     }
 
     if (!verificationToken) {
-      showToast.error(
-        "Error",
-        "Verification token is missing. Please try again."
-      );
+      Alert.alert('Error', 'Verification token is missing. Please try again.');
       return;
     }
 
     setIsLoading(true);
 
     try {
+      console.log('📤 Sending password reset request with token:', verificationToken.substring(0, 20) + '...');
+      
+      // ✅ FIXED: Order matters! Match the exact order from API documentation
       const payload = {
-        token: verificationToken,
         new_password: newPassword,
         confirm_password: confirmPassword,
+        token: verificationToken,
       };
+
+      console.log('📦 Payload structure:', JSON.stringify(payload, null, 2));
 
       await resetPassword(payload);
 
+      console.log('✅ Password reset successful');
+      
       // Show success modal
       setShowSuccessModal(true);
+
     } catch (error) {
-      console.error("Reset password error:", error);
-
-      let errorMessage = "Failed to reset password. Please try again.";
-
+      console.error('❌ Reset password error:', error);
+      
+      let errorMessage = 'Failed to reset password. Please try again.';
+      
       if ((error as any).isAxiosError) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
-        errorMessage =
-          axiosError.response?.data?.message ||
-          (typeof axiosError.response?.data?.detail === "string"
-            ? axiosError.response.data.detail
-            : errorMessage);
+        const responseData = axiosError.response?.data;
+        
+        errorMessage = responseData?.message 
+          || (typeof responseData?.detail === 'string' ? responseData.detail : errorMessage);
+        
+        console.error('Server error details:', responseData);
       }
-
-      showToast.error("Error", errorMessage);
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -117,13 +142,14 @@ export default function ResetPassword() {
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    router.push("/SignInScreen");
+    // ✅ FIXED: Correct path to SignInScreen
+    router.replace('/(auth)/SignInScreen');
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -131,7 +157,7 @@ export default function ResetPassword() {
       >
         <Text style={styles.title}>Reset Password</Text>
         <Text style={styles.subtitle}>
-          Create a new password for your account
+          Create a new password for {email || 'your account'}
         </Text>
 
         <View style={styles.inputWrapper}>
@@ -143,11 +169,11 @@ export default function ResetPassword() {
               setNewPassword(text);
               if (newPasswordError) validatePassword(text);
             }}
-            iconName="lock-outline"
+            iconName="lock-closed-outline"
             isPassword={true}
-            secureTextEntry={true}
             isError={!!newPasswordError}
             errorMessage={newPasswordError}
+            isValid={newPassword.length >= 8 && !newPasswordError}
           />
         </View>
 
@@ -159,20 +185,20 @@ export default function ResetPassword() {
             onChangeText={(text) => {
               setConfirmPassword(text);
               if (confirmPasswordError && newPassword === text) {
-                setConfirmPasswordError("");
+                setConfirmPasswordError('');
               }
             }}
-            iconName="lock-outline"
+            iconName="lock-closed-outline"
             isPassword={true}
-            secureTextEntry={true}
             isError={!!confirmPasswordError}
             errorMessage={confirmPasswordError}
+            isValid={confirmPassword.length > 0 && newPassword === confirmPassword && !confirmPasswordError}
           />
         </View>
 
         <View style={styles.buttonWrapper}>
           <PrimaryButton
-            title={isLoading ? "RESETTING..." : "Reset Password"}
+            title={isLoading ? 'RESETTING...' : 'Reset Password'}
             onPress={handleResetPassword}
             isLoading={isLoading}
             disabled={!newPassword || !confirmPassword || isLoading}
@@ -198,8 +224,7 @@ export default function ResetPassword() {
             </View>
             <Text style={styles.modalTitle}>Password reset successful!</Text>
             <Text style={styles.modalSubtitle}>
-              Your password has been successfully reset. You can now log in with
-              your new password.
+              Your password has been successfully reset. You can now log in with your new password.
             </Text>
             <PrimaryButton
               title="Back to Login"
@@ -244,16 +269,16 @@ const styles = StyleSheet.create({
   // Success Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
     backgroundColor: colors.textWhite,
     borderRadius: ms(16),
     padding: ms(24),
-    alignItems: "center",
-    width: "85%",
+    alignItems: 'center',
+    width: '85%',
     maxWidth: ms(400),
   },
   successIcon: {
@@ -261,23 +286,23 @@ const styles = StyleSheet.create({
     height: ms(80),
     borderRadius: ms(40),
     backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: vs(16),
   },
   modalTitle: {
     ...typography.heading2,
     color: colors.textPrimary,
     marginBottom: vs(8),
-    textAlign: "center",
+    textAlign: 'center',
   },
   modalSubtitle: {
     ...typography.bodyMedium,
     color: colors.textGrey1,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: vs(24),
   },
   modalButton: {
-    width: "100%",
+    width: '100%',
   },
 });

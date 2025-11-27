@@ -19,6 +19,8 @@ import { colors, spacing, typography } from "../../core/styles/index";
 import CreateTaskFormModal from "../components/CreateTask";
 import ListTasks from "../components/ListTasks";
 import SortModal, { SortOption } from "../components/SortModal";
+import { TextInput } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const arrowIcon = require("../../assets/images/arrow.png");
 const taskIcon = require("../../assets/images/task.png");
@@ -265,8 +267,8 @@ const TasksScreen = () => {
           {/* Search and Filter Bar */}
           {hasTasks && (
             <View style={styles.filterBar}>
-              {/* <View style={styles.searchContainer}>
-                <Text style={styles.searchIcon}>🔍</Text>
+              <View style={styles.searchContainer}>
+                <Ionicons style={styles.searchIcon} name="search"/>
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search"
@@ -297,7 +299,7 @@ const TasksScreen = () => {
                       ? "Pending"
                       : "Completed"}
                 </Text>
-              </TouchableOpacity> */}
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.sortButton}
@@ -549,32 +551,32 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: colors.textWhite,
     gap: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.backgroundStrong,
   },
   searchContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.backgroundMuted,
+    borderColor: colors.backgroundSubtle,
+    borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: spacing.md,
   },
   searchIcon: {
-    fontSize: 16,
+    ...typography.labelSmall,
     marginRight: spacing.xs,
   },
   searchInput: {
     flex: 1,
     height: 40,
-    fontSize: 14,
     color: colors.textPrimary,
+    ...typography.labelSmall,
     // fontFamily: typography,
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.backgroundSoft,
+    borderColor: colors.backgroundSubtle,
+    borderWidth: 1,
     paddingHorizontal: spacing.md,
     borderRadius: 8,
     gap: spacing.xs,
@@ -583,14 +585,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   filterText: {
-    fontSize: 14,
     color: colors.textPrimary,
-    // fontFamily: typography.bodyMedium,
+    ...typography.labelSmall,
   },
   sortButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.backgroundSoft,
+    borderColor: colors.backgroundSubtle,
+    borderWidth: 1,
     paddingHorizontal: spacing.md,
     borderRadius: 8,
     gap: spacing.xs,
@@ -599,9 +601,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sortText: {
-    fontSize: 14,
+    ...typography.labelSmall,
     color: colors.textPrimary,
-    // fontFamily: typography.fontFamily.medium,
   },
 });
 

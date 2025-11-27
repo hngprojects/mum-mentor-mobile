@@ -3,6 +3,7 @@ import { colors, typography } from "@/src/core/styles";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import {
   getMilestoneStates,
+  onDeleteMilestone,
   onToggleDeleteModal,
 } from "@/src/store/milestoneSlice";
 import React from "react";
@@ -15,6 +16,11 @@ export default function DeleteModal() {
 
   const onCloseModal = () =>
     dispatch(onToggleDeleteModal({ isOpenForm: false }));
+
+  const handleDeleteMilestone = () => {
+    dispatch(onDeleteMilestone());
+    onCloseModal();
+  };
 
   return (
     <ModalAnimationWrapper
@@ -33,7 +39,10 @@ export default function DeleteModal() {
         </View>
 
         <View style={styles.buttonsContainer}>
-          <Pressable style={[styles.button, styles.buttonSave]}>
+          <Pressable
+            style={[styles.button, styles.buttonSave]}
+            onPress={handleDeleteMilestone}
+          >
             Delete
           </Pressable>
 

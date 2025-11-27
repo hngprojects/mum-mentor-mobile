@@ -52,7 +52,7 @@ export default function CategoryScreen() {
               </View>
             </View>
 
-            <MilestonesList />
+            <MilestonesList milestoneStatus={milestoneStatus} />
 
             {/* <EmptyMilestoneMessage /> */}
 

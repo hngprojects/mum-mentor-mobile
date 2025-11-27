@@ -168,9 +168,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.textGrey2,
+    // paddingBottom: spacing.md,
   },
   modalTitle: {
     fontSize: 20,
@@ -182,7 +180,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.backgroundStrong,
     justifyContent: "center",
     alignItems: "center",
   },

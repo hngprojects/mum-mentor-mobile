@@ -3,11 +3,17 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useAppDispatch } from "@/src/store/hooks";
 import {
+  onCheckMilestoneStatus,
   onToggleDeleteModal,
   onToggleEditForm,
 } from "@/src/store/milestoneSlice";
+import { Milestone } from "@/src/store/types";
 import React from "react";
 type Actions = "edit" | "delete";
+
+const uncheckedIcon = require("../../../assets/images/checkbox-unticked.png");
+
+const checkedIcon = require("../../../assets/images/checked-icon.png");
 
 export const ACTION_BUTTONS_ICONS = [
   {
@@ -22,20 +28,19 @@ export const ACTION_BUTTONS_ICONS = [
   },
 ];
 
-export function MilestoneBox() {
+export function MilestoneBox({ milestone }: { milestone: Milestone }) {
   const dispatch = useAppDispatch();
-  const milestoneSampleId = "223j-2234";
 
   function handleMilestoneAction(actionType: Actions) {
     if (actionType === "edit") {
       dispatch(
-        onToggleEditForm({ isOpenForm: true, milestoneId: milestoneSampleId })
+        onToggleEditForm({ isOpenForm: true, milestoneId: milestone.id })
       );
     } else {
       dispatch(
         onToggleDeleteModal({
           isOpenForm: true,
-          milestoneId: milestoneSampleId,
+          milestoneId: milestone.id,
         })
       );
     }
@@ -43,16 +48,18 @@ export function MilestoneBox() {
 
   return (
     <View style={styles.milestoneBox}>
-      <Image
-        source={require("../../../assets/images/checkbox-unticked.png")}
-        style={styles.milestoneCheckbox}
-      />
+      <Pressable
+        onPress={() => dispatch(onCheckMilestoneStatus({ id: milestone?.id }))}
+      >
+        <Image
+          source={milestone?.status === "pending" ? uncheckedIcon : checkedIcon}
+          style={styles.milestoneCheckbox}
+        />
+      </Pressable>
       {/* name and desc */}
       <View style={styles.milestoneTextBox}>
-        <Text style={styles.milestoneName}>Drank warm water</Text>
-        <Text style={styles.milestoneDesc}>
-          Warm hydration to help digestion and relax muscles.
-        </Text>
+        <Text style={styles.milestoneName}>{milestone.title}</Text>
+        <Text style={styles.milestoneDesc}>{milestone.desc}</Text>
       </View>
 
       {/* action buttons */}

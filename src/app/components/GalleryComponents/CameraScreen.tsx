@@ -2,6 +2,7 @@
 
 import { colors } from "@/src/core/styles";
 import { ms, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { StatusBar } from "expo-status-bar";

@@ -1,22 +1,27 @@
-import { PENDING_MILESTONES } from "@/src/core/data/milestone-data";
 import { colors, typography } from "@/src/core/styles";
+import { useAppSelector } from "@/src/store/hooks";
+import { getMilestoneStates } from "@/src/store/milestoneSlice";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 // import Checkbox from "@/src/assets/images/tick-square.png";
 
 export default function PendingMilestones() {
+  const { milestoneData } = useAppSelector(getMilestoneStates);
+
+  const pendingMilestones = milestoneData.filter(
+    (milestone) => milestone.status === "pending"
+  );
+
   return (
     <View style={styles.pendingMilestoneContainer}>
       <Text style={styles.pendingMilestoneHeaderText}>Pending Milestones</Text>
 
       <View style={styles.pendingMileStoneContents}>
-        {PENDING_MILESTONES?.map((milestone, idx) => (
+        {pendingMilestones?.map((milestone, idx) => (
           <View key={idx} style={styles.pendingMilestoneContentBox}>
             <View style={styles.contentBoxTextWrapper}>
               <Text style={styles.contentBoxTitle}>{milestone.title}</Text>
-              <Text style={styles.contentBoxCategory}>
-                {milestone.category}
-              </Text>
+              <Text style={styles.contentBoxCategory}>Body Recovery</Text>
             </View>
 
             <Image

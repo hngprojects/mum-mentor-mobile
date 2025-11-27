@@ -141,6 +141,11 @@ export const useSendAiMessage = () => {
       const baseURL = authApi.defaults.baseURL || "";
       const token = await auth.getAccessToken();
 
+      console.log("🚀 Starting stream request:", {
+        url: `${baseURL}/api/v1/ai-chat/chats/${session_id}/message`,
+        hasToken: !!token,
+      });
+
       const response = await fetch(
         `${baseURL}/api/v1/ai-chat/chats/${session_id}/message`,
         {
@@ -153,23 +158,35 @@ export const useSendAiMessage = () => {
         }
       );
 
+      console.log("📡 Response status:", response.status);
+      console.log(
+        "📡 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       let messageId = "";
+      let chunkCount = 0;
 
       if (!reader) {
         throw new Error("No response body");
       }
 
+      console.log("📖 Starting to read stream...");
+
       while (true) {
         const { done, value } = await reader.read();
 
-        if (done) break;
+        if (done) {
+          console.log(`✅ Stream complete. Total chunks: ${chunkCount}`);
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
@@ -179,19 +196,24 @@ export const useSendAiMessage = () => {
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
+              chunkCount++;
+
+              console.log(`📦 Chunk ${chunkCount}:`, data.type);
 
               if (data.type === "start") {
                 messageId = data.message_id;
+                console.log("🎬 Stream started, messageId:", messageId);
               } else if (data.type === "chunk" && onChunk) {
                 onChunk(data.content);
               } else if (data.type === "done") {
                 messageId = data.message_id;
+                console.log("🏁 Stream done, messageId:", messageId);
                 if (onComplete) {
                   onComplete(messageId);
                 }
               }
             } catch (e) {
-              console.error("Failed to parse SSE data:", e);
+              console.error("❌ Failed to parse SSE data:", e, "Line:", line);
             }
           }
         }
@@ -199,20 +221,15 @@ export const useSendAiMessage = () => {
 
       return { messageId };
     },
-    // OPTIMISTIC UPDATE: Add user message immediately
     onMutate: async ({ session_id, message }) => {
-      // Cancel any outgoing refetches
       await qc.cancelQueries({ queryKey: CHAT_KEYS.session(session_id) });
-
-      // Snapshot the previous value
       const previousMessages = qc.getQueryData(CHAT_KEYS.session(session_id));
 
-      // Optimistically update with the new user message
       qc.setQueryData(CHAT_KEYS.session(session_id), (old: any) => {
         if (!old) return old;
 
         const newUserMessage: Message = {
-          id: `temp-${Date.now()}`, // Temporary ID
+          id: `temp-${Date.now()}`,
           text: message,
           isUser: true,
           timestamp: new Date().toISOString(),
@@ -224,11 +241,10 @@ export const useSendAiMessage = () => {
         };
       });
 
-      // Return context with the previous value
       return { previousMessages };
     },
-    // If mutation fails, rollback
     onError: (err, { session_id }, context) => {
+      console.error("❌ Mutation error:", err);
       if (context?.previousMessages) {
         qc.setQueryData(
           CHAT_KEYS.session(session_id),
@@ -236,15 +252,12 @@ export const useSendAiMessage = () => {
         );
       }
     },
-    // Always refetch after error or success to get the updated title
     onSettled: (_, __, { session_id }) => {
       qc.invalidateQueries({ queryKey: CHAT_KEYS.session(session_id) });
-      // Also invalidate the chat list to show updated title
       qc.invalidateQueries({ queryKey: CHAT_KEYS.all });
     },
   });
 };
-
 /* -----------------------------------------------------------
    DELETE CONVERSATION
 ------------------------------------------------------------ */

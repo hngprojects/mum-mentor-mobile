@@ -1,4 +1,4 @@
-// TaskListItem.tsx - Updated with style guide
+// TaskListItem.tsx
 import React from 'react';
 import {
   View,
@@ -29,7 +29,12 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
   onPress,
 }) => {
   return (
-    <View style={styles.taskItem}>
+    <TouchableOpacity
+      style={styles.taskItem}
+      onPress={onPress}
+      disabled={task.status === 'completed'}
+      activeOpacity={0.7}
+    >
       {/* Checkbox */}
       <TouchableOpacity
         style={styles.checkboxContainer}
@@ -43,11 +48,7 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
       </TouchableOpacity>
 
       {/* Task Content */}
-      <TouchableOpacity
-        style={styles.taskContent}
-        onPress={onPress}
-        disabled={task.status === 'completed'}
-      >
+      <View style={styles.taskContent}>
         <Text
           style={[
             styles.taskTitle,
@@ -71,7 +72,7 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
         <Text style={styles.taskDateTime}>
           {format(parseISO(task.due_date), 'yyyy - MM - dd')} · {format(parseISO(task.due_date), 'h:mma')}
         </Text>
-      </TouchableOpacity>
+      </View>
 
       {/* Delete Icon */}
       <TouchableOpacity
@@ -80,7 +81,7 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
       >
         <Image source={trashIcon} style={styles.trashIcon} />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
