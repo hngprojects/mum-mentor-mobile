@@ -1,6 +1,6 @@
-import { MILESTONE_DATA } from "@/src/core/data/milestone-data";
 import { RootState } from "@/src/store/store";
-import { initialStateTypes, Milestone } from "@/src/store/types";
+import { initialStateTypes } from "@/src/store/types";
+import { MilestoneDataType } from "@/src/types/milestones";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: initialStateTypes = {
@@ -12,14 +12,18 @@ const initialState: initialStateTypes = {
   isEditModalOpen: false,
   milestoneToDelId: "",
   milestoneToEditId: "",
-  milestoneData: MILESTONE_DATA,
+  milestoneData: [],
 };
 
 export const milestoneSlice = createSlice({
   name: "milestone",
   initialState,
   reducers: {
-    onAddMilestone(state, action: PayloadAction<Milestone>) {
+    onAddMilestoneOnMount(state, action: PayloadAction<MilestoneDataType[]>) {
+      state.milestoneData = action.payload;
+    },
+
+    onAddMilestone(state, action: PayloadAction<MilestoneDataType>) {
       state.milestoneData = [action.payload, ...state.milestoneData];
     },
 
@@ -31,12 +35,16 @@ export const milestoneSlice = createSlice({
 
     onEditMileStone(
       state,
-      action: PayloadAction<{ title: string; desc: string }>
+      action: PayloadAction<{
+        name: string;
+        description: string;
+        updated_at: string;
+      }>
     ) {
-      const { title, desc } = action?.payload;
+      const { name, description, updated_at } = action?.payload;
       state.milestoneData = state.milestoneData.map((milestone) =>
         milestone.id === state.milestoneToEditId
-          ? { ...milestone, title, desc }
+          ? { ...milestone, name, description, updated_at }
           : milestone
       );
     },
@@ -95,6 +103,7 @@ export const milestoneSlice = createSlice({
 });
 
 export const {
+  onAddMilestoneOnMount,
   onAddMilestone,
   onCheckMilestoneStatus,
   onDeleteMilestone,

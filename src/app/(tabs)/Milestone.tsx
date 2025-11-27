@@ -1,14 +1,14 @@
 import CategoryBox from "@/src/app/components/milestone/CategoryBox";
 import PendingMilestones from "@/src/app/components/milestone/PendingMilestones";
 // import Checkbox from "@/src/assets/images/tick-square.png";
-import {
-  BOTTOM_CATEGORIES,
-  MILESTONE_SECTION,
-  TOP_CATEGORIES,
-} from "@/src/core/data/milestone-data";
+import { MILESTONE_SECTION } from "@/src/core/data/milestone-data";
+import { useAuth } from "@/src/core/services/authContext";
+
+import { getMilestoneCategories } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
 import { useMilestoneTypeChange } from "@/src/hooks/useMilestoneTypeChange";
 import { MilestoneType } from "@/src/types/milestones";
+import { useQuery } from "@tanstack/react-query";
 import { StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,8 +18,15 @@ export default function Milestone() {
     "mother",
     "milestone_type"
   );
+  const { user } = useAuth();
+  const { data, error, isError, isLoading } = useQuery({
+    queryKey: ["dashboard", mileStoneType],
+    queryFn: () => getMilestoneCategories(),
+  });
 
-  console.log(mileStoneType, "milestone");
+  const categories = data?.categories;
+
+  console.log(categories?.slice(0, 2), categories, data);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -57,14 +64,24 @@ export default function Milestone() {
 
               <View style={styles.categoryContents}>
                 <View style={styles.categories}>
-                  {TOP_CATEGORIES.map((category, idx) => (
-                    <CategoryBox key={idx} category={category} />
+                  {categories?.slice(0, 2).map((category, idx) => (
+                    <CategoryBox
+                      key={idx}
+                      category={category}
+                      milestoneType={mileStoneType}
+                      ownerId={user?.id as string}
+                    />
                   ))}
                 </View>
 
                 <View style={styles.categories}>
-                  {BOTTOM_CATEGORIES.map((category, idx) => (
-                    <CategoryBox key={idx} category={category} />
+                  {categories?.slice(2).map((category, idx) => (
+                    <CategoryBox
+                      key={idx}
+                      category={category}
+                      milestoneType={mileStoneType}
+                      ownerId={user?.id as string}
+                    />
                   ))}
                 </View>
               </View>

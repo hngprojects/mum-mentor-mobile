@@ -3,7 +3,11 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, StyleSheet, Text } from "react-native";
 
-export default function BackButton() {
+export default function BackButton({
+  categoryHeading,
+}: {
+  categoryHeading: string;
+}) {
   const router = useRouter();
   return (
     <Pressable style={styles.backButton} onPress={() => router.back()}>
@@ -11,7 +15,7 @@ export default function BackButton() {
         source={require("../../../assets/images/arrow-left.png")}
         style={styles.backButton}
       />
-      <Text style={styles.buttonText}>Body Recovery</Text>
+      <Text style={styles.buttonText}>{categoryHeading}</Text>
     </Pressable>
   );
 }
