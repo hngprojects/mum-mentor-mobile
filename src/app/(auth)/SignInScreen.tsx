@@ -110,22 +110,19 @@ export default function SignInScreen() {
     return isValid;
   };
 
-  const checkAndNavigateUser = async (userEmail: string) => {
+  const checkAndNavigateUser = async () => {
     try {
-      const hasCompletedSetup = await AsyncStorage.getItem(
-        `setup_completed_${userEmail}`
-      );
+      const hasCompletedSetup = await AsyncStorage.getItem("hasCompletedSetup");
+      const hasCompletedSetup2 = await AsyncStorage.getItem("isSetupComplete");
 
-      if (hasCompletedSetup === "true") {
+      console.log(hasCompletedSetup, "has com", hasCompletedSetup2);
+      if (hasCompletedSetup === "true" || hasCompletedSetup2 === "true") {
         router.replace("/(tabs)/Home");
       } else {
-        // First time login - mark as seen and go to setup
-        await AsyncStorage.setItem(`setup_completed_${userEmail}`, "false");
-        router.replace("/setup/Mum"); // or whatever your setup route is
+        router.replace("/setup/Mum");
       }
     } catch (error) {
       console.error("Error checking setup status:", error);
-      // Fallback to home on error
       router.replace("/(tabs)/Home");
     }
   };
@@ -141,7 +138,7 @@ export default function SignInScreen() {
     try {
       await login({ email: email.toLowerCase(), password });
       showToast.success("Welcome Back!", "Login successful.");
-      await checkAndNavigateUser(email.toLowerCase());
+      await checkAndNavigateUser();
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;
@@ -207,6 +204,7 @@ export default function SignInScreen() {
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
+            iconName="mail-outline"
             isError={!!errors.email}
             errorMessage={errors.email}
           />
@@ -218,6 +216,7 @@ export default function SignInScreen() {
             onChangeText={setPassword}
             isPassword
             isError={!!errors.password}
+            iconName="lock-outline"
             errorMessage={errors.password}
           />
 

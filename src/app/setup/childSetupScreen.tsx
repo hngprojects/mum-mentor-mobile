@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSetup } from "../../core/hooks/setupContext";
 // ✅ FIXED: ChildData interface is correctly imported here
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getProfileSetup } from "../../core/services/profileSetup.service";
 import { completeSetupFlow } from "../../core/services/setupService";
 import ChildSetupItem, { ChildData } from "../components/ChildSetupItem";
@@ -92,12 +93,12 @@ const ChildSetupScreen: React.FC = () => {
     (async () => {
       try {
         const profile = await getProfileSetup();
-        if (profile?.id) {
-          console.log(
-            "[ChildSetup] Profile already exists. Redirecting to Home."
-          );
-          router.replace("/(tabs)/Home");
-        }
+        // if (profile?.id) {
+        //   console.log(
+        //     "[ChildSetup] Profile already exists. Redirecting to Home."
+        //   );
+        //   router.replace("/(tabs)/Home");
+        // }
       } catch (err) {
         // This is expected if the profile doesn't exist yet (i.e., this is the first time running setup)
         console.log(
@@ -161,7 +162,7 @@ const ChildSetupScreen: React.FC = () => {
 
   const handleDone = async () => {
     if (!user) {
-      Alert.alert(
+      showToast.error(
         "Authentication Error",
         "User session not found. Please log in again."
       );
@@ -179,7 +180,7 @@ const ChildSetupScreen: React.FC = () => {
     }
 
     if (!areAllFilledChildrenComplete()) {
-      Alert.alert(
+      showToast.success(
         "Incomplete Form",
         "Please complete all child details or remove partial entries."
       );
@@ -193,21 +194,39 @@ const ChildSetupScreen: React.FC = () => {
     }));
 
     setIsLoading(true);
+
     try {
       const result = await completeSetupFlow(momSetupData, childrenForAPI);
-      if (result.success) show();
-      else throw result.error || new Error("Setup failed");
-    } catch (error: any) {
-      console.error("[ChildSetup] Error:", error);
-      let msg = "Failed to complete setup. Please try again.";
-      if (error?.response?.status === 401) {
-        msg = "Session expired. Redirecting to login...";
-        setTimeout(() => router.replace("/(auth)/SignInScreen"), 2000);
-      } else if (error?.response?.status === 409) {
-        msg = "Profile setup already exists. Redirecting...";
-        setTimeout(() => router.replace("/(tabs)/Home"), 1500);
+
+      if (result.success) {
+        // Mark setup complete
+        await AsyncStorage.setItem("hasCompletedSetup", "true");
+        show(); // success modal
+      } else {
+        // Normalize the backend error
+        const errorToThrow = {
+          message: result.error?.message || "Setup failed",
+          status_code: result.error?.status_code, // backend status code
+          detail: result.error?.detail, // backend detail message
+        };
+        console.log("result", result);
+
+        // Throw it so it can be handled in catch
+        throw errorToThrow;
       }
-      Alert.alert("Setup Error", msg);
+    } catch (error: any) {
+      // Extract fields from thrown error
+      const message =
+        error?.detail || error?.message || "Failed to complete setup";
+
+      // Handle toasts and redirects based on backend status
+      if (message === "Profile setup already exists") {
+        await AsyncStorage.setItem("hasCompletedSetup", "true");
+        showToast.warning(message); // now uses backend message
+        setTimeout(() => router.replace("/(tabs)/Home"), 100);
+      } else {
+        showToast.error("Setup Error", message);
+      }
     } finally {
       setIsLoading(false);
     }

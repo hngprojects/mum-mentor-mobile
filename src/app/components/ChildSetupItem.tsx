@@ -3,7 +3,14 @@
 import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, rh, rw } from "@/src/core/styles/scaling";
 import React, { useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import CustomInput from "./CustomInput";
 import DatePickerInput from "./DatePickerInput";
 import DeleteConfirmModal from "./DeleteConfirmationModal";
@@ -84,7 +91,6 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
               onChangeText={(t) => handleChange("fullName", t)}
               iconName="person-outline"
             />
-
             {/* Child Age or Due Date */}
             <CustomInput
               label="Child's Age"
@@ -93,14 +99,28 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
               onChangeText={(t) => handleChange("age", t)}
               iconName="calendar-outline"
             />
-
             {/* Date of Birth - Now with Calendar Picker */}
-            <DatePickerInput
-              label="Child's Date Of Birth"
-              placeholder="Select Date"
-              value={childData.dob}
-              onDateChange={(date) => handleChange("dob", date)}
-            />
+            {Platform.OS === "web" ? (
+              <input
+                type="date"
+                value={childData.dob}
+                onChange={(e) => handleChange("dob", e.target.value)}
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  border: "1px solid #ccc",
+                  width: "100%",
+                  fontSize: 16,
+                }}
+              />
+            ) : (
+              <DatePickerInput
+                label="Child's Date Of Birth"
+                placeholder="Select Date"
+                value={childData.dob}
+                onDateChange={(date) => handleChange("dob", date)}
+              />
+            )}
 
             {/* Gender - Now with Dropdown */}
             <GenderDropdown
