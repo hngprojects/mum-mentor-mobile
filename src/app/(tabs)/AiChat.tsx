@@ -270,7 +270,7 @@ export default function ChatScreen() {
       {currentView === "welcome" && (
         <ChatWelcome
           userName={
-            isLoadingUser ? "..." : user?.full_name?.split(" ")[0] || "User"
+            isLoadingUser ? "" : user?.full_name?.split(" ")[0] || "User"
           }
           onCategoryPress={handleCategoryPress}
           onAskAnything={handleAskAnything}

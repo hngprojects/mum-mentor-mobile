@@ -18,11 +18,9 @@ export const auth = {
   getAccessToken: async () => {
     try {
       if (Platform.OS === "web") {
-        // Use localStorage for web
         const token = localStorage.getItem(ACCESS_TOKEN_KEY);
         return token;
       } else {
-        // Use SecureStore for native (iOS/Android)
         const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
         return token;
       }
@@ -36,11 +34,9 @@ export const auth = {
   getRefreshToken: async () => {
     try {
       if (Platform.OS === "web") {
-        // Use localStorage for web
         const token = localStorage.getItem(REFRESH_TOKEN_KEY);
         return token;
       } else {
-        // Use SecureStore for native (iOS/Android)
         const token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
         return token;
       }
@@ -54,30 +50,36 @@ export const auth = {
   setTokens: async (accessToken: string, refreshToken: string) => {
     try {
       if (Platform.OS === "web") {
-        // Use localStorage for web
         localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
         localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
         console.log("Auth token stored in localStorage (web)");
       } else {
-        // Use SecureStore for native (iOS/Android)
         await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
         await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
-        // console.log("Auth token stored in SecureStore (native)");
       }
+
+      // Also store onboarding state in AsyncStorage (works on all platforms)
+      await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, "true");
     } catch (error) {
       console.error("AUTH STORAGE ERROR: Failed to save auth token.", error);
       throw error;
     }
   },
 
-  // Clear tokens (logout)
+  // Clear tokens (logout) - FIXED
   clearTokens: async () => {
     try {
-      await AsyncStorage.multiRemove([
-        ACCESS_TOKEN_KEY,
-        REFRESH_TOKEN_KEY,
-        ONBOARDING_COMPLETE_KEY,
-      ]);
+      if (Platform.OS === "web") {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      }
+
+      // Clear AsyncStorage items
+      await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+      await AsyncStorage.removeItem(REDIRECT_AFTER_LOGIN_KEY);
     } catch (error) {
       console.error("Error clearing tokens:", error);
     }
@@ -88,15 +90,15 @@ export const auth = {
     router.replace(AUTH_ROUTES.LOGIN as RelativePathString);
   },
 
-  // Check if user is authenticated
+  // Check if user is authenticated - FIXED
   isAuthenticated: async () => {
-    const token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = await auth.getAccessToken();
     return !!token;
   },
 
-  // Get auth header for API calls
+  // Get auth header for API calls - FIXED
   getAuthHeader: async () => {
-    const token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = await auth.getAccessToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 
