@@ -1,7 +1,6 @@
 // lib/api.ts
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import { RelativePathString, router } from "expo-router";
-import { API_BASE_URL, AUTH_ROUTES, AUTH_ROUTES_LIST } from "../constants";
+import { API_BASE_URL } from "../constants";
 import { auth } from "./auth";
 
 export const apiAuth = (axiosInstance: AxiosInstance) => {
@@ -27,39 +26,28 @@ export const apiAuth = (axiosInstance: AxiosInstance) => {
   );
 
   // Response interceptor - Handle token refresh on 401
-  axiosInstance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
+  // In your apiAuth interceptor, update the request interceptor:
+  axiosInstance.interceptors.request.use(
+    async (config: InternalAxiosRequestConfig) => {
+      const token = await auth.getAccessToken();
 
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-
-        try {
-          await auth.refreshToken();
-
-          // Retry the original request with new token
-          const token = await auth.getAccessToken();
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-
-          return axiosInstance.request(originalRequest);
-        } catch {
-          await auth.clearTokens();
-
-          // Check if we're not already on an auth page
-          const currentSegments = router.canGoBack() ? null : "/";
-          const isOnAuthPage = AUTH_ROUTES_LIST?.some((route) =>
-            currentSegments?.toString().startsWith(route)
-          );
-
-          if (!isOnAuthPage) {
-            router.replace(AUTH_ROUTES.LOGIN as RelativePathString);
-          }
-
-          return Promise.reject(error);
-        }
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
 
+      // Only set Content-Type for JSON if not already set and not FormData
+      if (config.data && !(config.data instanceof FormData)) {
+        if (!config.headers["Content-Type"]) {
+          config.headers["Content-Type"] = "application/json";
+        }
+      } else if (config.data instanceof FormData) {
+        // Let the browser/axios set the Content-Type with boundary
+        delete config.headers["Content-Type"];
+      }
+
+      return config;
+    },
+    (error) => {
       return Promise.reject(error);
     }
   );

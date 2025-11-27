@@ -1,11 +1,11 @@
 // src/core/services/galleryStorageService.ts
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Storage Keys
 const STORAGE_KEYS = {
-  ALBUMS: '@gallery_albums',
-  PHOTOS: '@gallery_photos',
+  ALBUMS: "@gallery_albums",
+  PHOTOS: "@gallery_photos",
 };
 
 // TypeScript Interfaces
@@ -37,11 +37,12 @@ export const getAlbums = async (): Promise<Album[]> => {
   try {
     const albumsJson = await AsyncStorage.getItem(STORAGE_KEYS.ALBUMS);
     if (!albumsJson) return [];
-    
+
     const albums: Album[] = JSON.parse(albumsJson);
+    console.log("Albums:", albums);
     return albums;
   } catch (error) {
-    console.error('Error getting albums:', error);
+    console.error("Error getting albums:", error);
     return [];
   }
 };
@@ -52,9 +53,9 @@ export const getAlbums = async (): Promise<Album[]> => {
 export const getAlbumById = async (albumId: string): Promise<Album | null> => {
   try {
     const albums = await getAlbums();
-    return albums.find(album => album.id === albumId) || null;
+    return albums.find((album) => album.id === albumId) || null;
   } catch (error) {
-    console.error('Error getting album by ID:', error);
+    console.error("Error getting album by ID:", error);
     return null;
   }
 };
@@ -65,7 +66,7 @@ export const getAlbumById = async (albumId: string): Promise<Album | null> => {
 export const createAlbum = async (albumName: string): Promise<Album> => {
   try {
     const albums = await getAlbums();
-    
+
     const newAlbum: Album = {
       id: `album_${Date.now()}`,
       name: albumName,
@@ -73,13 +74,13 @@ export const createAlbum = async (albumName: string): Promise<Album> => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     albums.push(newAlbum);
     await AsyncStorage.setItem(STORAGE_KEYS.ALBUMS, JSON.stringify(albums));
-    
+
     return newAlbum;
   } catch (error) {
-    console.error('Error creating album:', error);
+    console.error("Error creating album:", error);
     throw error;
   }
 };
@@ -89,25 +90,25 @@ export const createAlbum = async (albumName: string): Promise<Album> => {
  */
 export const updateAlbum = async (
   albumId: string,
-  updates: Partial<Omit<Album, 'id' | 'createdAt'>>
+  updates: Partial<Omit<Album, "id" | "createdAt">>
 ): Promise<void> => {
   try {
     const albums = await getAlbums();
-    const albumIndex = albums.findIndex(album => album.id === albumId);
-    
+    const albumIndex = albums.findIndex((album) => album.id === albumId);
+
     if (albumIndex === -1) {
-      throw new Error('Album not found');
+      throw new Error("Album not found");
     }
-    
+
     albums[albumIndex] = {
       ...albums[albumIndex],
       ...updates,
       updatedAt: new Date().toISOString(),
     };
-    
+
     await AsyncStorage.setItem(STORAGE_KEYS.ALBUMS, JSON.stringify(albums));
   } catch (error) {
-    console.error('Error updating album:', error);
+    console.error("Error updating album:", error);
     throw error;
   }
 };
@@ -119,15 +120,26 @@ export const deleteAlbum = async (albumId: string): Promise<void> => {
   try {
     // Delete all photos in the album first
     const photos = await getPhotos();
-    const remainingPhotos = photos.filter(photo => photo.albumId !== albumId);
-    await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(remainingPhotos));
-    
+    const remainingPhotos = photos.filter((photo) => photo.albumId !== albumId);
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.PHOTOS,
+      JSON.stringify(remainingPhotos)
+    );
+
     // Delete the album
     const albums = await getAlbums();
-    const filteredAlbums = albums.filter(album => album.id !== albumId);
-    await AsyncStorage.setItem(STORAGE_KEYS.ALBUMS, JSON.stringify(filteredAlbums));
+
+    const normalizedAlbums = Array.isArray(albums) ? albums : [];
+
+    const filteredAlbums = normalizedAlbums?.filter(
+      (album) => album.id !== albumId
+    );
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.ALBUMS,
+      JSON.stringify(filteredAlbums)
+    );
   } catch (error) {
-    console.error('Error deleting album:', error);
+    console.error("Error deleting album:", error);
     throw error;
   }
 };
@@ -141,11 +153,11 @@ export const getPhotos = async (): Promise<Photo[]> => {
   try {
     const photosJson = await AsyncStorage.getItem(STORAGE_KEYS.PHOTOS);
     if (!photosJson) return [];
-    
+
     const photos: Photo[] = JSON.parse(photosJson);
     return photos;
   } catch (error) {
-    console.error('Error getting photos:', error);
+    console.error("Error getting photos:", error);
     return [];
   }
 };
@@ -156,9 +168,9 @@ export const getPhotos = async (): Promise<Photo[]> => {
 export const getAlbumPhotos = async (albumId: string): Promise<Photo[]> => {
   try {
     const photos = await getPhotos();
-    return photos.filter(photo => photo.albumId === albumId);
+    return photos.filter((photo) => photo.albumId === albumId);
   } catch (error) {
-    console.error('Error getting album photos:', error);
+    console.error("Error getting album photos:", error);
     return [];
   }
 };
@@ -169,9 +181,9 @@ export const getAlbumPhotos = async (albumId: string): Promise<Photo[]> => {
 export const getPhotoById = async (photoId: string): Promise<Photo | null> => {
   try {
     const photos = await getPhotos();
-    return photos.find(photo => photo.id === photoId) || null;
+    return photos.find((photo) => photo.id === photoId) || null;
   } catch (error) {
-    console.error('Error getting photo by ID:', error);
+    console.error("Error getting photo by ID:", error);
     return null;
   }
 };
@@ -190,7 +202,7 @@ export const addPhotoToAlbum = async (
 ): Promise<Photo> => {
   try {
     const photos = await getPhotos();
-    
+
     const newPhoto: Photo = {
       id: `photo_${Date.now()}`,
       albumId,
@@ -200,16 +212,16 @@ export const addPhotoToAlbum = async (
       date: photoData.date.toISOString(),
       createdAt: new Date().toISOString(),
     };
-    
+
     photos.push(newPhoto);
     await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(photos));
-    
+
     // Update album photo count and cover photo
     await updateAlbumPhotoCount(albumId);
-    
+
     return newPhoto;
   } catch (error) {
-    console.error('Error adding photo to album:', error);
+    console.error("Error adding photo to album:", error);
     throw error;
   }
 };
@@ -220,19 +232,22 @@ export const addPhotoToAlbum = async (
 export const deletePhoto = async (photoId: string): Promise<void> => {
   try {
     const photos = await getPhotos();
-    const photo = photos.find(p => p.id === photoId);
-    
+    const photo = photos.find((p) => p.id === photoId);
+
     if (!photo) {
-      throw new Error('Photo not found');
+      throw new Error("Photo not found");
     }
-    
-    const filteredPhotos = photos.filter(p => p.id !== photoId);
-    await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(filteredPhotos));
-    
+
+    const filteredPhotos = photos.filter((p) => p.id !== photoId);
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.PHOTOS,
+      JSON.stringify(filteredPhotos)
+    );
+
     // Update album photo count
     await updateAlbumPhotoCount(photo.albumId);
   } catch (error) {
-    console.error('Error deleting photo:', error);
+    console.error("Error deleting photo:", error);
     throw error;
   }
 };
@@ -242,24 +257,24 @@ export const deletePhoto = async (photoId: string): Promise<void> => {
  */
 export const updatePhoto = async (
   photoId: string,
-  updates: Partial<Omit<Photo, 'id' | 'albumId' | 'createdAt'>>
+  updates: Partial<Omit<Photo, "id" | "albumId" | "createdAt">>
 ): Promise<void> => {
   try {
     const photos = await getPhotos();
-    const photoIndex = photos.findIndex(photo => photo.id === photoId);
-    
+    const photoIndex = photos.findIndex((photo) => photo.id === photoId);
+
     if (photoIndex === -1) {
-      throw new Error('Photo not found');
+      throw new Error("Photo not found");
     }
-    
+
     photos[photoIndex] = {
       ...photos[photoIndex],
       ...updates,
     };
-    
+
     await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(photos));
   } catch (error) {
-    console.error('Error updating photo:', error);
+    console.error("Error updating photo:", error);
     throw error;
   }
 };
@@ -273,18 +288,19 @@ const updateAlbumPhotoCount = async (albumId: string): Promise<void> => {
   try {
     const albumPhotos = await getAlbumPhotos(albumId);
     const photoCount = albumPhotos.length;
-    
+
     // Get the most recent photo as cover
-    const coverPhotoUri = albumPhotos.length > 0 
-      ? albumPhotos[albumPhotos.length - 1].uri 
-      : undefined;
-    
+    const coverPhotoUri =
+      albumPhotos.length > 0
+        ? albumPhotos[albumPhotos.length - 1].uri
+        : undefined;
+
     await updateAlbum(albumId, {
       photoCount,
       coverPhotoUri,
     });
   } catch (error) {
-    console.error('Error updating album photo count:', error);
+    console.error("Error updating album photo count:", error);
   }
 };
 
@@ -293,12 +309,9 @@ const updateAlbumPhotoCount = async (albumId: string): Promise<void> => {
  */
 export const clearAllGalleryData = async (): Promise<void> => {
   try {
-    await AsyncStorage.multiRemove([
-      STORAGE_KEYS.ALBUMS,
-      STORAGE_KEYS.PHOTOS,
-    ]);
+    await AsyncStorage.multiRemove([STORAGE_KEYS.ALBUMS, STORAGE_KEYS.PHOTOS]);
   } catch (error) {
-    console.error('Error clearing gallery data:', error);
+    console.error("Error clearing gallery data:", error);
     throw error;
   }
 };

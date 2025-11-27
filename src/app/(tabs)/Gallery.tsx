@@ -73,8 +73,9 @@ export default function GalleryScreen() {
       const newAlbum = await galleryService.createAlbum(albumName);
       console.log("Album created:", newAlbum);
 
+      alert(newAlbum?.album_id);
       setCreatedAlbumName(albumName);
-      setCreatedAlbumId(newAlbum.id);
+      setCreatedAlbumId(newAlbum?.album_id || "");
       setIsCreateModalVisible(false);
 
       // Reload albums
@@ -117,8 +118,9 @@ export default function GalleryScreen() {
     });
   };
 
-  // Filter albums based on search query
-  const filteredAlbums = albums.filter((album) => {
+  const normalizedAlbums = Array.isArray(albums) ? albums : [];
+
+  const filteredAlbums = normalizedAlbums.filter((album) => {
     if (!searchQuery.trim()) return true;
 
     const query = searchQuery.toLowerCase();
@@ -199,36 +201,39 @@ export default function GalleryScreen() {
           ) : (
             /* Albums Grid */
             <View style={styles.albumsGrid}>
-              {filteredAlbums.map((album) => (
-                <TouchableOpacity
-                  key={album.id}
-                  style={styles.albumCard}
-                  onPress={() => handleViewAlbum(album)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.albumCover}>
-                    {album.cover_photo_uri ? (
-                      <Image
-                        source={{ uri: album.cover_photo_uri }}
-                        style={styles.albumCoverImage}
-                      />
-                    ) : (
-                      <Ionicons
-                        name="images"
-                        size={40}
-                        color={colors.textGrey1}
-                      />
-                    )}
-                  </View>
-                  <Text style={styles.albumName} numberOfLines={1}>
-                    {album.name}
-                  </Text>
-                  <Text style={styles.albumCount}>
-                    {album.photo_count}{" "}
-                    {album.photo_count === 1 ? "photo" : "photos"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {filteredAlbums.map((album, i) => {
+                console.log(`album ${i}`, album);
+                return (
+                  <TouchableOpacity
+                    key={album.id}
+                    style={styles.albumCard}
+                    onPress={() => handleViewAlbum(album)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.albumCover}>
+                      {album?.last_image ? (
+                        <Image
+                          source={{ uri: album?.last_image }}
+                          style={styles.albumCoverImage}
+                        />
+                      ) : (
+                        <Ionicons
+                          name="images"
+                          size={40}
+                          color={colors.textGrey1}
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.albumName} numberOfLines={1}>
+                      {album.name}
+                    </Text>
+                    <Text style={styles.albumCount}>
+                      {album.photo_count}{" "}
+                      {album.photo_count === 1 ? "photo" : "photos"}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
         </ScrollView>
