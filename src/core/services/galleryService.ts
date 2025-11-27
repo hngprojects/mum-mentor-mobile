@@ -11,10 +11,12 @@ const MEMORIES_ENDPOINT = "/api/v1/memories";
 export interface Album {
   id: string;
   name: string;
+  album_id?: string;
   cover_photo_uri?: string;
   photo_count: number;
   created_at: string;
   updated_at: string;
+  last_image?: string;
 }
 
 export interface Memory {
@@ -31,8 +33,9 @@ export interface Memory {
 export async function fetchAlbums(): Promise<Album[]> {
   try {
     const response = await apiClient.get(ALBUMS_ENDPOINT_LIST);
-    
+
     if (response.status >= 200 && response.status < 300) {
+      console.log("Albums:", response.data.data || response.data);
       return response.data.data || response.data;
     } else {
       throw new Error("Failed to fetch albums");
@@ -49,7 +52,7 @@ export async function fetchAlbums(): Promise<Album[]> {
 export async function fetchAlbumById(albumId: string): Promise<Album> {
   try {
     const response = await apiClient.get(`${ALBUMS_ENDPOINT_LIST}/${albumId}`);
-    
+
     if (response.status >= 200 && response.status < 300) {
       return response.data.data || response.data;
     } else {
@@ -87,7 +90,7 @@ export async function createAlbum(albumName: string): Promise<Album> {
 export async function deleteAlbum(albumId: string): Promise<void> {
   try {
     const response = await apiClient.delete(`${ALBUMS_ENDPOINT}/${albumId}`);
-    
+
     if (response.status >= 200 && response.status < 300) {
       return;
     } else {
@@ -109,7 +112,7 @@ export async function fetchAlbumMemories(albumId: string): Promise<Memory[]> {
     const response = await apiClient.get(
       `${ALBUMS_ENDPOINT_LIST}/${albumId}/memories`
     );
-    
+
     if (response.status >= 200 && response.status < 300) {
       return response.data.data || response.data;
     } else {
@@ -158,14 +161,14 @@ export async function uploadMemoryPhoto(data: {
   try {
     const formData = new FormData();
     formData.append("album_id", data.album_id);
-    
+
     // Append the photo file
     formData.append("photo", {
       uri: data.photo.uri,
       name: data.photo.name,
       type: data.photo.type,
     } as any);
-    
+
     if (data.caption) {
       formData.append("caption", data.caption);
     }
@@ -193,7 +196,7 @@ export async function uploadMemoryPhoto(data: {
 export async function deleteMemory(memoryId: string): Promise<void> {
   try {
     const response = await apiClient.delete(`${MEMORIES_ENDPOINT}/${memoryId}`);
-    
+
     if (response.status >= 200 && response.status < 300) {
       return;
     } else {
