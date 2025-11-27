@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -136,10 +137,29 @@ export default function SignInScreen() {
     return isValid;
   };
 
-  const handleLogin = async () => {
-    if (!validate()) {
-      return;
+  const checkAndNavigateUser = async (userEmail: string) => {
+    try {
+      const hasCompletedSetup = await AsyncStorage.getItem(
+        `setup_completed_${userEmail}`
+      );
+
+      if (hasCompletedSetup === "true") {
+        router.replace("/(tabs)/Home");
+      } else {
+        // First time login - mark as seen and go to setup
+        await AsyncStorage.setItem(`setup_completed_${userEmail}`, "false");
+        router.replace("/setup/Mum"); // or whatever your setup route is
+      }
+    } catch (error) {
+      console.error("Error checking setup status:", error);
+      // Fallback to home on error
+      router.replace("/(tabs)/Home");
     }
+  };
+
+  // Update your handleLogin
+  const handleLogin = async () => {
+    if (!validate()) return;
 
     setIsLoading(true);
     setErrors({});
@@ -150,7 +170,7 @@ export default function SignInScreen() {
       await login(loginPayload);
 
       showToast.success("Welcome Back!", "Login successful.");
-      router.replace("/(tabs)/Home");
+      await checkAndNavigateUser(email.toLowerCase());
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       const statusCode = axiosError.response?.status;

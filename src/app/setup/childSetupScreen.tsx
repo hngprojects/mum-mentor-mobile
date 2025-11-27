@@ -167,7 +167,7 @@ const ChildSetupScreen = () => {
           <PrimaryButton
             title="Done"
             onPress={handleDone}
-            disabled={!isFormComplete() || isLoading || !user}
+            // disabled={!isFormComplete() || isLoading || !user}
             isLoading={isLoading}
           />
           <SecondaryButton
