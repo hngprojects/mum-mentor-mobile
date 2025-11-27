@@ -46,10 +46,14 @@ export async function getAuthToken(): Promise<string | null> {
     if (Platform.OS === "web") {
       // Use localStorage for web
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      // ✅ LOG ADDED: Critical check for token retrieval
+      console.log("[STORAGE] Web token retrieved:", token ? "YES" : "NO", token ? `Token ID: ${token.substring(0, 10)}...` : "");
       return token;
     } else {
       // Use SecureStore for native
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+      // ✅ LOG ADDED: Critical check for token retrieval
+      console.log("[STORAGE] Native token retrieved:", token ? "YES" : "NO", token ? `Token ID: ${token.substring(0, 10)}...` : "");
       return token;
     }
   } catch (error) {

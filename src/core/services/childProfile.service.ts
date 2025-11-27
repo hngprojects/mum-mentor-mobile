@@ -128,6 +128,9 @@ export const getChildProfile = async (childId: string): Promise<ChildProfile> =>
 
 /**
  * Create a new child profile
+ * 
+ * THIS IS THE KEY FUNCTION USED BY setupService.ts
+ * Returns the ChildProfile with an 'id' property that setupService expects
  */
 export const createChildProfile = async (
   data: CreateChildProfileRequest
@@ -145,7 +148,18 @@ export const createChildProfile = async (
     
     // Handle nested structure { data: { child: {...} } } or { data: {...} }
     const childData = (response.data.data as any)?.child || response.data.data || response.data;
-    console.log('✅ Child profile created successfully:', childData);
+    
+    // CRITICAL: Verify the response has an 'id' field
+    if (!childData || !childData.id) {
+      console.error('❌ CRITICAL ERROR: Response missing child ID');
+      console.error('📦 Child data received:', childData);
+      throw new Error('Child profile created but no ID returned from server');
+    }
+    
+    console.log('✅ Child profile created successfully');
+    console.log('🔑 Child ID:', childData.id);
+    console.log('👶 Child name:', childData.full_name);
+    
     return childData;
   } catch (error) {
     console.error('❌ Error in createChildProfile:');
@@ -179,9 +193,21 @@ export const updateChildProfile = async (
  * Delete a child profile
  */
 export const deleteChildProfile = async (childId: string): Promise<void> => {
+  console.log('='.repeat(60));
+  console.log('🔴 deleteChildProfile called');
+  console.log('='.repeat(60));
+  console.log('📍 Child ID:', childId);
+  
   try {
-    await api.delete(`/api/v1/child-profiles/${childId}`);
+    console.log('🌐 Making DELETE request to /api/v1/child-profiles/' + childId);
+    const response = await api.delete(`/api/v1/child-profiles/${childId}`);
+    
+    console.log('✅ DELETE request successful');
+    console.log('📦 Response:', JSON.stringify(response.data, null, 2));
+    console.log('📊 Status:', response.status);
+    console.log('='.repeat(60));
   } catch (error) {
+    console.error('❌ DELETE request failed');
     handleApiError(error);
     throw error;
   }
@@ -199,13 +225,48 @@ export const uploadChildProfilePicture = async (
   }
 ): Promise<UploadProfilePictureResponse> => {
   try {
+    console.log('🔵 uploadChildProfilePicture: Starting upload...');
+    console.log('📍 Platform:', process.env.EXPO_PUBLIC_PLATFORM || 'unknown');
+    console.log('📦 Image file:', imageFile);
+    
     const formData = new FormData();
-    formData.append('file', {
-      uri: imageFile.uri,
-      name: imageFile.name,
-      type: imageFile.type,
-    } as any);
-
+    
+    // Check if we're on web (blob URL) or native
+    if (imageFile.uri.startsWith('blob:')) {
+      console.log('🌐 Web platform detected - converting blob to File');
+      
+      // On web, we need to fetch the blob and convert to File
+      const response = await fetch(imageFile.uri);
+      const blob = await response.blob();
+      
+      console.log('📦 Blob created:', {
+        size: blob.size,
+        type: blob.type
+      });
+      
+      // Create a File object from the blob
+      const file = new File([blob], imageFile.name, { type: imageFile.type });
+      
+      console.log('📦 File created:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
+      formData.append('file', file);
+    } else {
+      console.log('📱 Native platform detected - using URI directly');
+      
+      // On native, use the standard approach
+      formData.append('file', {
+        uri: imageFile.uri,
+        name: imageFile.name,
+        type: imageFile.type,
+      } as any);
+    }
+    
+    console.log('📤 Sending upload request...');
+    
     const response = await api.post<{ 
       data: UploadProfilePictureResponse 
     }>(`/api/v1/child-profiles/${childId}/upload-picture`, formData, {
@@ -214,9 +275,12 @@ export const uploadChildProfilePicture = async (
       },
     });
     
+    console.log('✅ Upload successful!');
+    
     // Handle nested structure { data: {...} }
     return response.data.data || response.data;
   } catch (error) {
+    console.error('❌ Upload failed in uploadChildProfilePicture');
     handleApiError(error);
     throw error;
   }
