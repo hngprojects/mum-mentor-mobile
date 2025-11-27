@@ -252,6 +252,7 @@ const Home = () => {
                 activeOpacity={0.9}
                 onPress={() => {
                   if (action.id === "resources") router.push("/resources");
+                  if (action.id === "journal") router.push("/journal");
                   // Add journal navigation here
                 }}
                 accessibilityRole="button"

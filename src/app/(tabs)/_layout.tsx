@@ -51,7 +51,7 @@ const TabLayout = () => {
       <Tabs.Screen name="Milestone" options={{ title: "Milestone" }} />
       <Tabs.Screen name="Gallery" options={{ title: "Gallery" }} />
       <Tabs.Screen name="Community" options={{ title: "Community" }} />
-      <Tabs.Screen name="Journal" options={{ title: "Journal" }} />
+      {/* <Tabs.Screen name="Journal" options={{ title: "Journal" }} /> */}
     </Tabs>
   );
 };

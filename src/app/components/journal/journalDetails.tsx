@@ -1,45 +1,125 @@
-import { colors, typography } from '@/src/core/styles'
-import React from 'react'
-import { Image, Text, View } from 'react-native'
-import { categories } from './editForm'
-import type { JournalCardProps } from './journalCard'
+// src/app/components/journal/journalDetails.tsx
 
-export function formatDate(dateString: string) {
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-  
-    const [year, month, day] = dateString.split("-");
-    const monthName = months[parseInt(month) - 1];
-  
-    return `${monthName} ${parseInt(day)}, ${year}`;
-  }
+import { colors, spacing, typography } from '@/src/core/styles';
+import { ms, rfs, vs } from '@/src/core/styles/scaling';
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { categories } from './editForm';
+import { formatDate, JournalCardProps } from './journalCard';
 
-const JournalDetails = ({ journal}: JournalCardProps) => {
-    const matchedCategory = categories.find(
-        (cat) => cat.title === journal.category
-      );
+const JournalDetails = ({ journal }: JournalCardProps) => {
+  const matchedCategory = categories.find((cat) => cat.title === journal.category);
+  const moodEmoji = journal.mood.split(" ")[1] || "";
 
   return (
-    <View style={{flexDirection: "column", gap: 10, padding:16, justifyContent: "space-between", borderWidth: 0.5, borderRadius: 8, borderColor: colors.outline, width: "100%"}}>
-        <View style={{flexDirection: "row", gap: 8, alignItems: "center"}}>
-          <Text style={{ color: matchedCategory?.color, backgroundColor: matchedCategory?.bgColor, padding: 4, borderRadius:8, ...typography.labelMedium}}>
-            {journal.category}
-          </Text>
-          <Text>{journal.mood.split(" ")[1]}</Text>
+    <ScrollView 
+      showsVerticalScrollIndicator={false} 
+      contentContainerStyle={styles.scrollContent}
+    >
+      <View style={styles.container}>
+        {/* Meta Info */}
+        <View style={styles.headerRow}>
+          <View style={[
+            styles.categoryBadge, 
+            { backgroundColor: matchedCategory?.bgColor || colors.backgroundSubtle }
+          ]}>
+            <Text style={[
+              styles.categoryText, 
+              { color: matchedCategory?.color || colors.textPrimary }
+            ]}>
+              {journal.category}
+            </Text>
+          </View>
+          <Text style={styles.moodText}>{moodEmoji}</Text>
         </View>
-        <Text style={{...typography.bodyLarge}}>{journal.title}</Text>
-        <View style={{paddingVertical: 2, flexDirection: "row", gap: 6, alignItems: "flex-end"}}>
-            <Image source={require("../../assets/images/journal/calendar.png")} style={{width: 24, height: 24}}/>
-            <Text style={{...typography.labelMedium}}>{formatDate(journal.date)}</Text>
-        </View>
-        <View style={{width: 376, marginHorizontal: "auto"}}>
-            <Image source={journal.imageUrl} style={{ width: "100%", height: 316, borderRadius: 8}} resizeMode='cover'/>
-        </View>
-        <Text style={{...typography.bodySmall}}>{journal.thoughts}</Text>
-    </View>
-  )
-}
 
-export default JournalDetails
+        {/* Title */}
+        <Text style={styles.title}>{journal.title}</Text>
+
+        {/* Date */}
+        <View style={styles.dateRow}>
+          <Ionicons name="calendar-outline" size={18} color={colors.textGrey1} />
+          <Text style={styles.dateText}>{formatDate(journal.date)}</Text>
+        </View>
+
+        {/* Big Image */}
+        <View style={styles.imageContainer}>
+          <Image 
+            source={journal.imageUrl} 
+            style={styles.mainImage} 
+            resizeMode="cover"
+          />
+        </View>
+
+        {/* Thoughts Body */}
+        <Text style={styles.bodyText}>{journal.thoughts}</Text>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: vs(40),
+  },
+  container: {
+    width: "100%",
+    padding: ms(spacing.md),
+    borderWidth: 1,
+    borderColor: colors.outline,
+    borderRadius: ms(12),
+    backgroundColor: colors.backgroundMain,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: ms(8),
+    marginBottom: vs(12),
+  },
+  categoryBadge: {
+    paddingHorizontal: ms(10),
+    paddingVertical: vs(4),
+    borderRadius: ms(8),
+  },
+  categoryText: {
+    ...typography.labelMedium,
+    fontWeight: "600",
+  },
+  moodText: {
+    fontSize: rfs(16),
+  },
+  title: {
+    ...typography.heading3,
+    color: colors.textPrimary,
+    marginBottom: vs(8),
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: ms(6),
+    marginBottom: vs(spacing.lg),
+  },
+  dateText: {
+    ...typography.bodyMedium,
+    color: colors.textGrey1,
+  },
+  imageContainer: {
+    width: "100%",
+    aspectRatio: 1.2, // Keeps consistent shape
+    marginBottom: vs(spacing.lg),
+    borderRadius: ms(8),
+    overflow: "hidden",
+  },
+  mainImage: {
+    width: "100%",
+    height: "100%",
+  },
+  bodyText: {
+    ...typography.bodyLarge,
+    color: colors.textPrimary,
+    lineHeight: 24,
+  },
+});
+
+export default JournalDetails;
