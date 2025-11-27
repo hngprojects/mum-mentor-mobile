@@ -26,6 +26,7 @@ import {
 } from "../../core/services/childProfile.service";
 import { CreateChildProfileRequest } from "../../types/child.types";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getProfileSetupId } from "../../core/services/profileSetup.service";
 
 // ============================================================================
 // TODO: IMPORT YOUR AUTH CONTEXT OR USER PROFILE HOOK HERE
@@ -34,7 +35,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { useAuth } from "../../core/context/AuthContext";
 //
 // Option 2: If you store it in AsyncStorage:
-//import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 //
 // Option 3: If you have a user profile API:
 // import { useUserProfile } from "../../hooks/useUserProfile";
@@ -174,36 +175,6 @@ export function AddChildModal({
   };
 
   /**
-   * Get profile_setup_id from available sources
-   */
-  const getProfileSetupId = async (): Promise<string | null> => {
-    console.log('🔍 Getting profile_setup_id...');
-    
-    // Priority 1: Use prop if provided
-    if (profileSetupId) {
-      console.log('✅ Using profile_setup_id from props:', profileSetupId);
-      return profileSetupId;
-    }
-
-    // Priority 2: Get from AsyncStorage (stored during login)
-    try {
-      const storedId = await AsyncStorage.getItem('profile_setup_id');
-      if (storedId) {
-        console.log('✅ Using profile_setup_id from AsyncStorage:', storedId);
-        return storedId;
-      } else {
-        console.warn('⚠️ profile_setup_id not found in AsyncStorage');
-      }
-    } catch (error) {
-      console.error('❌ Error reading from AsyncStorage:', error);
-    }
-
-    console.error('❌ profile_setup_id not found!');
-    console.error('💡 TIP: Make sure you are logged in and the login response included profile_setup_id');
-    return null;
-  };
-
-  /**
    * Handle save
    */
   const handleSave = async () => {
@@ -224,15 +195,14 @@ export function AddChildModal({
       return;
     }
 
-    // Get profile_setup_id
-    const setupId = await getProfileSetupId();
+    // Get profile_setup_id using the service
+    const setupId = profileSetupId || await getProfileSetupId();
     
     if (!setupId) {
       console.error('⚠️ CRITICAL: profile_setup_id is missing!');
-      console.error('⚠️ Please implement getProfileSetupId() function above');
       Alert.alert(
-        "Configuration Error",
-        "Could not retrieve profile setup ID. Please ensure you are logged in and try again.\n\nDevelopers: Check console for implementation instructions."
+        "Profile Setup Required",
+        "Could not retrieve your profile setup. Please ensure you have completed the onboarding process and are logged in."
       );
       return;
     }
