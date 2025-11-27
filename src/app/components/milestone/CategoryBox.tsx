@@ -1,29 +1,46 @@
+import { CATEGORIES } from "@/src/core/data/milestone-data";
 import { colors, typography } from "@/src/core/styles";
 import { useAppSelector } from "@/src/store/hooks";
 import { getMilestoneStates } from "@/src/store/milestoneSlice";
-import { CategoriesType } from "@/src/types/milestones";
-import { Link } from "expo-router";
+import { Category } from "@/src/types/milestones";
+import { Link, useRouter } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CircularProgress from "react-native-circular-progress-indicator";
 
 interface CategoryBoxType {
-  category: CategoriesType;
+  category: Category;
+  milestoneType: string;
+  ownerId: string;
 }
 
-export default function CategoryBox({ category }: CategoryBoxType) {
+export default function CategoryBox({
+  category,
+  milestoneType,
+  ownerId,
+}: CategoryBoxType) {
   const { milestoneData } = useAppSelector(getMilestoneStates);
+
+  const router = useRouter();
 
   const completedMilestones = milestoneData.filter(
     (milestone) => milestone.status === "completed"
   ).length;
 
   const progress = (completedMilestones / milestoneData.length) * 100;
+
+  const categoryData = CATEGORIES[category.label];
+
   return (
     <Link
       href={{
-        pathname: "/categories/[categoryId]",
-        params: { categoryId: category.id },
+        pathname: "/categories/CategoryDetails",
+        params: {
+          categoryValue: category.value,
+          categoryLabel: category.label,
+          ownerType: milestoneType,
+          ownerId,
+        },
       }}
       asChild
     >
@@ -31,7 +48,7 @@ export default function CategoryBox({ category }: CategoryBoxType) {
         <View style={styles.content}>
           {/* header */}
           <View style={styles.contentHeader}>
-            <Image source={category.icon} style={styles.contentIcon} />
+            <Image source={categoryData.icon} style={styles.contentIcon} />
             <CircularProgress
               value={progress}
               radius={28}
@@ -42,7 +59,7 @@ export default function CategoryBox({ category }: CategoryBoxType) {
               activeStrokeWidth={5}
               inActiveStrokeWidth={5}
               showProgressValue={false}
-              title={`${progress}%`}
+              title={`${Math.floor(progress)}%`}
               titleColor={colors.textGrey1}
               titleStyle={{ fontSize: 16, fontWeight: "500" }}
             />
@@ -50,8 +67,8 @@ export default function CategoryBox({ category }: CategoryBoxType) {
 
           {/* body */}
           <View style={styles.contentBody}>
-            <Text style={styles.contentBodyTitle}>{category.title}</Text>
-            <Text style={styles.contentBodyDesc}>{category.desc}</Text>
+            <Text style={styles.contentBodyTitle}>{categoryData.title}</Text>
+            <Text style={styles.contentBodyDesc}>{categoryData.desc}</Text>
           </View>
         </View>
       </TouchableOpacity>

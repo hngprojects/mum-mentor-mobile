@@ -50,6 +50,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const userPic = require("../../assets/images/user-pic.png");
 
   // --- Fetch Profile Setup ---
   const fetchProfileSetup = async (baseProfile: UserProfile) => {
@@ -145,8 +146,13 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const getUserImage = () => {
-    return userProfile?.profile_image || "https://i.pravatar.cc/150?img=5";
+    return userProfile?.profile_image || userPic;
   };
+
+  const imageSource =
+    typeof getUserImage() === "string"
+      ? { uri: getUserImage() }
+      : getUserImage();
 
   const child = {
     id: 1,
@@ -208,7 +214,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* --- Profile Card --- */}
         <View style={styles.profileCard}>
           <Image
-            source={{ uri: getUserImage() }}
+            source={imageSource}
             style={styles.avatar}
             accessibilityLabel="User profile avatar"
           />

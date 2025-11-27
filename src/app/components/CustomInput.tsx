@@ -71,10 +71,10 @@ const CustomInput: React.FC<CustomInputProps> = ({
   const borderColor = isError
     ? colors.error
     : isFocused
-    ? colors.primary
-    : isValid
-    ? colors.success
-    : colors.outline;
+      ? colors.primary
+      : isValid
+        ? colors.success
+        : colors.outline;
 
   const labelColor = isError ? colors.error : colors.textGrey1;
   const showValidationIcon = isValid || isError;

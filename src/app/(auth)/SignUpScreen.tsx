@@ -198,7 +198,7 @@ export default function SignUpScreen() {
 
       // Navigate to the reusable verification screen, passing context and email
       router.replace({
-        pathname: "/(auth)/OtpScreen",
+        pathname: "/(auth)/SignInScreen",
         params: {
           context: "register",
           email: email,

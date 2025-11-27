@@ -58,8 +58,8 @@ export function MilestoneBox({ milestone }: { milestone: Milestone }) {
       </Pressable>
       {/* name and desc */}
       <View style={styles.milestoneTextBox}>
-        <Text style={styles.milestoneName}>{milestone.title}</Text>
-        <Text style={styles.milestoneDesc}>{milestone.desc}</Text>
+        <Text style={styles.milestoneName}>{milestone.name}</Text>
+        <Text style={styles.milestoneDesc}>{milestone.description}</Text>
       </View>
 
       {/* action buttons */}

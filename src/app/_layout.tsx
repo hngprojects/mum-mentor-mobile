@@ -144,7 +144,10 @@ function RootLayoutContent() {
         <Stack.Screen name="profile" />
         <Stack.Screen name="resources" />
         <Stack.Screen name="components" />
-        <Stack.Screen name="categories/[categoryId]" />
+        <Stack.Screen
+          name="categories/CategoryDetails"
+          options={{ title: "category" }}
+        />
       </Stack>
       <Toast config={toastConfig} />
     </>
