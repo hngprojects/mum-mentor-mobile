@@ -6,10 +6,16 @@ import {
 import { colors } from "@/src/core/styles";
 import { rbr, rfs, s, vs } from "@/src/core/styles/scaling";
 import React, { useEffect, useRef, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { ChatInterface, StreamingMessage } from "../../(tabs)/AiChat";
 import { CategoryButton } from "./category-Button";
-import { ChatInput } from "./chat-Input";
 
 interface ChatWelcomeProps {
   userName: string;
@@ -130,15 +136,15 @@ export const ChatWelcome = ({
         ))}
       </View>
 
-      {/* <TouchableOpacity style={styles.askButton} onPress={onAskAnything}>
+      <TouchableOpacity style={styles.askButton} onPress={onAskAnything}>
         <Text style={styles.askButtonText}>Ask Anything</Text>
-      </TouchableOpacity> */}
-      <ChatInput
+      </TouchableOpacity>
+      {/* <ChatInput
         value={inputText}
         onChangeText={setInputText}
         onSend={handleSend}
         isAiSpeaking={isAiSpeaking}
-      />
+      /> */}
     </View>
   );
 };
