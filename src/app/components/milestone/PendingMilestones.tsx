@@ -20,7 +20,7 @@ export default function PendingMilestones() {
         {pendingMilestones?.map((milestone, idx) => (
           <View key={idx} style={styles.pendingMilestoneContentBox}>
             <View style={styles.contentBoxTextWrapper}>
-              <Text style={styles.contentBoxTitle}>{milestone.title}</Text>
+              <Text style={styles.contentBoxTitle}>{milestone?.name}</Text>
               <Text style={styles.contentBoxCategory}>Body Recovery</Text>
             </View>
 
