@@ -1,6 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { StyleSheet } from "react-native";
-
+import { StyleSheet, KeyboardAvoidingView, Platform, View } from "react-native";
 import Modal from "react-native-modal";
 
 interface ModalAnimationProps extends PropsWithChildren {
@@ -18,14 +17,19 @@ export default function ModalAnimationWrapper({
       isVisible={isVisible}
       onBackdropPress={onBackdropPress}
       backdropOpacity={0.5}
-      animationIn={animationIn}
-      animationOut={animationOut}
+      animationIn="zoomIn"
+      animationOut="zoomOut"
       animationInTiming={300}
       animationOutTiming={300}
-      useNativeDriver={true}
+      useNativeDriver
       style={styles.overlay}
     >
-      {children}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardWrapper}
+      >
+        <View style={styles.container}>{children}</View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -36,26 +40,13 @@ const styles = StyleSheet.create({
     margin: 0,
     paddingHorizontal: 24,
   },
+  keyboardWrapper: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  container: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 24,
+  },
 });
-
-const animationIn = {
-  from: {
-    opacity: 0,
-    transform: [{ scale: 0.9 }],
-  },
-  to: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-  },
-};
-
-const animationOut = {
-  from: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-  },
-  to: {
-    opacity: 0,
-    transform: [{ scale: 0.9 }],
-  },
-};
