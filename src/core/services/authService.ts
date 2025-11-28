@@ -242,84 +242,39 @@ export async function resendVerification(
   return response.data;
 }
 
-export async function verifyValue(
+// services/auth.api.ts
+export async function verifyValueApi(
   payload: VerificationPayload
-): Promise<ServiceResponse<TokenResponse>> {
-  try {
-    let apiUrl: string;
-    let requestBody: Record<string, string>;
+): Promise<TokenResponse> {
+  let apiUrl: string;
+  let requestBody: Record<string, string>;
 
-    if (payload.type === "email_verification") {
-      apiUrl = "/api/v1/auth/verify-email";
-      requestBody = { token: payload.verification_value };
-    } else if (payload.type === "password_reset") {
-      apiUrl = "/api/v1/auth/verify-otp";
-      requestBody = {
-        otp_code: payload.verification_value,
-        otp_type: "password_reset",
-      };
-    } else {
-      throw new Error("Invalid verification type provided.");
-    }
+  if (payload.type === "email_verification") {
+    apiUrl = "/api/v1/auth/verify-email";
+    requestBody = { token: payload.verification_value };
+  } else if (payload.type === "password_reset") {
+    apiUrl = "/api/v1/auth/verify-otp";
+    requestBody = {
+      otp_code: payload.verification_value,
+      otp_type: "password_reset",
+    };
+  } else {
+    throw new Error("Invalid verification type provided.");
+  }
 
-    const response = await apiClient.post(apiUrl, requestBody);
+  const response = await apiClient.post(apiUrl, requestBody);
 
-    // ✅ Handle different response formats based on verification type
-    let tokenData: TokenResponse;
+  console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
 
-    if (payload.type === "email_verification") {
-      // Email verification returns full TokenResponse object
-      const responseData = response.data.data;
+  let tokenData: TokenResponse;
 
-      if (Array.isArray(responseData)) {
-        // Handle array format [token, expiry]
-        const token = responseData[0];
-        tokenData = {
-          access_token: token,
-          refresh_token: "",
-          user: {
-            id: "",
-            email: payload.email,
-            full_name: "",
-          },
-        };
-      } else {
-        // Handle object format
-        tokenData = responseData;
-      }
+  if (payload.type === "email_verification") {
+    const responseData = response.data.data;
 
-      const token = tokenData?.access_token;
-      console.log(
-        "✅ Email verification token:",
-        token?.substring(0, 20) + "..."
-      );
-
-      if (token && token.length > 0) {
-        await setAuthToken(token);
-        console.log("Email verification successful. Token stored.");
-
-        // ✅ Fetch profile setup after email verification
-        try {
-          await getProfileSetup();
-        } catch (profileError) {
-          console.error("⚠️ Could not fetch profile setup:", profileError);
-        }
-      } else {
-        console.warn(
-          "Email verification returned no access token:",
-          response.data
-        );
-      }
-    } else if (payload.type === "password_reset") {
-      // ✅ Password reset OTP verify returns just a string message, NOT a token
-      // The OTP code itself will be used as the "token" for the reset-password endpoint
-      console.log("Password reset OTP verified successfully");
-      console.log("API Response:", response.data);
-
-      // Use the OTP code as the verification token for the next step
-      const otpCode = payload.verification_value;
+    if (Array.isArray(responseData)) {
+      const token = responseData[0];
       tokenData = {
-        access_token: otpCode, // Use OTP as token
+        access_token: token,
         refresh_token: "",
         user: {
           id: "",
@@ -327,16 +282,59 @@ export async function verifyValue(
           full_name: "",
         },
       };
-
-      console.log("✅ Using OTP code as verification token for password reset");
     } else {
-      throw new Error("Invalid verification type provided.");
+      tokenData = responseData;
     }
 
-    return { success: true, data: tokenData };
-  } catch (error) {
-    return { success: false, error: error as AxiosError<ApiErrorResponse> };
+    const token = tokenData?.access_token;
+    console.log(
+      "✅ Email verification token:",
+      token?.substring(0, 20) + "..."
+    );
+
+    if (token && token.length > 0) {
+      await setAuthToken(token);
+      console.log("Email verification successful. Token stored.");
+
+      try {
+        await getProfileSetup();
+      } catch (profileError) {
+        console.error("⚠️ Could not fetch profile setup:", profileError);
+      }
+    }
+  } else if (payload.type === "password_reset") {
+    console.log("Password reset OTP verified successfully");
+
+    const responseData = response.data.data;
+
+    // Extract the actual JWT token from the array format
+    const accessToken = Array.isArray(responseData.access_token)
+      ? responseData.access_token[0]
+      : responseData.access_token;
+
+    const refreshToken = Array.isArray(responseData.refresh_token)
+      ? responseData.refresh_token[0]
+      : responseData.refresh_token;
+
+    tokenData = {
+      access_token: accessToken,
+      refresh_token: refreshToken || "",
+      user: {
+        id: responseData.user_id || "",
+        email: payload.email,
+        full_name: "",
+      },
+    };
+
+    console.log(
+      "✅ Password reset verification token (JWT):",
+      accessToken?.substring(0, 20) + "..."
+    );
+  } else {
+    throw new Error("Invalid verification type provided.");
   }
+
+  return tokenData;
 }
 
 export async function resetPassword(

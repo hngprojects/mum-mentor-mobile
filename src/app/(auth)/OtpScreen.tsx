@@ -21,21 +21,15 @@ import { ms, rfs, vs } from "../../core/styles/scaling";
 // --- API Service and Types ---
 import { setAuthToken } from "@/src/core/services/authStorage";
 import { showToast } from "@/src/core/utils/toast";
+import { useMutation } from "@tanstack/react-query";
 import {
   ApiErrorResponse,
   EmailPayload,
   resendVerification,
-  ServiceResponse,
   VerificationPayload,
-  verifyValue,
+  verifyValueApi,
 } from "../../core/services/authService";
 import PrimaryButton from "../components/PrimaryButton";
-
-interface TokenResponse {
-  access_token: [string, string] | string; // Can be either array or string
-  refresh_token?: [string, string] | string;
-  user_id?: string;
-}
 
 // Add this helper function before your component or at the top
 const extractToken = (
@@ -96,6 +90,24 @@ function OtpScreen() {
       };
     }
   }, [timer, isLoading, isResending]);
+  function useVerifyOtp() {
+    return useMutation({
+      mutationFn: (payload: VerificationPayload) => verifyValueApi(payload),
+      onSuccess: (data, variables) => {
+        console.log("✅ Mutation Success - Full Data:", data);
+        console.log("✅ Verification Type:", variables.type);
+      },
+      onError: (error: any) => {
+        // 🔥 THIS IS WHERE YOU'LL SEE THE ACTUAL ERROR
+        console.error("❌ Mutation Error - Full Error Object:", error);
+        console.error("❌ Error Response:", error.response?.data);
+        console.error("❌ Error Status:", error.response?.status);
+        console.error("❌ Error Message:", error.message);
+      },
+    });
+  }
+
+  const verifyMutation = useVerifyOtp();
 
   // --- Initial Setup Effect ---
   useEffect(() => {
@@ -120,15 +132,13 @@ function OtpScreen() {
   // --- Handlers wrapped in useCallback to prevent recreation ---
   const handleVerify = useCallback(
     async (code?: string) => {
-      if (isLoading) return;
-
       const verificationValue = code || otp.join("");
+
       if (verificationValue.length !== OTP_LENGTH) {
         setVerificationError("Please enter the full 6-digit code.");
         return;
       }
 
-      setIsLoading(true);
       setVerificationError("");
 
       const verificationType: VerificationPayload["type"] =
@@ -141,105 +151,84 @@ function OtpScreen() {
       };
 
       try {
-        const result: ServiceResponse<TokenResponse> =
-          await verifyValue(payload);
-        console.log("📦 Result:", result);
-        console.log(context);
+        const response = await verifyMutation.mutateAsync(payload);
 
-        if (result.success) {
-          // 🔥 Change back to result.success, not result.status
-          const response = result.data;
+        // 🔥 YOU'LL SEE THE RESPONSE HERE
+        console.log("Component received response:", response);
 
-          if (context === "register") {
-            // Extract token safely (handles both string and array formats)
-            const accessToken = extractToken(response.access_token);
+        if (context === "register") {
+          const accessToken = extractToken(response.access_token);
 
-            if (accessToken) {
-              // 🔥 SET AUTH TOKEN HERE, after extracting the string
-              await setAuthToken(accessToken);
+          if (accessToken) {
+            await setAuthToken(accessToken);
 
-              // Optionally store refresh token too
-              const refreshToken = extractToken(response.refresh_token);
-              if (refreshToken) {
-                // Store refresh token if needed
-                // await SecureStore.setItemAsync('refresh_token', refreshToken);
-              }
-
-              showToast.success(
-                "Success",
-                "Email verified and logged in! Welcome to NORA."
-              );
-              router.replace("/(tabs)/Home");
-            } else {
-              console.warn("Verification successful but missing access_token.");
-              Alert.alert(
-                "Verification Success",
-                "Your email has been verified. Please log in to continue.",
-                [
-                  {
-                    text: "Log In",
-                    onPress: () => router.replace("/(auth)/SignInScreen"),
-                  },
-                ]
-              );
+            const refreshToken = extractToken(response.refresh_token);
+            if (refreshToken) {
+              // Store refresh token if needed
             }
-          } else if (context === "reset") {
-            // Extract token safely for password reset
-            const verificationToken =
-              extractToken(response.access_token) || resetToken;
 
-            if (!verificationToken) {
-              setVerificationError(
-                "Verification successful, but missing token for password reset."
-              );
-            } else {
-              showToast.success(
-                "Success",
-                "Code verified. Proceeding to reset password."
-              );
-              router.push({
-                pathname: "/(auth)/ResetPassword",
-                params: {
-                  verificationToken: verificationToken,
-                  email: email,
+            showToast.success(
+              "Success",
+              "Email verified and logged in! Welcome to NORA."
+            );
+            router.replace("/(tabs)/Home");
+          } else {
+            console.warn("Verification successful but missing access_token.");
+            Alert.alert(
+              "Verification Success",
+              "Your email has been verified. Please log in to continue.",
+              [
+                {
+                  text: "Log In",
+                  onPress: () => router.replace("/(auth)/SignInScreen"),
                 },
-              });
-            }
+              ]
+            );
           }
-        } else {
-          // Error handling
-          const error = result.error;
-          let serverMessage =
-            "A network or unexpected error occurred. Please check your connection.";
+        } else if (context === "reset") {
+          const verificationToken =
+            extractToken(response.access_token) || resetToken;
 
-          if (error && typeof error === "object" && "isAxiosError" in error) {
-            const axiosError = error as AxiosError<ApiErrorResponse>;
-            serverMessage =
-              axiosError.response?.data?.message ||
-              (typeof axiosError.response?.data?.detail === "string"
-                ? axiosError.response.data.detail
-                : undefined) ||
-              "Incorrect code, expired token, or server error. Please try again.";
+          if (!verificationToken) {
+            setVerificationError(
+              "Verification successful, but missing token for password reset."
+            );
+          } else {
+            showToast.success(
+              "Success",
+              "Code verified. Proceeding to reset password."
+            );
+            router.push({
+              pathname: "/(auth)/ResetPassword",
+              params: {
+                verificationToken: verificationToken,
+                email: email,
+              },
+            });
           }
-
-          showToast.error("Verification Failed", serverMessage);
-          setVerificationError(serverMessage);
-          setOtp(Array(OTP_LENGTH).fill(""));
-          inputRefs.current[0]?.focus();
         }
-      } catch (error) {
-        console.error("Unhandled error during verification:", error);
-        showToast.error(
-          "Error",
-          "An unexpected error occurred. Please try again."
-        );
-        setVerificationError("An unexpected error occurred.");
-      } finally {
-        setIsLoading(false);
+      } catch (error: any) {
+        // 🔥 DETAILED ERROR LOGGING
+        console.error("❌ Verification failed:", error);
+        console.error("❌ Error response data:", error.response?.data);
+
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        const serverMessage =
+          axiosError.response?.data?.message ||
+          (typeof axiosError.response?.data?.detail === "string"
+            ? axiosError.response.data.detail
+            : undefined) ||
+          "Incorrect code, expired token, or server error. Please try again.";
+
+        showToast.error("Verification Failed", serverMessage);
+        setVerificationError(serverMessage);
+        setOtp(Array(OTP_LENGTH).fill(""));
+        inputRefs.current[0]?.focus();
       }
     },
-    [isLoading, otp, context, email, resetToken]
+    [otp, context, email, resetToken]
   );
+
   const handleResendCode = useCallback(async () => {
     // Add more defensive checks
     if (timer > 0 || isResending || isLoading || !email) {
