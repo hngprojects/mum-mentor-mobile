@@ -1,32 +1,32 @@
 // components/AddChildModal.tsx
 import { Feather } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Alert,
-  Platform,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 // API Imports
 import {
   createChildProfile,
-  uploadChildProfilePicture,
   formatDateForApi,
+  uploadChildProfilePicture,
 } from "../../core/services/childProfile.service";
-import { CreateChildProfileRequest } from "../../types/child.types";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfileSetupId } from "../../core/services/profileSetup.service";
+import { CreateChildProfileRequest } from "../../types/child.types";
+import GenderDropdown from "../components/GenderDropdown";
 
 // ============================================================================
 // TODO: IMPORT YOUR AUTH CONTEXT OR USER PROFILE HOOK HERE
@@ -85,7 +85,8 @@ export function AddChildModal({
    */
   const requestPermissions = async () => {
     if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission Required",
@@ -176,16 +177,15 @@ export function AddChildModal({
    * Handle save
    */
   const handleSave = async () => {
-    
     if (!validateForm()) {
       return;
     }
 
     // Get profile_setup_id using the service
-    const setupId = profileSetupId || await getProfileSetupId();
-    
+    const setupId = profileSetupId || (await getProfileSetupId());
+
     if (!setupId) {
-      console.error('⚠️ CRITICAL: profile_setup_id is missing!');
+      console.error("⚠️ CRITICAL: profile_setup_id is missing!");
       Alert.alert(
         "Profile Setup Required",
         "Could not retrieve your profile setup. Please ensure you have completed the onboarding process and are logged in."
@@ -215,8 +215,11 @@ export function AddChildModal({
             name: `profile_${Date.now()}.jpg`,
             type: "image/jpeg",
           };
-          
-          const uploadResult = await uploadChildProfilePicture(newChild.id, imageFile);
+
+          const uploadResult = await uploadChildProfilePicture(
+            newChild.id,
+            imageFile
+          );
         } catch (imageError) {
           console.error("❌ Error uploading image:", imageError);
           // Don't fail the entire operation if image upload fails
@@ -228,7 +231,7 @@ export function AddChildModal({
       } else if (!profilePicture) {
         //
       } else if (!newChild.id) {
-        console.error('⚠️ newChild.id is missing, cannot upload picture');
+        console.error("⚠️ newChild.id is missing, cannot upload picture");
       }
 
       Alert.alert("Success", "Child profile added successfully!");
@@ -239,7 +242,7 @@ export function AddChildModal({
       console.error("Error:", error);
       console.error("Error type:", typeof error);
       console.error("Error stringified:", JSON.stringify(error, null, 2));
-      
+
       // More detailed error message
       let errorMessage = "Failed to add child profile. ";
       if (error instanceof Error) {
@@ -247,7 +250,7 @@ export function AddChildModal({
       } else {
         errorMessage += "Please check console for details.";
       }
-      
+
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
@@ -334,13 +337,10 @@ export function AddChildModal({
                   color="#999"
                   style={styles.inputIcon}
                 />
-                <TextInput
-                  style={styles.input}
+                <GenderDropdown
+                  label="Child's Gender"
                   value={gender}
-                  onChangeText={setGender}
-                  placeholder="Enter Gender (e.g., Male, Female)"
-                  placeholderTextColor="#CCC"
-                  editable={!loading}
+                  onValueChange={(gender) => setGender(gender)}
                 />
               </View>
             </View>
