@@ -28,19 +28,6 @@ import { getProfileSetupId } from "../../core/services/profileSetup.service";
 import { CreateChildProfileRequest } from "../../types/child.types";
 import GenderDropdown from "../components/GenderDropdown";
 
-// ============================================================================
-// TODO: IMPORT YOUR AUTH CONTEXT OR USER PROFILE HOOK HERE
-// ============================================================================
-// Option 1: If you have an auth context with user data:
-// import { useAuth } from "../../core/context/AuthContext";
-//
-// Option 2: If you store it in AsyncStorage:
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-//
-// Option 3: If you have a user profile API:
-// import { useUserProfile } from "../../hooks/useUserProfile";
-// ============================================================================
-
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface AddChildModalProps {
@@ -60,33 +47,13 @@ export function AddChildModal({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [birthOrder, setBirthOrder] = useState("");
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | { uri: string; name?: string; type?: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ============================================================================
-  // TODO: GET profile_setup_id FROM YOUR AUTH SYSTEM
-  // ============================================================================
-  // Option 1: From auth context
-  // const { user } = useAuth();
-  // const setupId = user?.profile_setup_id;
-  //
-  // Option 2: From user profile hook
-  // const { profile } = useUserProfile();
-  // const setupId = profile?.profile_setup_id;
-  //
-  // Option 3: Load from AsyncStorage (you'll need to make this async)
-  // const [setupId, setSetupId] = useState<string | null>(null);
-  // useEffect(() => {
-  //   AsyncStorage.getItem('profile_setup_id').then(setSetupId);
-  // }, []);
-  // ============================================================================
-
-  /**
-   * Request camera/gallery permissions
-   */
+  // Request camera/gallery permissions
   const requestPermissions = async () => {
     if (Platform.OS !== "web") {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission Required",
@@ -98,9 +65,7 @@ export function AddChildModal({
     return true;
   };
 
-  /**
-   * Handle image picker
-   */
+  // Handle image picker
   const handlePickImage = async () => {
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
@@ -114,7 +79,25 @@ export function AddChildModal({
       });
 
       if (!result.canceled && result.assets[0]) {
-        setProfilePicture(result.assets[0].uri);
+        const asset = result.assets[0];
+
+        if (Platform.OS === "web") {
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const file = new File([blob], `profile_${Date.now()}.jpg`, {
+            type: "image/jpeg",
+          });
+          setProfilePicture(asset.uri); // For display
+          setSelectedImage(file);        // For upload
+        } else {
+          const fileObj = {
+            uri: asset.uri,
+            name: `profile_${Date.now()}.jpg`,
+            type: "image/jpeg",
+          };
+          setProfilePicture(asset.uri);  // For display
+          setSelectedImage(fileObj);     // For upload
+        }
       }
     } catch (error) {
       console.error("❌ Error picking image:", error);
@@ -122,30 +105,14 @@ export function AddChildModal({
     }
   };
 
-  /**
-   * Handle date change
-   */
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
-    if (selectedDate) {
-      setDateOfBirth(selectedDate);
-    }
+    if (selectedDate) setDateOfBirth(selectedDate);
   };
 
-  /**
-   * Format date for display
-   */
-  const formatDateForDisplay = (date: Date): string => {
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
+  const formatDateForDisplay = (date: Date): string =>
+    date.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-  /**
-   * Validate form
-   */
   const validateForm = (): boolean => {
     if (!name.trim()) {
       Alert.alert("Validation Error", "Please enter child's full name");
@@ -162,40 +129,30 @@ export function AddChildModal({
     return true;
   };
 
-  /**
-   * Reset form
-   */
   const resetForm = () => {
     setName("");
     setGender("");
     setDateOfBirth(new Date());
     setBirthOrder("");
     setProfilePicture(null);
+    setSelectedImage(null);
   };
 
-  /**
-   * Handle save
-   */
   const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
-    // Get profile_setup_id using the service
     const setupId = profileSetupId || (await getProfileSetupId());
-
     if (!setupId) {
-      console.error("⚠️ CRITICAL: profile_setup_id is missing!");
       Alert.alert(
         "Profile Setup Required",
-        "Could not retrieve your profile setup. Please ensure you have completed the onboarding process and are logged in."
+        "Could not retrieve your profile setup. Please ensure you have completed onboarding."
       );
       return;
     }
+
     try {
       setLoading(true);
 
-      // Prepare the request data
       const createData: CreateChildProfileRequest = {
         profile_setup_id: setupId,
         full_name: name.trim(),
@@ -204,92 +161,68 @@ export function AddChildModal({
         birth_order: parseInt(birthOrder),
       };
 
-      // Create the child profile
+      console.log("📝 Sending child profile data:", createData);
+
       const newChild = await createChildProfile(createData);
+      
+      console.log("📦 Server response:", newChild);
 
-      // Upload profile picture if selected
-      if (profilePicture && newChild.id) {
+      // Check if we got a valid response with an ID
+      if (!newChild || !newChild.id) {
+        console.error("❌ Invalid server response:", newChild);
+        throw new Error("Server did not return a valid child profile. Please try again.");
+      }
+
+      console.log("✅ Child profile created with ID:", newChild.id);
+
+      // Only attempt image upload if we have both an image and a valid ID
+      if (selectedImage) {
+        console.log("🖼 Uploading profile picture for child ID:", newChild.id);
         try {
-          const imageFile = {
-            uri: profilePicture,
-            name: `profile_${Date.now()}.jpg`,
-            type: "image/jpeg",
-          };
-
-          const uploadResult = await uploadChildProfilePicture(
-            newChild.id,
-            imageFile
-          );
+          await uploadChildProfilePicture(newChild.id, selectedImage);
+          console.log("✅ Profile picture uploaded successfully");
         } catch (imageError) {
           console.error("❌ Error uploading image:", imageError);
-          // Don't fail the entire operation if image upload fails
+          // Don't fail the entire operation if just the image upload fails
           Alert.alert(
             "Partial Success",
-            "Child profile created successfully, but profile picture upload failed. You can try uploading it again by editing the profile."
+            "Child profile created successfully, but profile picture upload failed. You can update it later."
           );
         }
-      } else if (!profilePicture) {
-        //
-      } else if (!newChild.id) {
-        console.error("⚠️ newChild.id is missing, cannot upload picture");
       }
 
       Alert.alert("Success", "Child profile added successfully!");
       resetForm();
       onClose();
-    } catch (error) {
-      console.error("❌ ERROR in handleSave");
-      console.error("Error:", error);
-      console.error("Error type:", typeof error);
-      console.error("Error stringified:", JSON.stringify(error, null, 2));
-
-      // More detailed error message
-      let errorMessage = "Failed to add child profile. ";
-      if (error instanceof Error) {
-        errorMessage += error.message;
-      } else {
-        errorMessage += "Please check console for details.";
-      }
-
+    } catch (error: any) {
+      console.error("❌ ERROR in handleSave:", error);
+      
+      // Extract meaningful error message
+      const errorMessage = error?.message || 
+                          error?.response?.data?.message || 
+                          error?.response?.data?.detail ||
+                          "Failed to add child profile. Please try again.";
+      
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Handle cancel
-   */
   const handleCancel = () => {
     resetForm();
     onClose();
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={handleCancel}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleCancel}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={handleCancel}
-        />
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleCancel} />
         <View style={styles.modalContainer}>
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Add Child&apos;s Info</Text>
           </View>
-
-          {/* Scrollable Content */}
-          <ScrollView
-            style={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Avatar Section */}
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.avatarSection}>
               <Image
                 source={{
@@ -297,25 +230,16 @@ export function AddChildModal({
                 }}
                 style={styles.avatar}
               />
-              <TouchableOpacity
-                style={styles.cameraButton}
-                onPress={handlePickImage}
-                disabled={loading}
-              >
+              <TouchableOpacity style={styles.cameraButton} onPress={handlePickImage} disabled={loading}>
                 <Feather name="camera" size={20} color="#FFF" />
               </TouchableOpacity>
             </View>
 
-            {/* Child's Full Name Field */}
+            {/* Full Name */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Child&apos;s Full Name</Text>
               <View style={styles.inputContainer}>
-                <Feather
-                  name="user"
-                  size={20}
-                  color="#999"
-                  style={styles.inputIcon}
-                />
+                <Feather name="user" size={20} color="#999" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={name}
@@ -327,65 +251,33 @@ export function AddChildModal({
               </View>
             </View>
 
-            {/* Gender Field */}
+            {/* Gender - FIXED: Removed inputContainer wrapper */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Gender</Text>
-              <View style={styles.inputContainer}>
-                <Feather
-                  name="users"
-                  size={20}
-                  color="#999"
-                  style={styles.inputIcon}
-                />
-                <GenderDropdown
-                  label="Child's Gender"
-                  value={gender}
-                  onValueChange={(gender) => setGender(gender)}
-                />
-              </View>
+              <GenderDropdown 
+                label="Child's Gender" 
+                value={gender} 
+                onValueChange={setGender} 
+              />
             </View>
 
-            {/* Date Of Birth Field */}
+            {/* Date of Birth */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Date Of Birth</Text>
-              <TouchableOpacity
-                style={styles.inputContainer}
-                onPress={() => setShowDatePicker(true)}
-                disabled={loading}
-              >
-                <Feather
-                  name="calendar"
-                  size={20}
-                  color="#999"
-                  style={styles.inputIcon}
-                />
-                <Text style={styles.dateText}>
-                  {formatDateForDisplay(dateOfBirth)}
-                </Text>
+              <TouchableOpacity style={styles.inputContainer} onPress={() => setShowDatePicker(true)} disabled={loading}>
+                <Feather name="calendar" size={20} color="#999" style={styles.inputIcon} />
+                <Text style={styles.dateText}>{formatDateForDisplay(dateOfBirth)}</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Date Picker */}
             {showDatePicker && (
-              <DateTimePicker
-                value={dateOfBirth}
-                mode="date"
-                display="default"
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-              />
+              <DateTimePicker value={dateOfBirth} mode="date" display="default" onChange={handleDateChange} maximumDate={new Date()} />
             )}
 
-            {/* Birth Order Field */}
+            {/* Birth Order */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Birth Order</Text>
               <View style={styles.inputContainer}>
-                <Feather
-                  name="list"
-                  size={20}
-                  color="#999"
-                  style={styles.inputIcon}
-                />
+                <Feather name="list" size={20} color="#999" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={birthOrder}
@@ -398,20 +290,8 @@ export function AddChildModal({
               </View>
             </View>
 
-            {/* Helper Text */}
-            <View style={styles.helperSection}>
-              <Feather name="info" size={16} color="#999" />
-              <Text style={styles.helperText}>
-                Birth order: 1 for first child, 2 for second child, etc.
-              </Text>
-            </View>
-
             {/* Buttons */}
-            <TouchableOpacity
-              style={[styles.saveButton, loading && styles.buttonDisabled]}
-              onPress={handleSave}
-              disabled={loading}
-            >
+            <TouchableOpacity style={[styles.saveButton, loading && styles.buttonDisabled]} onPress={handleSave} disabled={loading}>
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color="#FFF" />
@@ -422,11 +302,7 @@ export function AddChildModal({
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancel}
-              disabled={loading}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={loading}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -437,138 +313,26 @@ export function AddChildModal({
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContainer: {
-    backgroundColor: "#FFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: SCREEN_HEIGHT * 0.9,
-    overflow: "hidden",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  avatarSection: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  cameraButton: {
-    position: "absolute",
-    bottom: 0,
-    right: "35%",
-    backgroundColor: "#666",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  formSection: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#000",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    minHeight: 56,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: "#000",
-  },
-  dateText: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: "#000",
-  },
-  helperSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9F9F9",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-    gap: 8,
-  },
-  helperText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#666",
-  },
-  saveButton: {
-    backgroundColor: "#E63946",
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  saveButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  loadingText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  cancelButton: {
-    borderWidth: 2,
-    borderColor: "#E63946",
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  cancelButtonText: {
-    color: "#E63946",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0, 0, 0, 0.5)" },
+  modalContainer: { backgroundColor: "#FFF", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: SCREEN_HEIGHT * 0.9, overflow: "hidden" },
+  header: { paddingHorizontal: 20, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: "#F0F0F0" },
+  headerTitle: { fontSize: 24, fontWeight: "700" },
+  content: { paddingHorizontal: 20, paddingTop: 20 },
+  avatarSection: { alignItems: "center", marginBottom: 24 },
+  avatar: { width: 120, height: 120, borderRadius: 60 },
+  cameraButton: { position: "absolute", bottom: 0, right: "35%", backgroundColor: "#666", width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
+  formSection: { marginBottom: 20 },
+  label: { fontSize: 16, fontWeight: "600", marginBottom: 8, color: "#000" },
+  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F5F5", borderRadius: 8, paddingHorizontal: 16, minHeight: 56 },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, paddingVertical: 16, fontSize: 16, color: "#000" },
+  dateText: { flex: 1, paddingVertical: 16, fontSize: 16, color: "#000" },
+  saveButton: { backgroundColor: "#E63946", paddingVertical: 16, borderRadius: 8, alignItems: "center", marginTop: 8, marginBottom: 12 },
+  saveButtonText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+  loadingContainer: { flexDirection: "row", alignItems: "center", gap: 8 },
+  loadingText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+  cancelButton: { borderWidth: 2, borderColor: "#E63946", paddingVertical: 16, borderRadius: 8, alignItems: "center", marginBottom: 32 },
+  cancelButtonText: { color: "#E63946", fontSize: 16, fontWeight: "700" },
+  buttonDisabled: { opacity: 0.6 },
 });

@@ -15,10 +15,10 @@ import {
 } from "@/src/types/milestones";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+
 type Actions = "edit" | "delete";
 
 const uncheckedIcon = require("../../../assets/images/checkbox-unticked.png");
-
 const checkedIcon = require("../../../assets/images/checked-icon.png");
 
 export const ACTION_BUTTONS_ICONS = [
@@ -37,7 +37,6 @@ export const ACTION_BUTTONS_ICONS = [
 export function MilestoneBox({ milestone }: { milestone: MilestoneDataType }) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  console.log(milestone.id);
 
   const { mutate: toggleMilestoneMutation } = useMutation({
     mutationFn: (payload: ToggleMilestonePayload) =>
@@ -85,12 +84,13 @@ export function MilestoneBox({ milestone }: { milestone: MilestoneDataType }) {
 
   return (
     <View style={styles.milestoneBox}>
-      <Pressable onPress={() => handleToggleStatus()}>
+      <Pressable onPress={handleToggleStatus}>
         <Image
           source={milestone?.status === "pending" ? uncheckedIcon : checkedIcon}
           style={styles.milestoneCheckbox}
         />
       </Pressable>
+
       {/* name and desc */}
       <View style={styles.milestoneTextBox}>
         <Text style={styles.milestoneName}>{milestone.name}</Text>
@@ -99,21 +99,21 @@ export function MilestoneBox({ milestone }: { milestone: MilestoneDataType }) {
 
       {/* action buttons */}
       <View style={styles.milestoneActionButtons}>
-        {ACTION_BUTTONS_ICONS.map((action) => (
-          <Pressable
-            key={action.id}
-            onPress={() => handleMilestoneAction(action.actionType as Actions)}
-            style={{
-              visibility:
-                milestone?.status === "completed" &&
-                action.actionType === "edit"
-                  ? "hidden"
-                  : "visible",
-            }}
-          >
-            <Image source={action.icon} />
-          </Pressable>
-        ))}
+        {ACTION_BUTTONS_ICONS.map((action) => {
+          // Hide edit button for completed milestones
+          if (milestone?.status === "completed" && action.actionType === "edit") {
+            return null;
+          }
+
+          return (
+            <Pressable
+              key={action.id}
+              onPress={() => handleMilestoneAction(action.actionType as Actions)}
+            >
+              <Image source={action.icon} style={styles.actionButtonIcon} />
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
@@ -124,28 +124,33 @@ const styles = StyleSheet.create({
     height: 24,
     width: 24,
   },
+
   milestoneActionButtons: {
     gap: 16,
     flexDirection: "row",
     alignItems: "center",
   },
+
   milestoneDesc: {
     ...typography.bodySmall,
     color: colors.textSecondary,
   },
+
   milestoneName: {
     ...typography.labelLarge,
     color: colors.textPrimary,
   },
+
   milestoneTextBox: {
     gap: 8,
-
     width: "70%",
   },
+
   milestoneCheckbox: {
     height: 32,
     width: 32,
   },
+
   milestoneBox: {
     paddingVertical: 8,
     width: "100%",

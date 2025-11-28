@@ -19,6 +19,7 @@ export default function ChildList() {
   });
 
   function handleChildPress(childId: string, childName: string) {
+    if (!childId || !childName) return; // ensure safe navigation
     router.push({
       pathname: "/child-milestone/[id]",
       params: { id: childId, name: childName },
@@ -26,28 +27,33 @@ export default function ChildList() {
   }
 
   if (error) {
-    showToast.error(error.message);
+    showToast.error((error as any)?.message || "Something went wrong"); // safe error handling
   }
 
   if (isLoading) {
     return <View>Loading...</View>;
   }
 
+  // Ensure children array exists
+  const children = childProfiles?.children ?? [];
+
   return (
     <View style={styles.childContainer}>
-      {childProfiles?.children?.map((child) => (
+      {children.map((child) => (
         <TouchableOpacity
           key={child.id}
           style={styles.childBox}
           onPress={() => handleChildPress(child.id, child.full_name)}
         >
           <Image
-            source={{ uri: child.profile_picture_url }}
+            source={{
+              uri: child.profile_picture_url || "https://via.placeholder.com/53", // fallback avatar
+            }}
             style={styles.childBoxAvatar}
           />
 
           <View style={styles.childBoxTextBox}>
-            <Text style={styles.childBoxTitle}>{child.full_name}</Text>
+            <Text style={styles.childBoxTitle}>{child.full_name || "Unknown"}</Text>
             <Text style={styles.childBoxDesc}>5 months old</Text>
           </View>
         </TouchableOpacity>
@@ -81,14 +87,8 @@ const styles = StyleSheet.create({
   },
   childContainer: {
     gap: 24,
-
     marginTop: 24,
     flex: 1,
     backgroundColor: "white",
   },
 });
-
-// 36d1f68a-4eaf-4960-a53e-b01ac1ce9887
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7InVzZXJfaWQiOiIzNmQxZjY4YS00ZWFmLTQ5NjAtYTUzZS1iMDFhYzFjZTk4ODciLCJyb2xlIjoidXNlciJ9LCJleHAiOjE3NjQzMDc5NzYsImlhdCI6MTc2NDMwNjE3NiwidG9rZW5fdHlwZSI6ImFjY2VzcyJ9.JvXkQgLO60dkPmzWAy9dYxt2li28-eS4WpOlArWIqTo
-
-// cff9cf3c-f2eb-4b80-8e2d-fe1b2346b438
