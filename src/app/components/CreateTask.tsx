@@ -283,6 +283,7 @@ const CreateTaskForm: React.FC<{
             value={formatTime(dueTime)}
             placeholder="Select Time"
             onDateChange={() => {}}
+            icon="time-outline"
           />
         </View>
       </TouchableOpacity>

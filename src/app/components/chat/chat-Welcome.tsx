@@ -1,8 +1,15 @@
+import {
+  useChatMessages,
+  useCreateChat,
+  useSendAiMessage,
+} from "@/src/core/hooks/useAiChat";
 import { colors } from "@/src/core/styles";
 import { rbr, rfs, s, vs } from "@/src/core/styles/scaling";
-import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { ChatInterface, StreamingMessage } from "../../(tabs)/AiChat";
 import { CategoryButton } from "./category-Button";
+import { ChatInput } from "./chat-Input";
 
 interface ChatWelcomeProps {
   userName: string;
@@ -22,6 +29,83 @@ export const ChatWelcome = ({
     { id: "4", title: "Parenting Tip 💕" },
     { id: "5", title: "Baby Care 👶" },
     { id: "6", title: "Night Routine 🌙" },
+  ];
+  const [inputText, setInputText] = useState("");
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [currentChat, setCurrentChat] = useState<ChatInterface | null>(null);
+  const [streamingText, setStreamingText] = useState("");
+  const { data: chatMessages } = useChatMessages(currentChat?.id);
+
+  const flatListRef = useRef<FlatList>(null);
+  const hasReceivedChunkRef = useRef(false);
+
+  const createChat = useCreateChat();
+  const sendMessage = useSendAiMessage();
+
+  const handleSend = async () => {
+    if (!inputText.trim() || isAiSpeaking) return;
+
+    const userMessage = inputText.trim();
+    setInputText("");
+    setIsAiSpeaking(true);
+    setStreamingText("");
+
+    hasReceivedChunkRef.current = false;
+
+    try {
+      let chatId = currentChat?.id;
+
+      if (!chatId) {
+        const newChat = await createChat.mutateAsync();
+        chatId = newChat.id;
+        setCurrentChat(newChat);
+      }
+
+      await sendMessage.mutateAsync({
+        session_id: chatId!,
+        message: userMessage,
+        onChunk: (chunk: string) => {
+          hasReceivedChunkRef.current = true;
+          setStreamingText((prev) => prev + chunk);
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        },
+
+        onComplete: () => {
+          setStreamingText("");
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAiSpeaking(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      chatMessages?.conversation &&
+      currentChat?.id === chatMessages.conversation.id
+    ) {
+      setCurrentChat(chatMessages.conversation);
+    }
+  }, [chatMessages?.conversation, currentChat?.id]);
+
+  // Combine real messages with streaming message
+  const displayMessages: StreamingMessage[] = [
+    ...(chatMessages?.messages || []),
+    ...(streamingText
+      ? [
+          {
+            id: "streaming",
+            text: streamingText,
+            isUser: false,
+            timestamp: new Date().toISOString(),
+            isStreaming: true,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -46,9 +130,15 @@ export const ChatWelcome = ({
         ))}
       </View>
 
-      <TouchableOpacity style={styles.askButton} onPress={onAskAnything}>
+      {/* <TouchableOpacity style={styles.askButton} onPress={onAskAnything}>
         <Text style={styles.askButtonText}>Ask Anything</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
+      <ChatInput
+        value={inputText}
+        onChangeText={setInputText}
+        onSend={handleSend}
+        isAiSpeaking={isAiSpeaking}
+      />
     </View>
   );
 };
@@ -102,5 +192,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFF",
     textAlign: "center",
+  },
+  messagesList: {
+    paddingVertical: vs(16),
   },
 });

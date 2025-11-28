@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -26,16 +28,15 @@ import { ChatMessage } from "../components/chat/chat-Message";
 import { ChatWelcome } from "../components/chat/chat-Welcome";
 import { HistoryEmptyState } from "../components/chat/history-Empty-State";
 import { TypingIndicator } from "../components/chat/typing-Indicator";
-import { KeyboardAvoidingView, Platform } from "react-native";
 
-interface Chat {
+export interface ChatInterface {
   id: string;
   title: string;
   created_at: string;
   user_id: string;
 }
 
-interface StreamingMessage {
+export interface StreamingMessage {
   id: string;
   text: string;
   isUser: boolean;
@@ -46,7 +47,7 @@ interface StreamingMessage {
 export default function ChatScreen() {
   const [currentView, setCurrentView] = useState<"welcome" | "chat">("welcome");
   const { data: chats } = useChatList();
-  const [currentChat, setCurrentChat] = useState<Chat | null>(null);
+  const [currentChat, setCurrentChat] = useState<ChatInterface | null>(null);
   const [inputText, setInputText] = useState("");
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [showHistoryEmpty, setShowHistoryEmpty] = useState(false);
@@ -228,7 +229,7 @@ export default function ChatScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} 
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <SafeAreaView style={styles.container}>
         {/* Header */}
