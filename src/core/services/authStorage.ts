@@ -10,9 +10,6 @@ const AUTH_TOKEN_KEY = "NoraAppAuthToken";
  * @param token The JWT access token string.
  */
 export async function setAuthToken(token: string): Promise<void> {
-  console.log("=== SET AUTH TOKEN DEBUG ===");
-  console.log("Platform:", Platform.OS);
-  console.log("Input token length:", token?.length);
 
   // Validate token
   const trimmedToken = token?.trim();
@@ -25,11 +22,9 @@ export async function setAuthToken(token: string): Promise<void> {
     if (Platform.OS === "web") {
       // Use localStorage for web
       localStorage.setItem(AUTH_TOKEN_KEY, trimmedToken);
-      console.log("Auth token stored in localStorage (web)");
     } else {
       // Use SecureStore for native (iOS/Android)
       await SecureStore.setItemAsync(AUTH_TOKEN_KEY, trimmedToken);
-      console.log("Auth token stored in SecureStore (native)");
     }
   } catch (error) {
     console.error("AUTH STORAGE ERROR: Failed to save auth token.", error);
@@ -46,22 +41,10 @@ export async function getAuthToken(): Promise<string | null> {
     if (Platform.OS === "web") {
       // Use localStorage for web
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      // ✅ LOG ADDED: Critical check for token retrieval
-      console.log(
-        "[STORAGE] Web token retrieved:",
-        token ? "YES" : "NO",
-        token ? `Token ID: ${token.substring(0, 10)}...` : ""
-      );
       return token;
     } else {
       // Use SecureStore for native
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-      // ✅ LOG ADDED: Critical check for token retrieval
-      console.log(
-        "[STORAGE] Native token retrieved:",
-        token ? "YES" : "NO",
-        token ? `Token ID: ${token.substring(0, 10)}...` : ""
-      );
       return token;
     }
   } catch (error) {
@@ -77,10 +60,8 @@ export async function removeAuthToken(): Promise<void> {
   try {
     if (Platform.OS === "web") {
       localStorage.clear();
-      console.log("Auth token removed from localStorage (web)");
     } else {
       await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
-      console.log("Auth token removed from SecureStore (native)");
     }
   } catch (error) {
     console.error("AUTH STORAGE ERROR: Failed to remove token.", error);

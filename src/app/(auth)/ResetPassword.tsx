@@ -52,15 +52,6 @@ export default function ResetPassword() {
 
   // ✅ Debug: Log token on mount (only once)
   useEffect(() => {
-    console.log("🔍 ResetPassword Screen - Token received:", {
-      hasToken: !!verificationToken,
-      tokenLength: verificationToken?.length,
-      tokenPreview: verificationToken
-        ? verificationToken.substring(0, 20) + "..."
-        : "N/A",
-      email: email,
-    });
-
     if (!verificationToken) {
       Alert.alert(
         "Error",
@@ -111,28 +102,18 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      console.log(
-        "📤 Sending password reset request with token:",
-        verificationToken.substring(0, 20) + "..."
-      );
-
-      // ✅ FIXED: Order matters! Match the exact order from API documentation
+      // FIXED: Order matters! Match the exact order from API documentation
       const payload = {
         new_password: newPassword,
         confirm_password: confirmPassword,
         token: verificationToken,
       };
 
-      console.log("📦 Payload structure:", JSON.stringify(payload, null, 2));
-
       await resetPassword(payload);
-
-      console.log("✅ Password reset successful");
 
       // Show success modal
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("❌ Reset password error:", error);
 
       let errorMessage = "Failed to reset password. Please try again.";
 

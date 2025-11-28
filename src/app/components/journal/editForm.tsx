@@ -87,8 +87,6 @@ const EditForm: React.FC<EditFormProps> = ({isEditing,  onClose, existingEntry, 
             date: date,
             imageUrl: imageUrl
         }
-        console.log("new data:", data)
-        console.log("all journey:", journalEntries)
         journalEntries.push(data)
         onClose?.();
         

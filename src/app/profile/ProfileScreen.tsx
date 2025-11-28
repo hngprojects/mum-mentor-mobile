@@ -56,7 +56,6 @@ export default function ProfileScreen({ navigation }: any) {
   const fetchProfileSetup = async (baseProfile: UserProfile) => {
     try {
       const response = await apiClient.get("/api/v1/profile-setup/");
-      console.log("Profile setup response:", response.data);
 
       if (response.data) {
         setUserProfile({
@@ -68,7 +67,6 @@ export default function ProfileScreen({ navigation }: any) {
         });
       }
     } catch (err: any) {
-      console.log("Profile setup not available:", err.response?.status);
       // Keep base profile if setup doesn't exist
     }
   };
@@ -79,9 +77,7 @@ export default function ProfileScreen({ navigation }: any) {
       setLoading(true);
       setError(null);
 
-      console.log("Fetching user profile...");
       const response = await apiClient.get("/api/v1/auth/profile");
-      console.log("Profile response:", response.data);
 
       // The actual user data is nested in response.data.data
       if (response.data?.data) {

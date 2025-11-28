@@ -45,7 +45,6 @@ export default function SignInScreen() {
   const redirectAfterLogin = async () => {
     try {
       const profile = await getProfileSetup();
-      console.log("profile", profile);
       if (profile?.mom_status) {
         router.replace("/(tabs)/Home");
       } else router.replace("/setup/Mum");
@@ -66,7 +65,7 @@ export default function SignInScreen() {
       if (result.success) {
         // ✅ Check if user profile was fetched
         if (result.userProfile) {
-          console.log("✅ User profile available:", result.userProfile.email);
+          //
         } else {
           console.warn("⚠️ User profile not fetched, but proceeding anyway");
         }
@@ -116,7 +115,6 @@ export default function SignInScreen() {
   //     const hasCompletedSetup = await AsyncStorage.getItem("hasCompletedSetup");
   //     const hasCompletedSetup2 = await AsyncStorage.getItem("isSetupComplete");
 
-  //     console.log(hasCompletedSetup, "has com", hasCompletedSetup2);
   //     if (hasCompletedSetup === "true" || hasCompletedSetup2 === "true") {
   //       router.replace("/(tabs)/Home");
   //     } else {

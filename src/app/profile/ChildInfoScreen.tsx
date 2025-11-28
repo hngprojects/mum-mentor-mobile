@@ -51,17 +51,12 @@ export default function ChildInfoScreen({ navigation }: any) {
   const fetchChildren = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching child profiles...');
       
       const profiles = await getChildProfiles();
-      console.log('📦 Received profiles:', profiles);
-      console.log('📊 Profiles type:', typeof profiles);
-      console.log('📊 Is array?:', Array.isArray(profiles));
       
       // Defensive: ensure we always set an array
       if (Array.isArray(profiles)) {
         setChildren(profiles);
-        console.log('✅ Set children state with', profiles.length, 'profiles');
       } else {
         console.warn('⚠️ API returned non-array, setting empty array. Received:', profiles);
         setChildren([]);

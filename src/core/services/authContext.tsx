@@ -27,17 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   // Centralized function to load/fetch the user profile
   const fetchUserProfile = useCallback(async () => {
-    // 📢 NEW LOG: Aggressively confirm we entered the fetch function
-    console.log("[AUTH CONTEXT] fetchUserProfile called. Preparing to call API..."); 
     try {
         const profile = await getCurrentUser(); // This relies on the token set in storage
         if (profile) {
             setUser(profile);
-            console.log("[AUTH CONTEXT] Session active and PROFILE FOUND.");
             return profile;
         } else {
             // This is the path taken if API returns 401/403
-            console.warn("[AUTH CONTEXT] Stored token present, but PROFILE NOT FOUND (API returned null/401). Clearing.");
             await removeAuthToken();
             setUser(null);
             return null;
@@ -53,20 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   useEffect(() => {
     async function loadSession() {
-      // 📢 NEW LOG: Aggressively confirm we entered loadSession
-      console.log("[AUTH CONTEXT] Starting loadSession check."); 
       setIsSessionLoading(true);
       try {
         const token = await getAuthToken(); // This triggers the log in authStorage
-        
-        // 📢 NEW LOG: Synchronously log the token status
-        console.log(`[AUTH CONTEXT] Token status (sync check): ${token ? 'Found' : 'Not Found'}`);
-        
+
         if (token) {
           await fetchUserProfile(); // This triggers the log in fetchUserProfile
         } else {
           setUser(null);
-          console.log("[AUTH CONTEXT] No token found in storage.");
         }
       } catch (error) {
         console.error("[Auth] Error restoring session:", error);
@@ -82,7 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     try {
       await apiLogin({ email, password }); // This sets the new token in storage
       await fetchUserProfile(); 
-      console.log("[Auth] SignIn completed and profile fetched.");
     } catch (err) {
       console.error("[Auth] SignIn failed:", err);
       await removeAuthToken();

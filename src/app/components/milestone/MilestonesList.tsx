@@ -15,17 +15,12 @@ export default function MilestonesList({
   const { milestoneData } = useAppSelector(getMilestoneStates);
   const { categoryValue } = useLocalSearchParams();
 
-  console.log(categoryValue, "cat");
-
   const { data, error, isError, isLoading } = useQuery({
     queryKey: ["milestones", categoryValue],
     queryFn: () => getMilestones(categoryValue as string),
   });
 
-  console.log(data, "milestones");
-
   if (!isLoading) {
-    console.log(data, "after loading");
   }
 
   const filteredMilestoneData = milestoneData?.filter(

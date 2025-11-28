@@ -133,19 +133,16 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
 
       // Verify token was actually stored
       const storedToken = await getAuthToken();
-      console.log("Token verification - stored:", storedToken ? "YES" : "NO");
 
       if (!storedToken) {
         console.error("CRITICAL: Token was not stored despite no errors!");
       }
 
-      // ✅ Fetch and store profile_setup_id after successful login
-      console.log("🔄 Fetching profile setup...");
+      // Fetch and store profile_setup_id after successful login
       try {
         await getProfileSetup();
-        console.log("✅ Profile setup fetched and stored");
       } catch (profileError) {
-        console.error("⚠️ Could not fetch profile setup:", profileError);
+        console.error("Could not fetch profile setup:", profileError);
         // Don't fail login if profile setup fetch fails
       }
     } else {
@@ -179,20 +176,14 @@ export async function loginWithGoogle(
 
       // Verify token was actually stored
       const storedToken = await getAuthToken();
-      console.log(
-        "Google auth token verification - stored:",
-        storedToken ? "YES" : "NO"
-      );
 
       if (!storedToken) {
         console.error("CRITICAL: Token was not stored despite no errors!");
       }
 
-      // ✅ Fetch and store profile_setup_id after successful Google login
-      console.log("🔄 Fetching profile setup...");
+      // Fetch and store profile_setup_id after successful Google login
       try {
         await getProfileSetup();
-        console.log("✅ Profile setup fetched and stored");
       } catch (profileError) {
         console.error("⚠️ Could not fetch profile setup:", profileError);
         // Don't fail login if profile setup fetch fails
@@ -287,9 +278,8 @@ export async function verifyValueApi(
       token?.substring(0, 20) + "..."
     );
 
-    if (token && token.length > 0) {
-      await setAuthToken(token);
-      console.log("Email verification successful. Token stored.");
+      if (token && token.length > 0) {
+        await setAuthToken(token);
 
       try {
         await getProfileSetup();
@@ -321,13 +311,9 @@ export async function verifyValueApi(
       },
     };
 
-    console.log(
-      "✅ Password reset verification token (JWT):",
-      accessToken?.substring(0, 20) + "..."
-    );
-  } else {
-    throw new Error("Invalid verification type provided.");
-  }
+    } else {
+      throw new Error("Invalid verification type provided.");
+    }
 
   return tokenData;
 }

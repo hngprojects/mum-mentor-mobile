@@ -232,11 +232,8 @@ function OtpScreen() {
   const handleResendCode = useCallback(async () => {
     // Add more defensive checks
     if (timer > 0 || isResending || isLoading || !email) {
-      console.log("Resend blocked:", { timer, isResending, isLoading });
       return;
     }
-
-    console.log("🔄 Resend code initiated");
 
     setIsResending(true);
     setVerificationError("");

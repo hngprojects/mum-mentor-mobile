@@ -31,10 +31,6 @@ export const useAuth = () => {
     },
     onSuccess: async (data) => {
       const { access_token, refresh_token } = data.data;
-      console.log({
-        access_token,
-        refresh_token,
-      });
       await auth.setTokens(access_token, refresh_token);
     },
   });

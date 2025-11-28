@@ -39,7 +39,6 @@ export const getAlbums = async (): Promise<Album[]> => {
     if (!albumsJson) return [];
 
     const albums: Album[] = JSON.parse(albumsJson);
-    console.log("Albums:", albums);
     return albums;
   } catch (error) {
     console.error("Error getting albums:", error);

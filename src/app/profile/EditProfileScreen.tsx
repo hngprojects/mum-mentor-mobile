@@ -111,16 +111,12 @@ export default function EditProfileModal({
         goals: selectedGoals,
       };
 
-      console.log("📝 Attempting to save profile setup:", profileSetupData);
-
       try {
         // Try PATCH first
-        console.log("📤 Trying PATCH...");
         const patchResponse = await apiClient.patch(
           "/api/v1/profile-setup/",
           profileSetupData
         );
-        console.log("✅ PATCH successful:", patchResponse.data);
 
         if (onProfileUpdated) onProfileUpdated();
         showToast.success("Success", "Profile updated successfully!");
@@ -129,9 +125,6 @@ export default function EditProfileModal({
       } catch (patchError: any) {
         const patchStatus = patchError.response?.status;
         const patchErrorDetail = patchError.response?.data?.error?.detail || "";
-
-        console.log("❌ PATCH failed:", patchStatus);
-        console.log("Error detail:", patchErrorDetail);
 
         // Check for server setup issue
         if (
@@ -150,7 +143,6 @@ export default function EditProfileModal({
 
         // If profile not found, try POST
         if (patchStatus === 404) {
-          console.log("📤 Profile not found, trying POST to create...");
           try {
             // Omit partner if empty
             const createData: any = {
@@ -163,21 +155,16 @@ export default function EditProfileModal({
               createData.partner = userProfile.partner;
             }
 
-            console.log("📤 POST payload:", createData);
-
             const postResponse = await apiClient.post(
               "/api/v1/profile-setup/",
               createData
             );
-            console.log("✅ POST successful:", postResponse.data);
 
             if (onProfileUpdated) onProfileUpdated();
             showToast.success("Success", "Profile created successfully!");
             onClose();
             return;
           } catch (postError: any) {
-            console.log("❌ POST failed:", postError.response?.status);
-            console.log("POST error response:", postError.response?.data);
 
             if (
               postError.response?.status === 500 &&

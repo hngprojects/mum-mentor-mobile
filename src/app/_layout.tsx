@@ -86,27 +86,19 @@ function RootLayoutContent() {
       return;
     }
 
-    console.log("🚀 Initial navigation check:", {
-      user: !!user,
-      onboardingComplete,
-    });
-
     // Perform initial navigation only once
     setHasNavigated(true);
 
     if (user) {
       // User is logged in - go to home
-      console.log("✅ User logged in - redirecting to Home");
       router.replace("/(tabs)/Home");
     } else {
       // User is not logged in
       if (onboardingComplete) {
         // Onboarding done - go to sign in
-        console.log("✅ Onboarding complete - redirecting to SignIn");
         router.replace("/(auth)/SignInScreen");
       } else {
         // Show onboarding
-        console.log("✅ Onboarding not complete - showing onboarding");
         router.replace("/(onboarding)");
       }
     }

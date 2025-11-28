@@ -53,7 +53,6 @@ export default function NotificationSettingsScreen() {
       // TODO: Load settings from API
       // const response = await apiClient.get("/api/v1/notification-settings");
       // setSettings(response.data);
-      console.log("Loading notification settings...");
     } catch (error) {
       console.error("Error loading notification settings:", error);
     } finally {
@@ -91,7 +90,6 @@ export default function NotificationSettingsScreen() {
 
       // TODO: Save to API
       // await apiClient.patch("/api/v1/notification-settings", { [key]: value });
-      console.log(`Updated ${key} to ${value}`);
     } catch (error) {
       console.error("Error updating notification settings:", error);
       showToast.error("Error", "Failed to update notification settings");

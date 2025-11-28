@@ -41,7 +41,6 @@ export async function getMilestonesByCategory(
 //   category?: string,
 //   childId?: string
 // ): Promise<MilestoneDataType | null> {
-//   console.log(category, "categ");
 //   try {
 //     const res = await apiClient.get("/api/v1/milestones/", {
 //       params: {
@@ -49,7 +48,6 @@ export async function getMilestonesByCategory(
 //         category: category,
 //       },
 //     });
-//     console.log(res, "resssssssss");
 //     return res.data.data?.details;
 //   } catch (error) {
 //     if (isAxiosError(error)) {
@@ -88,8 +86,6 @@ export async function getMilestoneCategories(
       },
     }
   );
-
-  console.log(res.data.data, "data");
 
   return res.data.data;
 }

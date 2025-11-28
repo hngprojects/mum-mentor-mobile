@@ -43,17 +43,12 @@ interface ProfileSetupResponse {
   data: ProfileSetupData;
 }
 
-// ======================================================
-// CREATE PROFILE SETUP
-// ======================================================
-
 export async function createProfileSetup(
   data: CreateProfileSetupRequest
 ): Promise<ProfileSetupData | { id: string }> {
   try {
-    console.log("🟢 Creating profile setup...");
 
-    // ✅ FIX: Use the imported apiClient instead of the local 'api' instance
+    // FIX: Use the imported apiClient instead of the local 'api' instance
     const response = await apiClient.post("/api/v1/profile-setup/", data);
     const rawData = response.data;
 
@@ -68,7 +63,6 @@ export async function createProfileSetup(
     }
 
     await AsyncStorage.setItem("profile_setup_id", profileSetupId);
-    console.log("✅ Stored profile_setup_id:", profileSetupId);
 
     return { id: profileSetupId };
   } catch (error) {

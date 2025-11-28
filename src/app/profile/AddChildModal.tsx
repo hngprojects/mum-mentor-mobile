@@ -114,7 +114,6 @@ export function AddChildModal({
 
       if (!result.canceled && result.assets[0]) {
         setProfilePicture(result.assets[0].uri);
-        console.log('📸 Profile picture selected:', result.assets[0].uri);
       }
     } catch (error) {
       console.error("❌ Error picking image:", error);
@@ -129,7 +128,6 @@ export function AddChildModal({
     setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) {
       setDateOfBirth(selectedDate);
-      console.log('📅 Date of birth selected:', selectedDate.toISOString());
     }
   };
 
@@ -178,20 +176,8 @@ export function AddChildModal({
    * Handle save
    */
   const handleSave = async () => {
-    console.log('='.repeat(60));
-    console.log('🟢 AddChildModal - handleSave called');
-    console.log('='.repeat(60));
-    console.log('📝 Form values:', {
-      name,
-      gender,
-      dateOfBirth: dateOfBirth.toISOString(),
-      formattedDate: formatDateForDisplay(dateOfBirth),
-      birthOrder,
-      profilePicture: profilePicture ? 'Selected' : 'None',
-    });
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed');
       return;
     }
 
@@ -206,9 +192,6 @@ export function AddChildModal({
       );
       return;
     }
-
-    console.log('🔑 Using profile_setup_id:', setupId);
-
     try {
       setLoading(true);
 
@@ -221,29 +204,19 @@ export function AddChildModal({
         birth_order: parseInt(birthOrder),
       };
 
-      console.log('📤 Sending create request with data:');
-      console.log(JSON.stringify(createData, null, 2));
-
       // Create the child profile
-      console.log('🌐 Calling createChildProfile API...');
       const newChild = await createChildProfile(createData);
-      console.log('✅ Child profile created successfully!');
-      console.log('📦 New child data:', JSON.stringify(newChild, null, 2));
 
       // Upload profile picture if selected
       if (profilePicture && newChild.id) {
-        console.log('📸 Uploading profile picture...');
         try {
           const imageFile = {
             uri: profilePicture,
             name: `profile_${Date.now()}.jpg`,
             type: "image/jpeg",
           };
-          console.log('📤 Image file details:', imageFile);
           
           const uploadResult = await uploadChildProfilePicture(newChild.id, imageFile);
-          console.log('✅ Profile picture uploaded successfully!');
-          console.log('📦 Upload result:', JSON.stringify(uploadResult, null, 2));
         } catch (imageError) {
           console.error("❌ Error uploading image:", imageError);
           // Don't fail the entire operation if image upload fails
@@ -253,19 +226,16 @@ export function AddChildModal({
           );
         }
       } else if (!profilePicture) {
-        console.log('ℹ️ No profile picture selected, skipping upload');
+        //
       } else if (!newChild.id) {
         console.error('⚠️ newChild.id is missing, cannot upload picture');
       }
 
-      console.log('✅ All operations completed successfully!');
       Alert.alert("Success", "Child profile added successfully!");
       resetForm();
       onClose();
     } catch (error) {
-      console.log('='.repeat(60));
       console.error("❌ ERROR in handleSave");
-      console.log('='.repeat(60));
       console.error("Error:", error);
       console.error("Error type:", typeof error);
       console.error("Error stringified:", JSON.stringify(error, null, 2));
@@ -288,7 +258,6 @@ export function AddChildModal({
    * Handle cancel
    */
   const handleCancel = () => {
-    console.log('🔵 AddChildModal - Cancelled');
     resetForm();
     onClose();
   };

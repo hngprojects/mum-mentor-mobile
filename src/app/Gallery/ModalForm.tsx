@@ -175,8 +175,6 @@ export default function ModalFormScreen() {
     setIsLoading(true);
 
     try {
-      // TODO: Call appropriate service based on formType
-      console.log("Submitting:", formType, formData, options);
 
       showToast.success("Success", `${config.title} completed successfully!`);
       router.back();

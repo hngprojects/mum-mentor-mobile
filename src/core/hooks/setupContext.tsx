@@ -67,7 +67,6 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({
     try {
       await setupStorage.saveMomSetup(data);
       setMomSetupData(data);
-      console.log("Mom setup saved to context");
     } catch (error) {
       console.error("Error saving mom setup:", error);
       throw error;
@@ -91,7 +90,6 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({
       await setupStorage.completeSetup(completeSetupData);
       setSetupData(completeSetupData);
       setIsSetupCompleted(true);
-      console.log("Complete setup saved");
     } catch (error) {
       console.error("Error completing setup:", error);
       throw error;
@@ -117,7 +115,6 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({
     try {
       await setupStorage.resetSetup();
       setIsSetupCompleted(false);
-      console.log("Setup reset - user will go through onboarding again");
     } catch (error) {
       console.error("Error resetting setup:", error);
     }

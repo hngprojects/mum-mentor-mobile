@@ -26,8 +26,6 @@ export default function Milestone() {
 
   const categories = data?.categories;
 
-  console.log(categories?.slice(0, 2), categories, data);
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView>

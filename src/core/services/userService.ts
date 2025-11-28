@@ -45,12 +45,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 
     // We check for a valid nested object containing the essential email property
     if (profileData && profileData.email) {
-      console.log("Successfully extracted user profile from 'data' key.");
       return profileData;
     }
-
-    // This log should now ONLY fire if the 'data' key is present but empty/malformed
-    console.log("API returned 200 OK but user data was incomplete or null.");
     return null;
   } catch (error) {
     const axiosError = error as AxiosError<ApiErrorResponse>;

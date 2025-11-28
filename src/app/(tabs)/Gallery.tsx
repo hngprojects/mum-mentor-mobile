@@ -71,7 +71,6 @@ export default function GalleryScreen() {
   const handleSaveAlbum = async (albumName: string) => {
     try {
       const newAlbum = await galleryService.createAlbum(albumName);
-      console.log("Album created:", newAlbum);
 
       alert(newAlbum?.album_id);
       setCreatedAlbumName(albumName);
@@ -202,7 +201,6 @@ export default function GalleryScreen() {
             /* Albums Grid */
             <View style={styles.albumsGrid}>
               {filteredAlbums.map((album, i) => {
-                console.log(`album ${i}`, album);
                 return (
                   <TouchableOpacity
                     key={album.id}

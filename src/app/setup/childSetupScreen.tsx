@@ -154,7 +154,6 @@ const ChildSetupScreen: React.FC = () => {
           status_code: result.error?.status_code, // backend status code
           detail: result.error?.detail, // backend detail message
         };
-        console.log("result", result);
 
         // Throw it so it can be handled in catch
         throw errorToThrow;

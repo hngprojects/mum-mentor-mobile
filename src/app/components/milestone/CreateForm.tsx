@@ -28,8 +28,6 @@ export default function CreateForm() {
   const { user } = useAuth();
   const isNameInputFilled = !!formData.name;
 
-  console.log(ownerType, ownerId, "yessss");
-
   const { mutate: createNewMilestone, isPending: isCreatingMilestone } =
     useMutation({
       mutationFn: (payload: CreateMilestoneType) => createMilestone(payload),

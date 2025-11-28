@@ -46,7 +46,6 @@ function mapMomStatus(status: string): string {
   };
 
   const mapped = mapping[status] || status.toLowerCase().replace(" ", "_");
-  console.log(`🔄 Mapping mom status: "${status}" → "${mapped}"`);
   return mapped;
 }
 
@@ -151,7 +150,6 @@ export async function isSetupComplete(): Promise<boolean> {
   try {
     const value = await AsyncStorage.getItem("isSetupComplete");
     const isComplete = value === "true";
-    console.log("🔍 Checking setup completion status:", isComplete);
     return isComplete;
   } catch (error) {
     console.error("Error checking setup completion:", error);
@@ -163,9 +161,7 @@ export async function isSetupComplete(): Promise<boolean> {
  * Helper function to reset setup (for testing/debugging)
  */
 export async function resetSetup(): Promise<void> {
-  console.log("🔄 Resetting setup...");
   await AsyncStorage.removeItem("isSetupComplete");
   await AsyncStorage.removeItem("profile_setup_id");
   await AsyncStorage.removeItem("momSetupData");
-  console.log("✅ Setup reset complete");
 }
