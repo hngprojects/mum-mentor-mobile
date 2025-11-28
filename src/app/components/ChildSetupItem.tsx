@@ -37,13 +37,33 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
   onDelete,
 }) => {
   const [expanded, setExpanded] = useState(false);
-
-  const handleChange = (key: keyof ChildData, value: string) => {
-    onUpdate(index, { ...childData, [key]: value });
-  };
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+
+  const computeAge = (dob: string) => {
+    if (!dob) return "";
+    const birth = new Date(dob);
+    const today = new Date();
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const beforeBirthday =
+      today.getMonth() < birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() &&
+        today.getDate() < birth.getDate());
+
+    return beforeBirthday ? (age - 1).toString() : age.toString();
+  };
+
+  const handleChange = (key: keyof ChildData, value: string) => {
+    let updated: ChildData = { ...childData, [key]: value };
+
+    if (key === "dob") {
+      const newAge = computeAge(value);
+      updated.age = newAge;
+    }
+
+    onUpdate(index, updated);
+  };
 
   return (
     <View style={styles.container}>
@@ -91,14 +111,6 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
               onChangeText={(t) => handleChange("fullName", t)}
               iconName="person-outline"
             />
-            {/* Child Age or Due Date */}
-            <CustomInput
-              label="Child's Age"
-              placeholder="Enter Age"
-              value={childData.age}
-              onChangeText={(t) => handleChange("age", t)}
-              iconName="calendar-outline"
-            />
             {/* Date of Birth - Now with Calendar Picker */}
             {Platform.OS === "web" ? (
               <input
@@ -121,6 +133,16 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
                 onDateChange={(date) => handleChange("dob", date)}
               />
             )}
+
+            {/* Child Age or Due Date */}
+            <CustomInput
+              label="Child's Age"
+              placeholder="Auto-calculated"
+              value={childData.age}
+              onChangeText={() => {}}
+              iconName="calendar-outline"
+              editable={false}
+            />
 
             {/* Gender - Now with Dropdown */}
             <GenderDropdown
