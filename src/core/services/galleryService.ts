@@ -35,7 +35,6 @@ export async function fetchAlbums(): Promise<Album[]> {
     const response = await apiClient.get(ALBUMS_ENDPOINT_LIST);
 
     if (response.status >= 200 && response.status < 300) {
-      console.log("Albums:", response.data.data || response.data);
       return response.data.data || response.data;
     } else {
       throw new Error("Failed to fetch albums");

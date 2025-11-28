@@ -50,12 +50,12 @@ export default function ProfileScreen({ navigation }: any) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const userPic = require("../../assets/images/user-pic.png");
 
   // --- Fetch Profile Setup ---
   const fetchProfileSetup = async (baseProfile: UserProfile) => {
     try {
       const response = await apiClient.get("/api/v1/profile-setup/");
-      console.log("Profile setup response:", response.data);
 
       if (response.data) {
         setUserProfile({
@@ -67,7 +67,6 @@ export default function ProfileScreen({ navigation }: any) {
         });
       }
     } catch (err: any) {
-      console.log("Profile setup not available:", err.response?.status);
       // Keep base profile if setup doesn't exist
     }
   };
@@ -78,9 +77,7 @@ export default function ProfileScreen({ navigation }: any) {
       setLoading(true);
       setError(null);
 
-      console.log("Fetching user profile...");
       const response = await apiClient.get("/api/v1/auth/profile");
-      console.log("Profile response:", response.data);
 
       // The actual user data is nested in response.data.data
       if (response.data?.data) {
@@ -145,8 +142,13 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const getUserImage = () => {
-    return userProfile?.profile_image || "https://i.pravatar.cc/150?img=5";
+    return userProfile?.profile_image || userPic;
   };
+
+  const imageSource =
+    typeof getUserImage() === "string"
+      ? { uri: getUserImage() }
+      : getUserImage();
 
   const child = {
     id: 1,
@@ -208,7 +210,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* --- Profile Card --- */}
         <View style={styles.profileCard}>
           <Image
-            source={{ uri: getUserImage() }}
+            source={imageSource}
             style={styles.avatar}
             accessibilityLabel="User profile avatar"
           />

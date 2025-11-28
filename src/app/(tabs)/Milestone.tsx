@@ -1,25 +1,17 @@
-import CategoryBox from "@/src/app/components/milestone/CategoryBox";
-import PendingMilestones from "@/src/app/components/milestone/PendingMilestones";
+import ChildList from "@/src/app/components/milestone/ChildList";
+import MilestoneDashboard from "@/src/app/components/milestone/MilestoneDashboard";
 // import Checkbox from "@/src/assets/images/tick-square.png";
-import {
-  BOTTOM_CATEGORIES,
-  MILESTONE_SECTION,
-  TOP_CATEGORIES,
-} from "@/src/core/data/milestone-data";
+import { MILESTONE_SECTION } from "@/src/core/data/milestone-data";
+
 import { colors, typography } from "@/src/core/styles";
-import { useMilestoneTypeChange } from "@/src/hooks/useMilestoneTypeChange";
 import { MilestoneType } from "@/src/types/milestones";
+import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Milestone() {
-  const { mileStoneType, saveMilestoneType } = useMilestoneTypeChange(
-    "mother",
-    "milestone_type"
-  );
-
-  console.log(mileStoneType, "milestone");
+  const [milestoneType, setMilestoneType] = useState("mother");
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -34,12 +26,12 @@ export default function Milestone() {
               {MILESTONE_SECTION.map((section) => (
                 <Text
                   onPress={() =>
-                    saveMilestoneType(section.type as MilestoneType)
+                    setMilestoneType(section.type as MilestoneType)
                   }
                   key={section.id}
                   style={[
                     styles.sectionText,
-                    section.type === mileStoneType && styles.sectionTextActive,
+                    section.type === milestoneType && styles.sectionTextActive,
                   ]}
                 >
                   {section?.type}
@@ -49,29 +41,11 @@ export default function Milestone() {
           </View>
 
           {/* milestone data based on type (mother or child) */}
-
-          <View style={styles.milestoneBody}>
-            {/* categories */}
-            <View style={styles.categoryContainer}>
-              <Text style={styles.categoryText}>Category</Text>
-
-              <View style={styles.categoryContents}>
-                <View style={styles.categories}>
-                  {TOP_CATEGORIES.map((category, idx) => (
-                    <CategoryBox key={idx} category={category} />
-                  ))}
-                </View>
-
-                <View style={styles.categories}>
-                  {BOTTOM_CATEGORIES.map((category, idx) => (
-                    <CategoryBox key={idx} category={category} />
-                  ))}
-                </View>
-              </View>
-            </View>
-
-            <PendingMilestones />
-          </View>
+          {milestoneType === "mother" ? (
+            <MilestoneDashboard milestoneType={milestoneType} />
+          ) : (
+            <ChildList />
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -105,6 +79,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    backgroundColor: "white",
   },
 
   container: {

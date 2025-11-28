@@ -45,7 +45,7 @@ interface CreateTaskFormModalProps {
   initData?: any;
 }
 
-const CustomDatePicker: React.FC<{
+export const CustomDatePicker: React.FC<{
   isVisible: boolean;
   mode: "date" | "time";
   onConfirm: (date: Date) => void;
@@ -283,6 +283,7 @@ const CreateTaskForm: React.FC<{
             value={formatTime(dueTime)}
             placeholder="Select Time"
             onDateChange={() => {}}
+            icon="time-outline"
           />
         </View>
       </TouchableOpacity>

@@ -21,6 +21,7 @@ import DeleteModal from "../components/journal/deleteModal";
 import EditForm, { categories } from "../components/journal/editForm";
 import JournalCard, { JournalItems, journalEntries } from "../components/journal/journalCard";
 import JournalDetails from "../components/journal/journalDetails";
+import { router } from "expo-router";
 
 interface Category {
   title: string;
@@ -43,6 +44,7 @@ export default function JournalScreen() {
   const [selectedJournal, setSelectedJournal] = useState<JournalItems>({
     id: 0,
     title: "",
+    //@ts-ignore
     imageUrl: "",
     mood: "",
     thoughts: "",
@@ -97,11 +99,11 @@ export default function JournalScreen() {
       {/* 1. Header Section */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {showDetails && (
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <TouchableOpacity onPress={() => {
+              showDetails ? handleBack() :router.back() 
+            }} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-          )}
           <Text style={styles.headerTitle}>
             {showDetails ? "Details" : "My Journal"}
           </Text>

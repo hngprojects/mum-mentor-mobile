@@ -42,10 +42,6 @@ const ConfirmDelete = () => {
     setShowDeleteModal(false);
     setIsLoading(true);
     try {
-      // Your delete account API call here
-      console.log("Deleting account for:", email);
-      // await deleteAccountAPI(email);
-
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);

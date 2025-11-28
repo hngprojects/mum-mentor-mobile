@@ -8,6 +8,7 @@ import * as Progress from "react-native-progress";
 export default function MilestoneProgressBar() {
   const { milestoneData } = useAppSelector(getMilestoneStates);
 
+  console.log(milestoneData, "data");
   const completedMilestone = milestoneData.filter(
     (milestone) => milestone.status === "completed"
   ).length;
@@ -16,7 +17,10 @@ export default function MilestoneProgressBar() {
   //   (milestone) => milestone.status === "completed"
   // ).length;
 
-  const progress = completedMilestone / milestoneData.length;
+  const progress = milestoneData?.length
+    ? completedMilestone / milestoneData.length
+    : 0;
+  console.log(progress, "progress");
 
   return (
     <View style={styles.milestoneProgressContainer}>
@@ -30,7 +34,9 @@ export default function MilestoneProgressBar() {
         <View style={styles.milestoneProgressTextContainer}>
           <Text style={styles.mileStoneProgressText1}>Progress Bar</Text>
 
-          <Text style={styles.milestoneProgressText2}>0%</Text>
+          <Text style={styles.milestoneProgressText2}>
+            {Math.floor(progress * 100)}%
+          </Text>
         </View>
 
         {/* progress bar */}

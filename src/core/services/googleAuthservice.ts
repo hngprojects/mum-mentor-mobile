@@ -40,7 +40,6 @@ export const configureGoogleSignIn = () => {
     scopes: ["profile", "email", "openid"],
   });
 
-  console.log("✅ Google Sign-In configured");
 };
 
 /**
@@ -48,17 +47,14 @@ export const configureGoogleSignIn = () => {
  */
 export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
   try {
-    console.log("🔐 Starting Google Sign-In...");
 
     // Check if device has Google Play Services (Android only)
     await GoogleSignin.hasPlayServices({
       showPlayServicesUpdateDialog: true,
     });
-    console.log("✅ Google Play Services available");
 
     // Sign in with Google
     const userInfo = await GoogleSignin.signIn();
-    console.log("✅ Google Sign-In successful");
 
     // Get token from correct location (userInfo.data.idToken)
     const idToken = userInfo?.data?.idToken;
@@ -67,8 +63,6 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
     if (!idToken) {
       throw new Error("No ID token received from Google");
     }
-
-    console.log("📤 Authenticating with backend...");
 
     // Generate device ID if it doesn't exist
     let deviceId = await SecureStore.getItemAsync("device_id");
@@ -80,12 +74,6 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
     }
 
     const deviceName = "Mobile App";
-
-    console.log("🔧 Request payload:", {
-      id_token: idToken.substring(0, 50) + "...",
-      device_id: deviceId,
-      device_name: deviceName,
-    });
 
     const response = await fetch(`${API_BASE_URL}/api/v1/google/login`, {
       method: "POST",
@@ -100,7 +88,6 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
     });
 
     const data = await response.json();
-    console.log("📥 Backend response:", data);
 
     if (!response.ok) {
       console.error("❌ Backend authentication failed:", data);
@@ -108,22 +95,16 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
     }
 
     if (data.status === "success" && data.data) {
-      console.log("✅ Backend authentication successful");
 
       const { access_token, refresh_token } = data.data;
 
-      // ✅ FIX: Use standard setAuthToken() to store token in "NoraAppAuthToken" key
-      // This ensures the token is stored in the same place as email login
-      // ✅ This part should be in your code
+      // This part should be in your code
       await setAuthToken(access_token);
-      console.log("✅ Token stored using setAuthToken()");
 
-      // ✅ This part should fetch user profile
-      console.log("📥 Fetching user profile from backend...");
+      // This part should fetch user profile
       const userProfile = await getCurrentUser();
 
       if (userProfile) {
-        console.log("✅ User profile fetched successfully:", userProfile.email);
       } else {
         console.warn("⚠️ Failed to fetch user profile after Google login");
       }
@@ -135,7 +116,7 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
           name: user?.name || "",
           photo: user?.photo || undefined,
         },
-        userProfile: userProfile || undefined, // ✅ Include backend user profile
+        userProfile: userProfile || undefined, 
         tokens: {
           accessToken: access_token,
           refreshToken: refresh_token,
@@ -184,7 +165,6 @@ export const signOutFromGoogle = async (): Promise<{
   error?: string;
 }> => {
   try {
-    console.log("🚪 Signing out from Google...");
 
     const refreshToken = await SecureStore.getItemAsync("refresh_token");
     if (refreshToken) {
@@ -198,7 +178,6 @@ export const signOutFromGoogle = async (): Promise<{
             refresh_token: refreshToken,
           }),
         });
-        console.log("✅ Session revoked on backend");
       } catch (error) {
         console.warn("⚠️ Failed to revoke session on backend:", error);
       }
@@ -214,7 +193,6 @@ export const signOutFromGoogle = async (): Promise<{
     await SecureStore.deleteItemAsync("refresh_token");
     await SecureStore.deleteItemAsync("device_id");
 
-    console.log("✅ Sign-out successful");
     return { success: true };
   } catch (error: any) {
     console.error("❌ Sign-out Error:", error);
@@ -232,7 +210,6 @@ export const isSignedInToGoogle = async (): Promise<boolean> => {
   try {
     return await GoogleSignin?.isSignedIn();
   } catch (error) {
-    console.log(error);
     return false;
   }
 };
@@ -246,7 +223,6 @@ export const isAuthenticated = async (): Promise<boolean> => {
     const accessToken = await getAuthToken();
     return !!accessToken;
   } catch (error) {
-    console.log(error);
     return false;
   }
 };
@@ -290,8 +266,6 @@ export const refreshAccessToken = async (): Promise<{
       throw new Error("No refresh token available");
     }
 
-    console.log("🔄 Refreshing access token...");
-
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers: {
@@ -311,9 +285,8 @@ export const refreshAccessToken = async (): Promise<{
     if (data.status === "success" && data.data) {
       const { access_token, refresh_token: newRefreshToken } = data.data;
 
-      // ✅ FIXED: Use centralized setAuthToken for new access token
+      // FIXED: Use centralized setAuthToken for new access token
       await setAuthToken(access_token);
-      console.log("✅ Access token refreshed and stored");
 
       // Store new refresh token
       await SecureStore.setItemAsync("refresh_token", newRefreshToken);
@@ -357,9 +330,7 @@ export const makeAuthenticatedRequest = async (
       },
     });
 
-    // If 401, try refreshing token
     if (response.status === 401) {
-      console.log("🔄 Access token expired, refreshing...");
 
       const refreshResult = await refreshAccessToken();
 

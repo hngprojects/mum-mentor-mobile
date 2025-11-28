@@ -1,27 +1,43 @@
+import { getPendingMilestones } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
-import { useAppSelector } from "@/src/store/hooks";
-import { getMilestoneStates } from "@/src/store/milestoneSlice";
+import { showToast } from "@/src/core/utils/toast";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 // import Checkbox from "@/src/assets/images/tick-square.png";
 
-export default function PendingMilestones() {
-  const { milestoneData } = useAppSelector(getMilestoneStates);
+export default function PendingMilestones({ childId }: { childId?: string }) {
+  const {
+    data: pendingMilestones,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["pending-milestones", childId],
+    queryFn: () => getPendingMilestones(childId),
+  });
 
-  const pendingMilestones = milestoneData.filter(
-    (milestone) => milestone.status === "pending"
-  );
+  if (error) {
+    showToast.error(error.message);
+  }
+
+  console.log(pendingMilestones, "datasss");
+
+  if (isLoading) {
+    return <View>Loading</View>;
+  }
 
   return (
     <View style={styles.pendingMilestoneContainer}>
       <Text style={styles.pendingMilestoneHeaderText}>Pending Milestones</Text>
 
       <View style={styles.pendingMileStoneContents}>
-        {pendingMilestones?.map((milestone, idx) => (
-          <View key={idx} style={styles.pendingMilestoneContentBox}>
+        {pendingMilestones?.map((milestone) => (
+          <View key={milestone.id} style={styles.pendingMilestoneContentBox}>
             <View style={styles.contentBoxTextWrapper}>
-              <Text style={styles.contentBoxTitle}>{milestone.title}</Text>
-              <Text style={styles.contentBoxCategory}>Body Recovery</Text>
+              <Text style={styles.contentBoxTitle}>{milestone.name}</Text>
+              <Text style={styles.contentBoxCategory}>
+                {milestone.category}
+              </Text>
             </View>
 
             <Image

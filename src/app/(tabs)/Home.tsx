@@ -306,9 +306,18 @@ const Home = () => {
             /* Empty State */
             <View style={styles.taskCard}>
               <Image source={taskIcon} style={styles.taskIcon} />
-              <Text style={styles.taskEmptyTitle}>No task added yet</Text>
-              <Text style={styles.taskEmptySubtitle}>
-                {"Your today's task will be displayed here"}
+              <Text style={styles.taskEmptyTitle}>
+                No task created for today
+              </Text>
+
+              <Text
+                style={[
+                  styles.viewAllLink,
+                  { textDecorationLine: "underline" },
+                ]}
+                onPress={() => router.push("../components/TaskPage")}
+              >
+                Click to view all tasks
               </Text>
               <SecondaryButton
                 title="Add Task"

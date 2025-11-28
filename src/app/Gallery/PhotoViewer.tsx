@@ -171,9 +171,6 @@ export default function PhotoViewerScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            // TODO: Call delete API
-            console.log("Deleting photo:", photoId);
-
             // Update local state
             if (album) {
               setAlbum({

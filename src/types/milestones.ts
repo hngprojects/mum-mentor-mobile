@@ -41,3 +41,52 @@ export type CategoriesType = {
   value: number;
   icon: ImageSourcePropType;
 };
+
+export interface CreateMilestoneType {
+  name: string;
+  description: string | null;
+  category: string;
+  child_id?: string;
+}
+
+export type EditMilestoneType = Partial<Omit<CreateMilestoneType, "child_id">>;
+
+export type ToggleMilestonePayload = {
+  completed: boolean;
+  child_id?: string;
+};
+
+export interface MilestoneDataType {
+  id: string;
+  owner_id: string;
+  owner_type: string;
+  name: string;
+  description: string;
+  status: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MilestoneDataDetails {
+  details: MilestoneDataType[];
+}
+
+export interface ChildrenDataType {
+  children: Children[];
+  total: number;
+}
+
+export interface Children {
+  id: string;
+  profile_setup_id: string;
+  full_name: string;
+  date_of_birth: string;
+  due_date: string;
+  gender: string;
+  birth_order: number;
+  profile_picture_url: string;
+  age: number;
+  created_at: string;
+  updated_at: string;
+}

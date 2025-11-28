@@ -141,11 +141,6 @@ export const useSendAiMessage = () => {
       const baseURL = authApi.defaults.baseURL || "";
       const token = await auth.getAccessToken();
 
-      console.log("🚀 Starting stream request:", {
-        url: `${baseURL}/api/v1/ai-chat/chats/${session_id}/message`,
-        hasToken: !!token,
-      });
-
       const response = await fetch(
         `${baseURL}/api/v1/ai-chat/chats/${session_id}/message`,
         {
@@ -156,12 +151,6 @@ export const useSendAiMessage = () => {
           },
           body: JSON.stringify({ message }),
         }
-      );
-
-      console.log("📡 Response status:", response.status);
-      console.log(
-        "📡 Response headers:",
-        Object.fromEntries(response.headers.entries())
       );
 
       if (!response.ok) {
@@ -178,13 +167,10 @@ export const useSendAiMessage = () => {
         throw new Error("No response body");
       }
 
-      console.log("📖 Starting to read stream...");
-
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
-          console.log(`✅ Stream complete. Total chunks: ${chunkCount}`);
           break;
         }
 
@@ -196,18 +182,13 @@ export const useSendAiMessage = () => {
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              chunkCount++;
-
-              console.log(`📦 Chunk ${chunkCount}:`, data.type);
 
               if (data.type === "start") {
                 messageId = data.message_id;
-                console.log("🎬 Stream started, messageId:", messageId);
               } else if (data.type === "chunk" && onChunk) {
                 onChunk(data.content);
               } else if (data.type === "done") {
                 messageId = data.message_id;
-                console.log("🏁 Stream done, messageId:", messageId);
                 if (onComplete) {
                   onComplete(messageId);
                 }

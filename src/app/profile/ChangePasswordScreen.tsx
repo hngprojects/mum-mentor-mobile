@@ -87,8 +87,6 @@ const ChangePassword = () => {
 
       const response = await changePassword(payload);
 
-      console.log("✅ Password changed successfully:", response);
-
       // Clear form
       setOldPassword("");
       setNewPassword("");

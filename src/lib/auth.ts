@@ -52,7 +52,6 @@ export const auth = {
       if (Platform.OS === "web") {
         localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
         localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-        console.log("Auth token stored in localStorage (web)");
       } else {
         await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
         await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);

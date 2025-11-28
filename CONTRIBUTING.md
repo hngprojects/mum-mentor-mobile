@@ -85,12 +85,14 @@ All branches must follow this format:
 ```
 
 **Examples:**
+
 - `chidindu/feat/onboarding`
 - `ukeme/fix/login-validation`
 - `amaka/refactor/payment-flow`
 - `tunde/chore/update-dependencies`
 
 **Branch Types:**
+
 - `feat` - New features
 - `fix` - Bug fixes
 - `refactor` - Code refactoring
@@ -101,6 +103,7 @@ All branches must follow this format:
 ### Workflow Steps
 
 1. **Always branch from `staging`:**
+
    ```bash
    git checkout staging
    git pull origin staging
@@ -108,18 +111,21 @@ All branches must follow this format:
    ```
 
 2. **Make your changes and commit regularly:**
+
    ```bash
    git add .
    git commit -m "feat: add user profile screen"
    ```
 
 3. **Keep your branch updated:**
+
    ```bash
    git fetch origin staging
    git rebase origin/staging
    ```
 
 4. **Push your branch:**
+
    ```bash
    git push origin yourname/feat/new-feature
    ```
@@ -131,6 +137,7 @@ All branches must follow this format:
 ### File Naming Conventions
 
 #### Components (PascalCase)
+
 ```
 Button.tsx
 BottomSheet.tsx
@@ -139,6 +146,7 @@ PaymentMethodList.tsx
 ```
 
 #### Domain Logic (camelCase)
+
 ```
 authService.ts
 validateEmail.ts
@@ -147,6 +155,7 @@ userRepository.ts
 ```
 
 #### Hooks (camelCase with 'use' prefix)
+
 ```
 useAuth.ts
 useDebounce.ts
@@ -154,6 +163,7 @@ useKeyboard.ts
 ```
 
 #### Types (PascalCase)
+
 ```
 User.types.ts
 ApiResponse.types.ts
@@ -163,27 +173,34 @@ ApiResponse.types.ts
 
 - **Always use TypeScript** - No implicit `any` types
 - **Define interfaces for props:**
+
   ```typescript
   interface ButtonProps {
     title: string;
     onPress: () => void;
-    variant?: 'primary' | 'secondary';
+    variant?: "primary" | "secondary";
     disabled?: boolean;
   }
-  
-  export const Button = ({ title, onPress, variant = 'primary', disabled = false }: ButtonProps) => {
+
+  export const Button = ({
+    title,
+    onPress,
+    variant = "primary",
+    disabled = false,
+  }: ButtonProps) => {
     // Component implementation
   };
   ```
 
 - **Use type inference when obvious:**
+
   ```typescript
   // Good
   const count = 0;
-  const users = ['John', 'Jane'];
-  
+  const users = ["John", "Jane"];
+
   // Explicit when needed
-  const callback: (id: string) => void = (id) => console.log(id);
+  const callback: (id: string) => void = (id) => console.log;
   ```
 
 ### Component Structure
@@ -204,17 +221,17 @@ interface UserCardProps {
 export const UserCard = ({ userId, onPress }: UserCardProps) => {
   // Hooks
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Effects
   useEffect(() => {
     // Effect logic
   }, []);
-  
+
   // Handlers
   const handlePress = () => {
     onPress();
   };
-  
+
   // Render
   return (
     <View style={styles.container}>
@@ -250,8 +267,8 @@ Create stores within each feature's `stores/` folder:
 
 ```typescript
 // features/authentication/stores/authStore.ts
-import { create } from 'zustand';
-import { User } from '../types/User.types';
+import { create } from "zustand";
+import { User } from "../types/User.types";
 
 interface AuthState {
   user: User | null;
@@ -269,6 +286,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 ```
 
 **Best Practices:**
+
 - Keep stores focused and feature-specific
 - Use selectors to prevent unnecessary re-renders
 - Avoid storing derived state
@@ -277,8 +295,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 ```typescript
 // features/authentication/api/authApi.ts
-import axios from 'axios';
-import { API_BASE_URL } from '@/app/config';
+import axios from "axios";
+import { API_BASE_URL } from "@/app/config";
 
 export const authApi = {
   login: async (email: string, password: string) => {
@@ -293,13 +311,13 @@ export const authApi = {
 
 ```typescript
 // features/authentication/hooks/useLogin.ts
-import { useMutation } from '@tanstack/react-query';
-import { authApi } from '../api/authApi';
-import { useAuthStore } from '../stores/authStore';
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../api/authApi";
+import { useAuthStore } from "../stores/authStore";
 
 export const useLogin = () => {
   const login = useAuthStore((state) => state.login);
-  
+
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authApi.login(email, password),
@@ -307,13 +325,14 @@ export const useLogin = () => {
       login(data.user);
     },
     onError: (error) => {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     },
   });
 };
 ```
 
 **API Best Practices:**
+
 - Use TanStack Query for all server state
 - Implement proper error handling
 - Use query keys consistently
@@ -333,11 +352,11 @@ describe('Button', () => {
     const { getByText } = render(<Button title="Click Me" onPress={() => {}} />);
     expect(getByText('Click Me')).toBeTruthy();
   });
-  
+
   it('calls onPress when pressed', () => {
     const onPress = jest.fn();
     const { getByText } = render(<Button title="Click Me" onPress={onPress} />);
-    
+
     fireEvent.press(getByText('Click Me'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
@@ -365,23 +384,28 @@ describe('Button', () => {
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Refactoring
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Tested on iOS
 - [ ] Tested on Android
 - [ ] Added/updated tests
 
 ## Screenshots/Video
+
 (if applicable)
 
 ## Related Issues
+
 Closes #[issue number]
 ```
 
@@ -421,17 +445,20 @@ Closes #[issue number]
 ## Common Issues & Solutions
 
 ### Metro Bundler Issues
+
 ```bash
 yarn start -- --reset-cache
 ```
 
 ### iOS Build Issues
+
 ```bash
 cd ios && pod install && cd ..
 yarn ios
 ```
 
 ### Android Build Issues
+
 ```bash
 cd android && ./gradlew clean && cd ..
 yarn android

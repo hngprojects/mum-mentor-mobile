@@ -56,10 +56,8 @@ const DeleteAccountScreen = () => {
     setIsLoading(true);
     try {
       // Your delete account API call here
-      console.log('Selected Reasons:', selectedReasons);
       router.push('/profile/ConfirmDelete')
       if (selectedReasons.includes('Others')) {
-        console.log('Other Reason:', otherReason);
       }
       // await deleteAccountAPI(selectedReasons, otherReason);
       // router.replace('/account-deleted'); // Navigate to success screen

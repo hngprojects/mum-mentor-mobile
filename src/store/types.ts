@@ -1,6 +1,6 @@
-import { MILESTONE_DATA } from "@/src/core/data/milestone-data";
+import { MilestoneDataType } from "@/src/types/milestones";
 
-export type MilestoneDataType = typeof MILESTONE_DATA;
+// export type MilestoneDataType = typeof MILESTONE_DATA;
 
 export interface initialStateTypes {
   isCreateFormOpen: boolean;
@@ -9,13 +9,19 @@ export interface initialStateTypes {
   isEditModalOpen: boolean;
   milestoneToDelId: string;
   milestoneToEditId: string;
-  milestoneData: MilestoneDataType;
+  milestoneData: MilestoneDataType[];
   isEditSuccessModalOpen: boolean;
 }
 
 export type Milestone = {
   id: string;
+  name: string;
+  description: string;
+  status: string;
+};
+
+export type CategoryInfo = {
   title: string;
   desc: string;
-  status: string;
+  icon: any;
 };

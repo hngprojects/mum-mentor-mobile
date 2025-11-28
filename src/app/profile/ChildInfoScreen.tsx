@@ -39,6 +39,13 @@ export default function ChildInfoScreen({ navigation }: any) {
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // utils/getFullImageUrl.ts
+const getFullImageUrl = (relativeUrl?: string) => {
+  if (!relativeUrl) return undefined;
+  if (relativeUrl.startsWith("http")) return relativeUrl;
+  return `https://api.staging.kaizen.emerj.net/api/v1${relativeUrl}`;
+};
+
 
   // Fetch children on mount
   useEffect(() => {
@@ -51,17 +58,12 @@ export default function ChildInfoScreen({ navigation }: any) {
   const fetchChildren = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching child profiles...');
       
       const profiles = await getChildProfiles();
-      console.log('📦 Received profiles:', profiles);
-      console.log('📊 Profiles type:', typeof profiles);
-      console.log('📊 Is array?:', Array.isArray(profiles));
       
       // Defensive: ensure we always set an array
       if (Array.isArray(profiles)) {
         setChildren(profiles);
-        console.log('✅ Set children state with', profiles.length, 'profiles');
       } else {
         console.warn('⚠️ API returned non-array, setting empty array. Received:', profiles);
         setChildren([]);
@@ -234,12 +236,12 @@ export default function ChildInfoScreen({ navigation }: any) {
         {/* Children List */}
         {Array.isArray(children) && children.map((child) => (
           <View key={child.id} style={styles.childCard}>
-            <Image
-              source={{
-                uri: child.profile_picture_url || "https://i.pravatar.cc/150?img=1",
-              }}
-              style={styles.childAvatar}
-            />
+       <Image
+  source={{
+    uri: getFullImageUrl(child.profile_picture_url) || "https://i.pravatar.cc/150?img=1",
+  }}
+  style={styles.childAvatar}
+/>
             <View style={styles.childInfo}>
               <Text style={styles.childName}>{child.full_name}</Text>
               <Text style={styles.childAge}>

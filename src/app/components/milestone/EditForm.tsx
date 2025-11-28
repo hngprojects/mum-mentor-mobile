@@ -3,6 +3,8 @@ import { colors, typography } from "@/src/core/styles";
 import React, { useEffect, useState } from "react";
 import Modal from "react-native-modal";
 
+import { editMilestone } from "@/src/core/services/milestoneService";
+import { showToast } from "@/src/core/utils/toast";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import {
   getMilestoneStates,
@@ -10,40 +12,64 @@ import {
   onToggleEditForm,
   onToggleEditSuccessModal,
 } from "@/src/store/milestoneSlice";
+import { EditMilestoneType } from "@/src/types/milestones";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function EditForm() {
   const { isEditModalOpen, milestoneData, milestoneToEditId } =
     useAppSelector(getMilestoneStates);
   const dispatch = useAppDispatch();
-
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const { categoryValue } = useLocalSearchParams();
+  const isNameInputFilled = formData.name;
+  const queryClient = useQueryClient();
 
   const currentMilestone = milestoneData.find(
     (milestone) => milestone.id === milestoneToEditId
   );
 
+  const { mutate: updateMilestone, isPending: isUpdatingMilestone } =
+    useMutation({
+      mutationFn: (payload: EditMilestoneType) =>
+        editMilestone(milestoneToEditId, payload),
+      onSuccess: () => {
+        dispatch(onToggleEditForm({ isOpenForm: false }));
+        dispatch(onToggleEditSuccessModal(true));
+        queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
+      },
+      onError: (error) => {
+        showToast.error(error.message);
+        dispatch(onToggleEditForm({ isOpenForm: false }));
+      },
+    });
+
   useEffect(() => {
     if (currentMilestone) {
-      setTitle(currentMilestone.title);
-      setDesc(currentMilestone.desc);
+      setFormData((cur) => ({
+        name: currentMilestone.name,
+        description: currentMilestone.description,
+      }));
     }
   }, [currentMilestone]);
 
   function handleMilestoneUpdate() {
-    const updatedMilestone = {
-      title,
-      desc,
+    const currentDate = new Date().toISOString();
+    const milestoneToUpdate = {
+      ...formData,
+      updated_at: currentDate,
     };
 
-    dispatch(onEditMileStone(updatedMilestone));
-    // if success, open success modal
+    const serverMilestoneToUpdate = {
+      ...formData,
+      category: categoryValue as string,
+    };
 
-    setTitle("");
-    setDesc("");
-    dispatch(onToggleEditForm({ isOpenForm: false }));
-    dispatch(onToggleEditSuccessModal(true));
+    dispatch(onEditMileStone(milestoneToUpdate));
+    updateMilestone(serverMilestoneToUpdate);
+
+    setFormData({ name: "", description: "" });
   }
 
   return (
@@ -60,9 +86,7 @@ export default function EditForm() {
         {/* header */}
         <View style={styles.formHeaderBox}>
           <Text style={styles.formTitle}>edit milestones</Text>
-          <Text style={styles.formDescription}>
-            src/app/components/milestone/CreateForm.tsx
-          </Text>
+          <Text style={styles.formDescription}></Text>
         </View>
 
         {/* forms */}
@@ -73,8 +97,11 @@ export default function EditForm() {
             placeholderTextColor={colors.textGrey2}
             keyboardType="default"
             autoCapitalize="none"
-            value={title}
-            onChangeText={(text) => setTitle(text)}
+            value={formData.name}
+            editable={!isUpdatingMilestone}
+            onChangeText={(text) =>
+              setFormData((cur) => ({ ...cur, name: text }))
+            }
           />
         </FormInput>
 
@@ -85,18 +112,26 @@ export default function EditForm() {
             placeholderTextColor={colors.textGrey2}
             keyboardType="default"
             autoCapitalize="none"
-            value={desc}
-            onChangeText={(text) => setDesc(text)}
+            editable={!isUpdatingMilestone}
+            value={formData.description}
+            onChangeText={(text) =>
+              setFormData((cur) => ({ ...cur, description: text }))
+            }
           />
         </FormInput>
 
         <View style={styles.buttonsContainer}>
           <Pressable
-            style={[styles.buttons, styles.buttonSave]}
+            style={[
+              styles.buttons,
+              styles.buttonSave,
+              !isNameInputFilled && styles.buttonDisabled,
+              isUpdatingMilestone && styles.buttonDisabled,
+            ]}
             onPress={handleMilestoneUpdate}
-            disabled={!title && !desc}
+            disabled={!isNameInputFilled || isUpdatingMilestone}
           >
-            Save
+            {isUpdatingMilestone ? "Updating Milestone..." : "Update"}
           </Pressable>
 
           <Pressable
@@ -123,6 +158,9 @@ const styles = StyleSheet.create({
   buttonSave: {
     color: "white",
     backgroundColor: colors.primary,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 
   buttons: {

@@ -1,5 +1,8 @@
 import FormInput from "@/src/app/components/milestone/FormInput";
+
+import { createMilestone } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
+import { showToast } from "@/src/core/utils/toast";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import {
   getMilestoneStates,
@@ -7,6 +10,9 @@ import {
   onToggleCreateForm,
   onToggleSuccessModal,
 } from "@/src/store/milestoneSlice";
+import { CreateMilestoneType, MilestoneDataType } from "@/src/types/milestones";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -15,23 +21,51 @@ import Modal from "react-native-modal";
 export default function CreateForm() {
   const { isCreateFormOpen } = useAppSelector(getMilestoneStates);
   const dispatch = useAppDispatch();
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const queryClient = useQueryClient();
+  const { categoryValue, ownerId, childId } = useLocalSearchParams();
+
+  const isNameInputFilled = !!formData.name;
+
+  const { mutate: createNewMilestone, isPending: isCreatingMilestone } =
+    useMutation({
+      mutationFn: (payload: CreateMilestoneType) => createMilestone(payload),
+
+      onSuccess: () => {
+        dispatch(onToggleCreateForm(false));
+        dispatch(onToggleSuccessModal(true));
+        queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
+      },
+
+      onError: (error) => {
+        showToast.error(error.message);
+      },
+    });
 
   function handleMilestoneCreation() {
-    const newMilestone = {
+    const currentDate = new Date().toISOString();
+    const newMilestone: MilestoneDataType = {
       id: crypto.randomUUID(),
-      title,
-      desc,
+      owner_id: ownerId as string,
+      owner_type: childId ? "child" : "mother",
       status: "pending",
+      category: categoryValue as string,
+      created_at: currentDate,
+      updated_at: currentDate,
+      ...formData,
+    };
+
+    const serverNewMilestone = {
+      ...formData,
+      category: categoryValue as string,
+      child_id: childId as string | undefined,
     };
 
     dispatch(onAddMilestone(newMilestone));
+    createNewMilestone(serverNewMilestone);
+
     // if success, open success modal
-    setTitle("");
-    setDesc("");
-    dispatch(onToggleCreateForm(false));
-    dispatch(onToggleSuccessModal(true));
+    setFormData({ name: "", description: "" });
   }
 
   return (
@@ -59,11 +93,12 @@ export default function CreateForm() {
             style={styles.input}
             placeholder="e.g 5 Minutes Exercise"
             placeholderTextColor={colors.textGrey2}
-            defaultValue=""
-            keyboardType="default"
+            editable={!isCreatingMilestone}
             autoCapitalize="none"
-            value={title}
-            onChangeText={(text) => setTitle(text)}
+            value={formData.name}
+            onChangeText={(text) =>
+              setFormData((cur) => ({ ...cur, name: text }))
+            }
           />
         </FormInput>
 
@@ -72,26 +107,34 @@ export default function CreateForm() {
             style={styles.input}
             placeholder="eg. Tried a 5 Minutes Exercise Plan..."
             placeholderTextColor={colors.textGrey2}
+            editable={!isCreatingMilestone}
             defaultValue=""
             keyboardType="default"
             autoCapitalize="none"
-            value={desc}
-            onChangeText={(text) => setDesc(text)}
+            onChangeText={(text) =>
+              setFormData((cur) => ({ ...cur, description: text }))
+            }
           />
         </FormInput>
 
         <View style={styles.buttonsContainer}>
           <Pressable
-            style={[styles.buttons, styles.buttonSave]}
+            style={[
+              styles.buttons,
+              styles.buttonSave,
+              !isNameInputFilled && styles.buttonDisabled,
+              isCreatingMilestone && styles.buttonDisabled,
+            ]}
             onPress={() => handleMilestoneCreation()}
-            disabled={!title && !desc}
+            disabled={!isNameInputFilled || isCreatingMilestone}
           >
-            Save
+            {isCreatingMilestone ? "Saving..." : "Save"}
           </Pressable>
 
           <Pressable
             style={[styles.buttons, styles.buttonCancel]}
             onPress={() => dispatch(onToggleCreateForm(false))}
+            disabled={isCreatingMilestone}
           >
             Cancel
           </Pressable>
@@ -113,6 +156,10 @@ const styles = StyleSheet.create({
   buttonSave: {
     color: "white",
     backgroundColor: colors.primary,
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
   },
 
   buttons: {

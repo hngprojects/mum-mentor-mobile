@@ -1,32 +1,32 @@
 // components/AddChildModal.tsx
 import { Feather } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Alert,
-  Platform,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 // API Imports
 import {
   createChildProfile,
-  uploadChildProfilePicture,
   formatDateForApi,
+  uploadChildProfilePicture,
 } from "../../core/services/childProfile.service";
-import { CreateChildProfileRequest } from "../../types/child.types";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfileSetupId } from "../../core/services/profileSetup.service";
+import { CreateChildProfileRequest } from "../../types/child.types";
+import GenderDropdown from "../components/GenderDropdown";
 
 // ============================================================================
 // TODO: IMPORT YOUR AUTH CONTEXT OR USER PROFILE HOOK HERE
@@ -85,7 +85,8 @@ export function AddChildModal({
    */
   const requestPermissions = async () => {
     if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission Required",
@@ -114,7 +115,6 @@ export function AddChildModal({
 
       if (!result.canceled && result.assets[0]) {
         setProfilePicture(result.assets[0].uri);
-        console.log('📸 Profile picture selected:', result.assets[0].uri);
       }
     } catch (error) {
       console.error("❌ Error picking image:", error);
@@ -129,7 +129,6 @@ export function AddChildModal({
     setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) {
       setDateOfBirth(selectedDate);
-      console.log('📅 Date of birth selected:', selectedDate.toISOString());
     }
   };
 
@@ -178,37 +177,21 @@ export function AddChildModal({
    * Handle save
    */
   const handleSave = async () => {
-    console.log('='.repeat(60));
-    console.log('🟢 AddChildModal - handleSave called');
-    console.log('='.repeat(60));
-    console.log('📝 Form values:', {
-      name,
-      gender,
-      dateOfBirth: dateOfBirth.toISOString(),
-      formattedDate: formatDateForDisplay(dateOfBirth),
-      birthOrder,
-      profilePicture: profilePicture ? 'Selected' : 'None',
-    });
-    
     if (!validateForm()) {
-      console.log('❌ Form validation failed');
       return;
     }
 
     // Get profile_setup_id using the service
-    const setupId = profileSetupId || await getProfileSetupId();
-    
+    const setupId = profileSetupId || (await getProfileSetupId());
+
     if (!setupId) {
-      console.error('⚠️ CRITICAL: profile_setup_id is missing!');
+      console.error("⚠️ CRITICAL: profile_setup_id is missing!");
       Alert.alert(
         "Profile Setup Required",
         "Could not retrieve your profile setup. Please ensure you have completed the onboarding process and are logged in."
       );
       return;
     }
-
-    console.log('🔑 Using profile_setup_id:', setupId);
-
     try {
       setLoading(true);
 
@@ -221,29 +204,22 @@ export function AddChildModal({
         birth_order: parseInt(birthOrder),
       };
 
-      console.log('📤 Sending create request with data:');
-      console.log(JSON.stringify(createData, null, 2));
-
       // Create the child profile
-      console.log('🌐 Calling createChildProfile API...');
       const newChild = await createChildProfile(createData);
-      console.log('✅ Child profile created successfully!');
-      console.log('📦 New child data:', JSON.stringify(newChild, null, 2));
 
       // Upload profile picture if selected
       if (profilePicture && newChild.id) {
-        console.log('📸 Uploading profile picture...');
         try {
           const imageFile = {
             uri: profilePicture,
             name: `profile_${Date.now()}.jpg`,
             type: "image/jpeg",
           };
-          console.log('📤 Image file details:', imageFile);
-          
-          const uploadResult = await uploadChildProfilePicture(newChild.id, imageFile);
-          console.log('✅ Profile picture uploaded successfully!');
-          console.log('📦 Upload result:', JSON.stringify(uploadResult, null, 2));
+
+          const uploadResult = await uploadChildProfilePicture(
+            newChild.id,
+            imageFile
+          );
         } catch (imageError) {
           console.error("❌ Error uploading image:", imageError);
           // Don't fail the entire operation if image upload fails
@@ -253,23 +229,20 @@ export function AddChildModal({
           );
         }
       } else if (!profilePicture) {
-        console.log('ℹ️ No profile picture selected, skipping upload');
+        //
       } else if (!newChild.id) {
-        console.error('⚠️ newChild.id is missing, cannot upload picture');
+        console.error("⚠️ newChild.id is missing, cannot upload picture");
       }
 
-      console.log('✅ All operations completed successfully!');
       Alert.alert("Success", "Child profile added successfully!");
       resetForm();
       onClose();
     } catch (error) {
-      console.log('='.repeat(60));
       console.error("❌ ERROR in handleSave");
-      console.log('='.repeat(60));
       console.error("Error:", error);
       console.error("Error type:", typeof error);
       console.error("Error stringified:", JSON.stringify(error, null, 2));
-      
+
       // More detailed error message
       let errorMessage = "Failed to add child profile. ";
       if (error instanceof Error) {
@@ -277,7 +250,7 @@ export function AddChildModal({
       } else {
         errorMessage += "Please check console for details.";
       }
-      
+
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
@@ -288,7 +261,6 @@ export function AddChildModal({
    * Handle cancel
    */
   const handleCancel = () => {
-    console.log('🔵 AddChildModal - Cancelled');
     resetForm();
     onClose();
   };
@@ -365,13 +337,10 @@ export function AddChildModal({
                   color="#999"
                   style={styles.inputIcon}
                 />
-                <TextInput
-                  style={styles.input}
+                <GenderDropdown
+                  label="Child's Gender"
                   value={gender}
-                  onChangeText={setGender}
-                  placeholder="Enter Gender (e.g., Male, Female)"
-                  placeholderTextColor="#CCC"
-                  editable={!loading}
+                  onValueChange={(gender) => setGender(gender)}
                 />
               </View>
             </View>

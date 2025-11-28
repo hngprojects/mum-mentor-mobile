@@ -34,10 +34,6 @@ function useOnboardingStatusLoader() {
       try {
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
         setOnboardingComplete(value === "true");
-        console.log(
-          "📱 Onboarding status:",
-          value === "true" ? "Complete" : "Not complete"
-        );
       } catch (error) {
         console.error("Failed to load onboarding status:", error);
       }
@@ -90,27 +86,19 @@ function RootLayoutContent() {
       return;
     }
 
-    console.log("🚀 Initial navigation check:", {
-      user: !!user,
-      onboardingComplete,
-    });
-
     // Perform initial navigation only once
     setHasNavigated(true);
 
     if (user) {
       // User is logged in - go to home
-      console.log("✅ User logged in - redirecting to Home");
       router.replace("/(tabs)/Home");
     } else {
       // User is not logged in
       if (onboardingComplete) {
         // Onboarding done - go to sign in
-        console.log("✅ Onboarding complete - redirecting to SignIn");
         router.replace("/(auth)/SignInScreen");
       } else {
         // Show onboarding
-        console.log("✅ Onboarding not complete - showing onboarding");
         router.replace("/(onboarding)");
       }
     }
@@ -144,7 +132,11 @@ function RootLayoutContent() {
         <Stack.Screen name="profile" />
         <Stack.Screen name="resources" />
         <Stack.Screen name="components" />
-        <Stack.Screen name="categories/[categoryId]" />
+        <Stack.Screen
+          name="categories/CategoryDetails"
+          options={{ title: "category" }}
+        />
+        <Stack.Screen name="child-milestone/[id].tsx" />
       </Stack>
       <Toast config={toastConfig} />
     </>

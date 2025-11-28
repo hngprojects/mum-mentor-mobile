@@ -28,20 +28,17 @@ apiClient.interceptors.request.use(
       "/auth/resend-verification",
       "/auth/verify-otp",
       "/auth/verify-email",
-      '/auth/reset-password',
+      "/auth/reset-password",
     ];
 
     // Check if the current request path ends with one of the unauthenticated paths.
     // config.url contains the relative path like '/auth/register'
     const isAuthFlow = unauthenticatedPaths.some((path) =>
-      config.url?.endsWith(path)
+      config.url?.includes(path)
     );
 
     if (isAuthFlow) {
       // Skip token retrieval and attachment for authentication flow endpoints
-      console.log(
-        `Skipping JWT attachment for unauthenticated path: ${config.url}`
-      );
       return config;
     }
 
@@ -51,10 +48,8 @@ apiClient.interceptors.request.use(
     // 2. Attach the token to the Authorization header if it exists
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("Attached JWT to request headers.");
     } else {
       // For debugging unauthenticated requests
-      console.log("No JWT found. Request will proceed unauthenticated.");
     }
 
     return config;

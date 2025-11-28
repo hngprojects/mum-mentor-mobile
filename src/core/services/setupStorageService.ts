@@ -57,7 +57,6 @@ export const setupStorage = {
     try {
       const jsonData = JSON.stringify(data);
       await AsyncStorage.setItem(SETUP_DATA_KEY, jsonData);
-      console.log('Setup data saved successfully');
     } catch (error) {
       console.error('Error saving setup data:', error);
       throw error;
@@ -114,7 +113,6 @@ export const setupStorage = {
       await this.markSetupCompleted();
       // Clean up temp data
       await AsyncStorage.removeItem(`${SETUP_DATA_KEY}_temp`);
-      console.log('Setup completed successfully');
     } catch (error) {
       console.error('Error completing setup:', error);
       throw error;
@@ -129,7 +127,6 @@ export const setupStorage = {
         SETUP_DATA_KEY,
         `${SETUP_DATA_KEY}_temp`,
       ]);
-      console.log('Setup data cleared');
     } catch (error) {
       console.error('Error clearing setup data:', error);
     }
@@ -139,7 +136,6 @@ export const setupStorage = {
   async resetSetup(): Promise<void> {
     try {
       await AsyncStorage.removeItem(SETUP_COMPLETED_KEY);
-      console.log('Setup reset - user will go through setup again');
     } catch (error) {
       console.error('Error resetting setup:', error);
     }

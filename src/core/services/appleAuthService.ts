@@ -28,7 +28,6 @@ export const isAppleAuthAvailable = async (): Promise<boolean> => {
  */
 export const signInWithApple = async (): Promise<AppleAuthResult> => {
   try {
-    console.log("🍎 Starting Apple Sign-In...");
 
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
@@ -37,17 +36,12 @@ export const signInWithApple = async (): Promise<AppleAuthResult> => {
       ],
     });
 
-    console.log("✅ Apple Sign-In successful");
-    console.log("📦 Credential:", credential);
-
     // Extract user info (only available on first sign-in)
     const { identityToken, email, fullName } = credential;
 
     if (!identityToken) {
       throw new Error("No identity token received from Apple");
     }
-
-    console.log("📤 Authenticating with backend...");
 
     // Get device info
     const deviceId = (await SecureStore.getItemAsync("device_id")) || undefined;
@@ -74,12 +68,11 @@ export const signInWithApple = async (): Promise<AppleAuthResult> => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Backend authentication failed:", data);
+      console.error("Backend authentication failed:", data);
       throw new Error(data.message || "Backend authentication failed");
     }
 
     if (data.status === "success" && data.data) {
-      console.log("✅ Backend authentication successful");
 
       const { access_token, refresh_token } = data.data;
 
@@ -137,10 +130,9 @@ export const signOutFromApple = async (): Promise<{
     await SecureStore.deleteItemAsync("refresh_token");
     await SecureStore.deleteItemAsync("apple_user_id");
 
-    console.log("✅ Apple sign-out successful");
     return { success: true };
   } catch (error: any) {
-    console.error("❌ Apple Sign-out Error:", error);
+    console.error("Apple Sign-out Error:", error);
     return {
       success: false,
       error: error.message || "Failed to sign out",

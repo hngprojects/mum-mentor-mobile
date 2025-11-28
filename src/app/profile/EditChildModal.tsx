@@ -1,6 +1,7 @@
 // components/EditChildModal.tsx
 import { Feather } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
+
 import {
   Dimensions,
   Image,
@@ -18,6 +19,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
+
 // API Imports
 import {
   updateChildProfile,
@@ -26,8 +28,11 @@ import {
   parseDateFromApi,
 } from "../../core/services/childProfile.service";
 import { ChildProfile, UpdateChildProfileRequest } from "../../types/child.types";
+import GenderDropdown from "../components/GenderDropdown";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const userPic = require("../../assets/images/user-pic.png");
+
 
 interface EditChildModalProps {
   visible: boolean;
@@ -48,6 +53,15 @@ export function EditChildModal({
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+    const getUserImage = () => {
+    return profilePicture || userPic;
+  };
+
+  const imageSource =
+    typeof getUserImage() === "string"
+      ? { uri: getUserImage() }
+      : getUserImage();
 
   // Update form when child prop changes
   useEffect(() => {
@@ -225,11 +239,13 @@ export function EditChildModal({
             style={styles.content}
             showsVerticalScrollIndicator={false}
           >
+
+
             {/* Avatar Section */}
             <View style={styles.avatarSection}>
               <Image
                 source={{
-                  uri: profilePicture || "https://i.pravatar.cc/150?img=1",
+                  uri: imageSource,
                 }}
                 style={styles.avatar}
               />
@@ -269,21 +285,12 @@ export function EditChildModal({
             {/* Gender Field */}
             <View style={styles.formSection}>
               <Text style={styles.label}>Gender</Text>
-              <View style={styles.inputContainer}>
-                <Feather
-                  name="users"
-                  size={20}
-                  color="#666"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  value={gender}
-                  onChangeText={setGender}
-                  placeholder="Enter gender"
-                  editable={!loading}
-                />
-              </View>
+            <GenderDropdown
+              label="Child's Gender"
+              value={gender}
+              onValueChange={(gender) => setGender(gender)}
+            />
+               
             </View>
 
             {/* Date of Birth Field */}

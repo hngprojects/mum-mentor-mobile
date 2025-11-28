@@ -15,8 +15,6 @@ import { getAuthToken } from './authStorage'; // ← ADJUST THIS PATH TO MATCH Y
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.staging.kaizen.emerj.net';
 
 // Log configuration on import
-console.log('🔧 API Service Configuration:');
-console.log('📍 Base URL:', API_BASE_URL);
 if (API_BASE_URL === 'https://api.staging.kaizen.emerj.net') {
   console.warn('⚠️ WARNING: Using default API URL. Please set EXPO_PUBLIC_API_URL in .env file');
 }
@@ -32,23 +30,15 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use(
   async (config) => {
-    console.log('🚀 API Request Starting...');
-    console.log('📍 URL:', (config.baseURL || '') + (config.url || ''));
-    console.log('🔧 Method:', config.method?.toUpperCase());
     
     // Use your existing getAuthToken function
     const token = await getAuthToken();
-    
-    console.log('🔑 Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
       console.error('❌ No auth token found in storage!');
     }
-    
-    console.log('📦 Request Headers:', JSON.stringify(config.headers, null, 2));
-    console.log('📦 Request Body:', JSON.stringify(config.data, null, 2));
     
     return config;
   },
@@ -61,10 +51,6 @@ api.interceptors.request.use(
 // Add response interceptor for logging
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ API Response Success');
-    console.log('📍 URL:', response.config.url || 'unknown');
-    console.log('📊 Status:', response.status);
-    console.log('📦 Response Data:', JSON.stringify(response.data, null, 2));
     return response;
   },
   (error) => {
@@ -84,7 +70,6 @@ api.interceptors.response.use(
  */
 export const getChildProfiles = async (): Promise<ChildProfile[]> => {
   try {
-    console.log('🔵 getChildProfiles: Making API request...');
     const response = await api.get<{ 
       data: { 
         children: ChildProfile[];
@@ -92,14 +77,7 @@ export const getChildProfiles = async (): Promise<ChildProfile[]> => {
       } 
     }>('/api/v1/child-profiles/');
     
-    console.log('📦 Raw API response:', JSON.stringify(response.data, null, 2));
-    
-    // Your API structure: { data: { children: [...], total: 0 } }
     const childrenData = response.data.data?.children || [];
-    
-    console.log('📦 Extracted children array:', childrenData);
-    console.log('📊 Array length:', childrenData.length);
-    console.log('✅ Returning children array');
     
     return childrenData;
   } catch (error) {
@@ -135,16 +113,11 @@ export const getChildProfile = async (childId: string): Promise<ChildProfile> =>
 export const createChildProfile = async (
   data: CreateChildProfileRequest
 ): Promise<ChildProfile> => {
-  console.log('🔵 createChildProfile called');
-  console.log('📝 Input data:', JSON.stringify(data, null, 2));
   
   try {
-    console.log('🌐 Making POST request to /api/v1/child-profiles/');
     const response = await api.post<{ 
       data: { child: ChildProfile } | ChildProfile 
     }>('/api/v1/child-profiles/', data);
-    
-    console.log('📦 Raw response:', JSON.stringify(response.data, null, 2));
     
     // Handle nested structure { data: { child: {...} } } or { data: {...} }
     const childData = (response.data.data as any)?.child || response.data.data || response.data;
@@ -155,10 +128,6 @@ export const createChildProfile = async (
       console.error('📦 Child data received:', childData);
       throw new Error('Child profile created but no ID returned from server');
     }
-    
-    console.log('✅ Child profile created successfully');
-    console.log('🔑 Child ID:', childData.id);
-    console.log('👶 Child name:', childData.full_name);
     
     return childData;
   } catch (error) {
@@ -193,19 +162,9 @@ export const updateChildProfile = async (
  * Delete a child profile
  */
 export const deleteChildProfile = async (childId: string): Promise<void> => {
-  console.log('='.repeat(60));
-  console.log('🔴 deleteChildProfile called');
-  console.log('='.repeat(60));
-  console.log('📍 Child ID:', childId);
   
   try {
-    console.log('🌐 Making DELETE request to /api/v1/child-profiles/' + childId);
     const response = await api.delete(`/api/v1/child-profiles/${childId}`);
-    
-    console.log('✅ DELETE request successful');
-    console.log('📦 Response:', JSON.stringify(response.data, null, 2));
-    console.log('📊 Status:', response.status);
-    console.log('='.repeat(60));
   } catch (error) {
     console.error('❌ DELETE request failed');
     handleApiError(error);
@@ -225,37 +184,21 @@ export const uploadChildProfilePicture = async (
   }
 ): Promise<UploadProfilePictureResponse> => {
   try {
-    console.log('🔵 uploadChildProfilePicture: Starting upload...');
-    console.log('📍 Platform:', process.env.EXPO_PUBLIC_PLATFORM || 'unknown');
-    console.log('📦 Image file:', imageFile);
     
     const formData = new FormData();
     
     // Check if we're on web (blob URL) or native
     if (imageFile.uri.startsWith('blob:')) {
-      console.log('🌐 Web platform detected - converting blob to File');
       
       // On web, we need to fetch the blob and convert to File
       const response = await fetch(imageFile.uri);
       const blob = await response.blob();
       
-      console.log('📦 Blob created:', {
-        size: blob.size,
-        type: blob.type
-      });
-      
       // Create a File object from the blob
       const file = new File([blob], imageFile.name, { type: imageFile.type });
       
-      console.log('📦 File created:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
-      });
-      
       formData.append('file', file);
     } else {
-      console.log('📱 Native platform detected - using URI directly');
       
       // On native, use the standard approach
       formData.append('file', {
@@ -265,8 +208,6 @@ export const uploadChildProfilePicture = async (
       } as any);
     }
     
-    console.log('📤 Sending upload request...');
-    
     const response = await api.post<{ 
       data: UploadProfilePictureResponse 
     }>(`/api/v1/child-profiles/${childId}/upload-picture`, formData, {
@@ -274,8 +215,6 @@ export const uploadChildProfilePicture = async (
         'Content-Type': 'multipart/form-data',
       },
     });
-    
-    console.log('✅ Upload successful!');
     
     // Handle nested structure { data: {...} }
     return response.data.data || response.data;
@@ -290,9 +229,6 @@ export const uploadChildProfilePicture = async (
  * Handle API errors and log them
  */
 const handleApiError = (error: unknown) => {
-  console.log('='.repeat(60));
-  console.log('🔴 API ERROR HANDLER');
-  console.log('='.repeat(60));
   
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiError>;
@@ -344,8 +280,6 @@ const handleApiError = (error: unknown) => {
     console.error('📍 Error Type: Non-Axios Error');
     console.error('📝 Error:', error);
   }
-  
-  console.log('='.repeat(60));
 };
 
 /**

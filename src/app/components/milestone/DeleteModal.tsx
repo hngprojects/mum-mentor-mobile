@@ -1,25 +1,43 @@
 import ModalAnimationWrapper from "@/src/app/components/milestone/ModalAnimationWrapper";
+import { deleteMilestoneAction } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
+import { showToast } from "@/src/core/utils/toast";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import {
   getMilestoneStates,
   onDeleteMilestone,
   onToggleDeleteModal,
 } from "@/src/store/milestoneSlice";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function DeleteModal() {
-  const { isDeleteModalOpen } = useAppSelector(getMilestoneStates);
+  const { isDeleteModalOpen, milestoneToDelId } =
+    useAppSelector(getMilestoneStates);
+  const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
+
+  const { mutate: deleteMilestone, isPending: isDeletingMilestone } =
+    useMutation({
+      mutationFn: (milestoneId: string) => deleteMilestoneAction(milestoneId),
+
+      onSuccess: () => {
+        onCloseModal();
+        queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
+      },
+      onError: (error) => {
+        showToast.error(error.message);
+      },
+    });
 
   const onCloseModal = () =>
     dispatch(onToggleDeleteModal({ isOpenForm: false }));
 
   const handleDeleteMilestone = () => {
     dispatch(onDeleteMilestone());
-    onCloseModal();
+    deleteMilestone(milestoneToDelId);
   };
 
   return (
@@ -35,20 +53,28 @@ export default function DeleteModal() {
 
         <View style={styles.modalHeader}>
           <Text style={styles.headerText}>Delete Milestone</Text>
-          <Text>Are you sure you want to delete this Milestone?</Text>
+          <Text style={styles.headerDesc}>
+            Are you sure you want to delete this Milestone?
+          </Text>
         </View>
 
         <View style={styles.buttonsContainer}>
           <Pressable
-            style={[styles.button, styles.buttonSave]}
+            style={[
+              styles.button,
+              styles.buttonSave,
+              isDeletingMilestone && styles.buttonDisabled,
+            ]}
             onPress={handleDeleteMilestone}
+            disabled={isDeletingMilestone}
           >
-            Delete
+            {isDeletingMilestone ? "Deleting Milestone..." : "Delete"}
           </Pressable>
 
           <Pressable
             style={[styles.button, styles.buttonCancel]}
             onPress={onCloseModal}
+            disabled={isDeletingMilestone}
           >
             Cancel
           </Pressable>
@@ -73,6 +99,10 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     textAlign: "center",
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
   deleteIcon: {
     width: 24,
     height: 24,

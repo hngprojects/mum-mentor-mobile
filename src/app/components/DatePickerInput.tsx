@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import { colors, typography } from "@/src/core/styles";
+import { ms, rbr, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useState } from "react";
 import {
-  View,
+  Modal,
+  Platform,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Modal,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography } from '@/src/core/styles';
-import { ms, vs, rbr } from '@/src/core/styles/scaling';
+  View,
+} from "react-native";
 
 interface DatePickerInputProps {
   label: string;
@@ -19,28 +19,30 @@ interface DatePickerInputProps {
   onDateChange: (date: string) => void;
   isError?: boolean;
   errorMessage?: string;
+  icon?: string;
 }
 
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
   label,
-  placeholder = 'Select Date',
+  placeholder = "Select Date",
   value,
   onDateChange,
   isError = false,
   errorMessage,
+  icon,
 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [date, setDate] = useState<Date>(value ? new Date(value) : new Date());
 
   const formatDate = (dateObj: Date): string => {
-    const day = dateObj.getDate().toString().padStart(2, '0');
-    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+    const day = dateObj.getDate().toString().padStart(2, "0");
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
     const year = dateObj.getFullYear().toString().slice(-2);
     return `${day}/${month}/${year}`;
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowPicker(false);
     }
 
@@ -62,14 +64,12 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       <Text style={styles.label}>{label}</Text>
 
       <TouchableOpacity
-        style={[
-          styles.inputContainer,
-          isError && styles.inputContainerError,
-        ]}
+        style={[styles.inputContainer, isError && styles.inputContainerError]}
         onPress={() => setShowPicker(true)}
       >
         <Ionicons
-          name="calendar-outline"
+          //@ts-ignore
+          name={icon ?? "calendar-outline"}
           size={20}
           color={isError ? colors.error : colors.textGrey1}
           style={styles.icon}
@@ -90,7 +90,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       )}
 
       {/* Android DatePicker */}
-      {Platform.OS === 'android' && showPicker && (
+      {Platform.OS === "android" && showPicker && (
         <DateTimePicker
           value={date}
           mode="date"
@@ -101,12 +101,8 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       )}
 
       {/* iOS DatePicker Modal */}
-      {Platform.OS === 'ios' && (
-        <Modal
-          visible={showPicker}
-          transparent
-          animationType="slide"
-        >
+      {Platform.OS === "ios" && (
+        <Modal visible={showPicker} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
@@ -149,8 +145,8 @@ const styles = StyleSheet.create({
     marginBottom: vs(8),
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.outline,
     borderRadius: rbr(10),
@@ -181,8 +177,8 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     backgroundColor: colors.backgroundMain,
@@ -191,9 +187,9 @@ const styles = StyleSheet.create({
     paddingBottom: vs(20),
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: ms(20),
     paddingVertical: vs(16),
     borderBottomWidth: 1,

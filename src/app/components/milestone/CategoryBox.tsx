@@ -1,29 +1,75 @@
+import { CATEGORIES } from "@/src/core/data/milestone-data";
+import { getMilestonesByCategory } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
-import { useAppSelector } from "@/src/store/hooks";
-import { getMilestoneStates } from "@/src/store/milestoneSlice";
-import { CategoriesType } from "@/src/types/milestones";
-import { Link } from "expo-router";
+import { showToast } from "@/src/core/utils/toast";
+import { Category } from "@/src/types/milestones";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useRouter } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CircularProgress from "react-native-circular-progress-indicator";
 
 interface CategoryBoxType {
-  category: CategoriesType;
+  category: Category;
+  milestoneType: string;
+  ownerId: string;
+  childId?: string;
 }
 
-export default function CategoryBox({ category }: CategoryBoxType) {
-  const { milestoneData } = useAppSelector(getMilestoneStates);
+export default function CategoryBox({
+  category,
+  milestoneType,
+  ownerId,
+  childId,
+}: CategoryBoxType) {
+  // const { milestoneData } = useAppSelector(getMilestoneStates);
 
-  const completedMilestones = milestoneData.filter(
-    (milestone) => milestone.status === "completed"
-  ).length;
+  console.log(category);
 
-  const progress = (completedMilestones / milestoneData.length) * 100;
+  const router = useRouter();
+  const {
+    data: milestoneData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["milestonesByCat", category.label, childId],
+    queryFn: () => getMilestonesByCategory(category.label, childId),
+  });
+
+  const completedMilestones =
+    milestoneData?.filter((milestone) => milestone.status === "completed")
+      .length ?? 0;
+  const milestonesDataLength = milestoneData?.length ?? 0;
+
+  console.log(milestoneData, category.label, "milestone");
+
+  if (isLoading) {
+    return <View>Loading</View>;
+  }
+
+  const progress = milestonesDataLength
+    ? (completedMilestones / milestonesDataLength) * 100
+    : 0;
+
+  console.log(progress, "progress", category.label, "ridwan");
+
+  const categoryData = CATEGORIES[category.label];
+
+  if (error) {
+    showToast.error(error.message);
+  }
+
   return (
     <Link
       href={{
-        pathname: "/categories/[categoryId]",
-        params: { categoryId: category.id },
+        pathname: "/categories/CategoryDetails",
+        params: {
+          categoryValue: category.value,
+          categoryLabel: category.label,
+          ownerType: milestoneType,
+          ownerId,
+          childId,
+        },
       }}
       asChild
     >
@@ -31,7 +77,7 @@ export default function CategoryBox({ category }: CategoryBoxType) {
         <View style={styles.content}>
           {/* header */}
           <View style={styles.contentHeader}>
-            <Image source={category.icon} style={styles.contentIcon} />
+            <Image source={categoryData.icon} style={styles.contentIcon} />
             <CircularProgress
               value={progress}
               radius={28}
@@ -42,7 +88,7 @@ export default function CategoryBox({ category }: CategoryBoxType) {
               activeStrokeWidth={5}
               inActiveStrokeWidth={5}
               showProgressValue={false}
-              title={`${progress}%`}
+              title={`${Math.floor(progress)}%`}
               titleColor={colors.textGrey1}
               titleStyle={{ fontSize: 16, fontWeight: "500" }}
             />
@@ -50,8 +96,8 @@ export default function CategoryBox({ category }: CategoryBoxType) {
 
           {/* body */}
           <View style={styles.contentBody}>
-            <Text style={styles.contentBodyTitle}>{category.title}</Text>
-            <Text style={styles.contentBodyDesc}>{category.desc}</Text>
+            <Text style={styles.contentBodyTitle}>{categoryData.title}</Text>
+            <Text style={styles.contentBodyDesc}>{categoryData.desc}</Text>
           </View>
         </View>
       </TouchableOpacity>

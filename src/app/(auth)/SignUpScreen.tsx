@@ -193,12 +193,12 @@ export default function SignUpScreen() {
       // Success: Redirect to the verification screen, passing the email as a parameter
       showToast.success(
         "Success!",
-        "Account created. Please check your email for the verification code."
+        "Account created. Please check your email."
       );
 
       // Navigate to the reusable verification screen, passing context and email
       router.replace({
-        pathname: "/(auth)/OtpScreen",
+        pathname: "/(auth)/SignInScreen",
         params: {
           context: "register",
           email: email,

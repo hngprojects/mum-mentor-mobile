@@ -1,13 +1,19 @@
 import { colors, typography } from "@/src/core/styles";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { toggleMilestoneStatusAction } from "@/src/core/services/milestoneService";
+import { showToast } from "@/src/core/utils/toast";
 import { useAppDispatch } from "@/src/store/hooks";
 import {
   onCheckMilestoneStatus,
   onToggleDeleteModal,
   onToggleEditForm,
 } from "@/src/store/milestoneSlice";
-import { Milestone } from "@/src/store/types";
+import {
+  MilestoneDataType,
+  ToggleMilestonePayload,
+} from "@/src/types/milestones";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 type Actions = "edit" | "delete";
 
@@ -28,8 +34,30 @@ export const ACTION_BUTTONS_ICONS = [
   },
 ];
 
-export function MilestoneBox({ milestone }: { milestone: Milestone }) {
+export function MilestoneBox({ milestone }: { milestone: MilestoneDataType }) {
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
+  console.log(milestone.id);
+
+  const { mutate: toggleMilestoneMutation } = useMutation({
+    mutationFn: (payload: ToggleMilestonePayload) =>
+      toggleMilestoneStatusAction(milestone.id, payload),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["milestonesByCat"],
+        refetchType: "all",
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["pending-milestones"],
+        refetchType: "all",
+      });
+    },
+    onError: (error) => {
+      showToast.error(error.message);
+    },
+  });
 
   function handleMilestoneAction(actionType: Actions) {
     if (actionType === "edit") {
@@ -46,11 +74,18 @@ export function MilestoneBox({ milestone }: { milestone: Milestone }) {
     }
   }
 
+  function handleToggleStatus() {
+    dispatch(onCheckMilestoneStatus({ id: milestone?.id }));
+    const togglePayload = {
+      completed: milestone.status === "completed" ? false : true,
+    };
+
+    toggleMilestoneMutation(togglePayload);
+  }
+
   return (
     <View style={styles.milestoneBox}>
-      <Pressable
-        onPress={() => dispatch(onCheckMilestoneStatus({ id: milestone?.id }))}
-      >
+      <Pressable onPress={() => handleToggleStatus()}>
         <Image
           source={milestone?.status === "pending" ? uncheckedIcon : checkedIcon}
           style={styles.milestoneCheckbox}
@@ -58,8 +93,8 @@ export function MilestoneBox({ milestone }: { milestone: Milestone }) {
       </Pressable>
       {/* name and desc */}
       <View style={styles.milestoneTextBox}>
-        <Text style={styles.milestoneName}>{milestone.title}</Text>
-        <Text style={styles.milestoneDesc}>{milestone.desc}</Text>
+        <Text style={styles.milestoneName}>{milestone.name}</Text>
+        <Text style={styles.milestoneDesc}>{milestone.description}</Text>
       </View>
 
       {/* action buttons */}
@@ -68,6 +103,13 @@ export function MilestoneBox({ milestone }: { milestone: Milestone }) {
           <Pressable
             key={action.id}
             onPress={() => handleMilestoneAction(action.actionType as Actions)}
+            style={{
+              visibility:
+                milestone?.status === "completed" &&
+                action.actionType === "edit"
+                  ? "hidden"
+                  : "visible",
+            }}
           >
             <Image source={action.icon} />
           </Pressable>
