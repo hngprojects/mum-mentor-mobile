@@ -6,9 +6,9 @@ import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, rfs, vs } from "@/src/core/styles/scaling";
 import { showToast } from "@/src/core/utils/toast";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -26,44 +26,36 @@ import AddMemoryModal from "../components/GalleryComponents/AddMemoryModal";
 const { width } = Dimensions.get("window");
 const PHOTO_SIZE = (width - ms(spacing.lg * 2) - ms(spacing.md)) / 2;
 
+interface PhotoData {
+  id: string;
+  image_url: string;
+}
+
+interface Memory {
+  album_id: string;
+  id: string;
+  note: string;
+  photo_data: PhotoData;
+  saved_on: string;
+}
+
 export default function AlbumDetailScreen() {
   const params = useLocalSearchParams();
   const albumId = params.albumId as string;
   const albumName = (params.albumName as string) || "Album";
 
-  const { data, isLoading: isGetAlbumLoading, error } = useGetAlbum(albumId);
+  const { data, isLoading, refetch } = useGetAlbum(albumId);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddMemoryModalVisible, setIsAddMemoryModalVisible] = useState(false);
   const [photos, setPhotos] = useState<galleryStorage.Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   // Load photos when screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      if (albumId) {
-        loadPhotos();
-      }
-    }, [albumId])
-  );
-
-  const loadPhotos = async () => {
-    try {
-      setIsLoading(true);
-      const albumPhotos = await galleryStorage.getAlbumPhotos(albumId);
-      setPhotos(albumPhotos);
-    } catch (error) {
-      console.error("Error loading photos:", error);
-      showToast.error("Error", "Failed to load photos");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadPhotos();
+    refetch();
     setRefreshing(false);
   };
 
@@ -115,39 +107,35 @@ export default function AlbumDetailScreen() {
     setIsAddMemoryModalVisible(false);
   };
 
-  const handlePhotoPress = (photo: galleryStorage.Photo) => {
-    router.push({
-      pathname: "../Gallery/PhotoDetail",
-      params: { photoId: photo.id },
-    });
-  };
+  // const handlePhotoPress = (photoUrl: string) => {
+  //   router.push({
+  //     pathname: "../Gallery/PhotoDetail",
+  //     params: { photoUrl },
+  //   });
+  // };
 
   // Filter photos based on search query
-  const filteredPhotos = photos.filter((photo) => {
-    if (!searchQuery.trim()) return true;
+  const filteredPhotos =
+    data?.memories &&
+    data?.memories?.filter((photo) => {
+      if (!searchQuery.trim()) return true;
 
-    const query = searchQuery.toLowerCase();
-    const note = photo.note.toLowerCase();
-    const category = photo.category.toLowerCase();
-    const date = new Date(photo.date).toLocaleDateString("en-US").toLowerCase();
+      const query = searchQuery.toLowerCase();
+      const note = photo.note.toLowerCase();
 
-    return (
-      note.includes(query) || category.includes(query) || date.includes(query)
-    );
-  });
+      return note.includes(query);
+    });
 
-  const renderPhotoItem = ({ item }: { item: galleryStorage.Photo }) => (
-    <TouchableOpacity
-      style={styles.photoItem}
-      onPress={() => handlePhotoPress(item)}
-      activeOpacity={0.8}
-    >
-      <Image source={{ uri: item.uri }} style={styles.photoImage} />
-    </TouchableOpacity>
+  const renderPhotoItem = ({ item }: { item: Memory }) => (
+    <View style={styles.photoItem}>
+      <Image
+        source={{ uri: item.photo_data.image_url }}
+        style={styles.photoImage}
+      />
+    </View>
   );
 
   const hasPhotos = photos.length > 0;
-  const hasFilteredResults = filteredPhotos.length > 0;
 
   return (
     <>
@@ -201,7 +189,7 @@ export default function AlbumDetailScreen() {
         {hasPhotos && (
           <View style={styles.photoCountContainer}>
             <Text style={styles.photoCount}>
-              {filteredPhotos.length} of {photos.length}{" "}
+              {filteredPhotos?.length} of {photos.length}{" "}
               {photos.length === 1 ? "photo" : "photos"}
             </Text>
           </View>
@@ -212,7 +200,7 @@ export default function AlbumDetailScreen() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptySubtitle}>Loading photos...</Text>
           </View>
-        ) : !hasPhotos ? (
+        ) : !data?.memories ? (
           /* Empty State - No Photos */
           <View style={styles.emptyContainer}>
             <Image
