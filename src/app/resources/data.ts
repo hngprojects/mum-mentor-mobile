@@ -30,7 +30,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Position the new diaper under the baby and fasten securely.",
           "Dispose of the dirty diaper properly and wash hands.",
         ],
-        videoUrl: "https://example.com/quick-diaper-change",
+        
       },
       {
         id: "soothing-crying-baby",
@@ -46,7 +46,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Offer a pacifier if breastfeeding isn't an issue.",
           "If nothing works, take a break and try again later, staying calm yourself.",
         ],
-        videoUrl: "https://example.com/soothing-crying-baby",
+        
       },
       {
         id: "encouraging-crawling-hacks",
@@ -62,7 +62,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Practice for 10-15 minutes, 2-3 times daily, when the baby is alert.",
           "Gradually increase distances as the baby gains confidence.",
         ],
-        videoUrl: "https://example.com/encouraging-crawling",
+        
       },
       {
         id: "playing-with-toys",
@@ -78,7 +78,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Rotate toys every few days to keep things fresh.",
           "Engage in play together, narrating actions and responses.",
         ],
-        videoUrl: "https://example.com/playing-with-toys",
+        
       },
       {
         id: "baby-language-basics",
@@ -94,7 +94,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Read books together daily.",
           "Sing songs and nursery rhymes.",
         ],
-        videoUrl: "https://example.com/baby-language",
+        
       },
       {
         id: "baby-cottage-setup",
@@ -110,7 +110,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Use calming colors and decor.",
           "Make it a screen-free zone.",
         ],
-        videoUrl: "https://example.com/baby-cottage",
+        
       },
       {
         id: "sleep-routine-starter",
@@ -126,7 +126,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Offer a final feed if needed, then place in crib while drowsy but awake.",
           "Use a consistent sleep cue like a special blanket or soft toy.",
         ],
-        videoUrl: "https://example.com/sleep-routine",
+        
       },
     ],
   },
@@ -244,7 +244,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Exhale slowly through your mouth for a count of 6.",
           "Repeat for 5-10 minutes, focusing on the breath.",
         ],
-        videoUrl: "https://example.com/mindful-breathing",
+        
       },
       {
         id: "quick-self-massage",
@@ -260,7 +260,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Breathe deeply throughout the massage.",
           "Spend 5-10 minutes on each area as needed.",
         ],
-        videoUrl: "https://example.com/self-massage",
+        
       },
       {
         id: "gratitude-journaling",
@@ -276,7 +276,7 @@ export const resourceSections: ResourceSectionData[] = [
           "Read previous entries occasionally to reflect on patterns.",
           "Make it a consistent habit, even on difficult days.",
         ],
-        videoUrl: "https://example.com/gratitude-journaling",
+        
       },
     ],
   }
