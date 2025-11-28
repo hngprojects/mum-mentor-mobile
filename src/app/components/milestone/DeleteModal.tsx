@@ -68,7 +68,9 @@ export default function DeleteModal() {
             onPress={handleDeleteMilestone}
             disabled={isDeletingMilestone}
           >
-            {isDeletingMilestone ? "Deleting Milestone..." : "Delete"}
+            <Text style={styles.buttonText}>
+              {isDeletingMilestone ? "Deleting Milestone..." : "Delete"}
+            </Text>
           </Pressable>
 
           <Pressable
@@ -76,7 +78,7 @@ export default function DeleteModal() {
             onPress={onCloseModal}
             disabled={isDeletingMilestone}
           >
-            Cancel
+            <Text style={styles.buttonCancelText}>Cancel</Text>
           </Pressable>
         </View>
       </View>
@@ -85,28 +87,40 @@ export default function DeleteModal() {
 }
 
 const styles = StyleSheet.create({
-  // delete modal
   headerDesc: {
     ...typography.bodySmall,
     textAlign: "center",
     color: colors.textGrey1,
   },
 
-  // success modal
   headerText: {
     ...typography.heading3,
     color: "black",
-    fontWeight: 600,
+    fontWeight: "600",
     textAlign: "center",
   },
+
   buttonDisabled: {
     opacity: 0.6,
+  },
+
+  buttonText: {
+    ...typography.buttonText,
+    color: "white",
+    fontWeight: "500",
+  },
+
+  buttonCancelText: {
+    ...typography.buttonText,
+    color: colors.primary,
+    fontWeight: "500",
   },
 
   deleteIcon: {
     width: 24,
     height: 24,
   },
+
   modalHeader: {
     gap: 8,
     alignItems: "center",
@@ -120,26 +134,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // create milestone form
   buttonCancel: {
     backgroundColor: "white",
-    color: colors.primary,
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
 
   buttonSave: {
-    color: "white",
     backgroundColor: colors.primary,
   },
 
   button: {
-    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    ...typography.buttonText,
-    fontWeight: 500,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
@@ -150,17 +158,5 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     gap: 8,
     width: "100%",
-  },
-
-  backgroundOverlay: {
-    backgroundColor: "#00000099",
-    position: "fixed",
-    width: "100%",
-    height: "100%",
-    top: 0,
-    left: 0,
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
   },
 });

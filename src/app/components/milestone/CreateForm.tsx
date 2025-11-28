@@ -1,5 +1,4 @@
 import FormInput from "@/src/app/components/milestone/FormInput";
-
 import { createMilestone } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
 import { showToast } from "@/src/core/utils/toast";
@@ -14,7 +13,6 @@ import { CreateMilestoneType, MilestoneDataType } from "@/src/types/milestones";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Modal from "react-native-modal";
 
@@ -30,13 +28,11 @@ export default function CreateForm() {
   const { mutate: createNewMilestone, isPending: isCreatingMilestone } =
     useMutation({
       mutationFn: (payload: CreateMilestoneType) => createMilestone(payload),
-
       onSuccess: () => {
         dispatch(onToggleCreateForm(false));
         dispatch(onToggleSuccessModal(true));
         queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
       },
-
       onError: (error) => {
         showToast.error(error.message);
       },
@@ -63,8 +59,6 @@ export default function CreateForm() {
 
     dispatch(onAddMilestone(newMilestone));
     createNewMilestone(serverNewMilestone);
-
-    // if success, open success modal
     setFormData({ name: "", description: "" });
   }
 
@@ -77,9 +71,7 @@ export default function CreateForm() {
       onBackdropPress={() => dispatch(onToggleCreateForm(false))}
       style={{ justifyContent: "flex-end", margin: 0 }}
     >
-      {/* container */}
       <View style={styles.milestoneFormContainer}>
-        {/* header */}
         <View style={styles.formHeaderBox}>
           <Text style={styles.formTitle}>create milestones</Text>
           <Text style={styles.formDescription}>
@@ -87,7 +79,6 @@ export default function CreateForm() {
           </Text>
         </View>
 
-        {/* forms */}
         <FormInput label="Milestone Name">
           <TextInput
             style={styles.input}
@@ -122,13 +113,14 @@ export default function CreateForm() {
             style={[
               styles.buttons,
               styles.buttonSave,
-              !isNameInputFilled && styles.buttonDisabled,
-              isCreatingMilestone && styles.buttonDisabled,
+              (!isNameInputFilled || isCreatingMilestone) && styles.buttonDisabled,
             ]}
-            onPress={() => handleMilestoneCreation()}
+            onPress={handleMilestoneCreation}
             disabled={!isNameInputFilled || isCreatingMilestone}
           >
-            {isCreatingMilestone ? "Saving..." : "Save"}
+            <Text style={styles.buttonText}>
+              {isCreatingMilestone ? "Saving..." : "Save"}
+            </Text>
           </Pressable>
 
           <Pressable
@@ -136,7 +128,7 @@ export default function CreateForm() {
             onPress={() => dispatch(onToggleCreateForm(false))}
             disabled={isCreatingMilestone}
           >
-            Cancel
+            <Text style={styles.buttonCancelText}>Cancel</Text>
           </Pressable>
         </View>
       </View>
@@ -145,16 +137,13 @@ export default function CreateForm() {
 }
 
 const styles = StyleSheet.create({
-  // create milestone form
   buttonCancel: {
     backgroundColor: "white",
-    color: colors.primary,
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
 
   buttonSave: {
-    color: "white",
     backgroundColor: colors.primary,
   },
 
@@ -162,13 +151,22 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
+  buttonText: {
+    ...typography.buttonText,
+    color: "white",
+    fontWeight: "500",
+  },
+
+  buttonCancelText: {
+    ...typography.buttonText,
+    color: colors.primary,
+    fontWeight: "500",
+  },
+
   buttons: {
-    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    ...typography.buttonText,
-    fontWeight: 500,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
@@ -178,16 +176,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  errorText: {
-    fontSize: 12,
-    color: colors.error,
-    textAlign: "right",
-  },
-
   input: {
     borderRadius: 8,
     padding: 8,
-    gap: 10,
     borderWidth: 1,
     borderColor: colors.outline,
     ...typography.caption,
@@ -195,28 +186,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  label: {
-    ...typography.labelLarge,
-    color: colors.textSecondary,
-    fontWeight: "500",
-  },
-
-  inputGroup: {
-    gap: 4,
-  },
-
   formDescription: {
     ...typography.bodySmall,
-    alignItems: "center",
     color: colors.textGrey1,
     maxWidth: 271.62,
-    marginHorizontal: "auto",
     textAlign: "center",
   },
 
   formTitle: {
     ...typography.heading3,
-    fontWeight: 600,
+    fontWeight: "600",
     color: "black",
     textTransform: "capitalize",
     textAlign: "center",
@@ -233,16 +212,5 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 24,
     gap: 24,
-  },
-
-  createMilestoneOverlay: {
-    backgroundColor: "#00000099",
-    position: "fixed",
-    width: "100%",
-    height: "100%",
-    top: 0,
-    left: 0,
-    flex: 1,
-    justifyContent: "flex-end",
   },
 });

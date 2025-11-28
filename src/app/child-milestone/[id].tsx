@@ -16,12 +16,13 @@ export default function ChildDashboardScreen() {
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Image
               source={require("../../assets/images/arrow-left.png")}
-              style={styles.backButton}
+              style={styles.buttonIcon}
             />
-            <Text style={styles.buttonText}>{`${childName}'s Milestone`}</Text>
+            <Text style={styles.buttonText}>
+              {`${childName || "Child"}'s Milestone`}
+            </Text>
           </Pressable>
 
-          {/* Reuse the dashboard layout! */}
           <MilestoneDashboard
             milestoneType="child"
             childId={childId as string}
@@ -36,6 +37,7 @@ const styles = StyleSheet.create({
   buttonIcon: {
     width: 24,
     height: 24,
+    resizeMode: "contain",
   },
   buttonText: {
     ...typography.heading2,
@@ -50,7 +52,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-
   container: {
     paddingHorizontal: 20,
     paddingTop: 16,

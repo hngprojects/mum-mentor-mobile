@@ -40,23 +40,49 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
 
-  const computeAge = (dob: string) => {
+  const computeAge = (dob: string): string => {
+    // Return empty string if no date of birth
     if (!dob) return "";
-    const birth = new Date(dob);
-    const today = new Date();
 
-    let age = today.getFullYear() - birth.getFullYear();
-    const beforeBirthday =
-      today.getMonth() < birth.getMonth() ||
-      (today.getMonth() === birth.getMonth() &&
-        today.getDate() < birth.getDate());
+    try {
+      const birth = new Date(dob);
+      const today = new Date();
 
-    return beforeBirthday ? (age - 1).toString() : age.toString();
+      // Check if the date is valid
+      if (isNaN(birth.getTime())) {
+        console.warn("Invalid date provided:", dob);
+        return "";
+      }
+
+      // Check if date is in the future
+      if (birth > today) {
+        console.warn("Date of birth is in the future:", dob);
+        return "";
+      }
+
+      // Calculate age
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+
+      // Adjust if birthday hasn't occurred yet this year
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+
+      // Return empty string if age is negative (shouldn't happen with future date check above)
+      if (age < 0) return "";
+
+      return age.toString();
+    } catch (error) {
+      console.error("Error computing age:", error);
+      return "";
+    }
   };
 
   const handleChange = (key: keyof ChildData, value: string) => {
     let updated: ChildData = { ...childData, [key]: value };
 
+    // Auto-calculate age when DOB changes
     if (key === "dob") {
       const newAge = computeAge(value);
       updated.age = newAge;
@@ -111,6 +137,7 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
               onChangeText={(t) => handleChange("fullName", t)}
               iconName="person-outline"
             />
+
             {/* Date of Birth - Now with Calendar Picker */}
             {Platform.OS === "web" ? (
               <input
@@ -134,11 +161,11 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
               />
             )}
 
-            {/* Child Age or Due Date */}
+            {/* Child Age - Auto-calculated */}
             <CustomInput
               label="Child's Age"
-              placeholder="Auto-calculated"
-              value={childData.age}
+              placeholder="Auto-calculated from DOB"
+              value={childData.age ? `${childData.age} years` : ""}
               onChangeText={() => {}}
               iconName="calendar-outline"
               editable={false}
@@ -153,6 +180,7 @@ const ChildSetupItem: React.FC<ChildSetupItemProps> = ({
           </View>
         </>
       )}
+
       <DeleteConfirmModal
         visible={showDeleteModal}
         title={`Delete Child Setup ${index + 1}`}
@@ -196,13 +224,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.lg,
   },
-
   deleteIcon: {
     width: 20,
     height: 20,
     tintColor: colors.error,
   },
-
   divider: {
     height: rh(0.1),
     backgroundColor: colors.backgroundSubtle,

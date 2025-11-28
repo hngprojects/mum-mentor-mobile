@@ -5,7 +5,9 @@ import { ms, rfs, vs } from "@/src/core/styles/scaling";
 import { showToast } from "@/src/core/utils/toast";
 import React, { useState } from "react";
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
@@ -52,38 +54,43 @@ const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({
     >
       <TouchableWithoutFeedback onPress={handleCancel}>
         <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              {/* Header */}
-              <View style={styles.header}>
-                <Text style={styles.title}>Create Album</Text>
-                <Text style={styles.subtitle}>
-                  Gather memories that belong together
-                </Text>
-              </View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardAvoidingView}
+          >
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContainer}>
+                {/* Header */}
+                <View style={styles.header}>
+                  <Text style={styles.title}>Create Album</Text>
+                  <Text style={styles.subtitle}>
+                    Gather memories that belong together
+                  </Text>
+                </View>
 
-              {/* Album Name Input */}
-              <View style={styles.inputContainer}>
-                <CustomInput
-                  label="Album name"
-                  placeholder="e.g Tiny Smiles"
-                  value={albumName}
-                  onChangeText={setAlbumName}
-                  iconName="gallery-outline"
-                />
-              </View>
+                {/* Album Name Input */}
+                <View style={styles.inputContainer}>
+                  <CustomInput
+                    label="Album name"
+                    placeholder="e.g Tiny Smiles"
+                    value={albumName}
+                    onChangeText={setAlbumName}
+                    iconName="gallery-outline"
+                  />
+                </View>
 
-              {/* Buttons */}
-              <View style={styles.buttonsContainer}>
-                <PrimaryButton
-                  title="Save"
-                  onPress={handleSave}
-                  disabled={!albumName.trim()}
-                />
-                <SecondaryButton title="Cancel" onPress={handleCancel} />
+                {/* Buttons */}
+                <View style={styles.buttonsContainer}>
+                  <PrimaryButton
+                    title="Save"
+                    onPress={handleSave}
+                    disabled={!albumName.trim()}
+                  />
+                  <SecondaryButton title="Cancel" onPress={handleCancel} />
+                </View>
               </View>
-            </View>
-          </TouchableWithoutFeedback>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </View>
       </TouchableWithoutFeedback>
     </Modal>
@@ -97,6 +104,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
+  },
+  keyboardAvoidingView: {
+    width: "100%",
   },
   modalContainer: {
     backgroundColor: colors.backgroundMain,
