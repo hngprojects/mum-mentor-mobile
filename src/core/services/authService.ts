@@ -125,11 +125,6 @@ export async function login(payload: LoginPayload): Promise<AuthTokenData> {
       payload
     );
 
-    console.log("=".repeat(60));
-    console.log("🔐 LOGIN RESPONSE RECEIVED");
-    console.log("=".repeat(60));
-    console.log("Full response:", JSON.stringify(response.data, null, 2));
-
     const tokenData = response.data.data;
     const token = tokenData?.access_token;
 

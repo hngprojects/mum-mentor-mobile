@@ -34,10 +34,6 @@ function useOnboardingStatusLoader() {
       try {
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
         setOnboardingComplete(value === "true");
-        console.log(
-          "📱 Onboarding status:",
-          value === "true" ? "Complete" : "Not complete"
-        );
       } catch (error) {
         console.error("Failed to load onboarding status:", error);
       }
