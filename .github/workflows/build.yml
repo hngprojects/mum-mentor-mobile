@@ -23,47 +23,47 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Install dependencies
         run: npm ci
 
       # - name: Create google-services.json from secret
-        run: |
-          # write secret contents to android app folder
-          mkdir -p android/app
+      # run: |
+      #   # write secret contents to android app folder
+      #   mkdir -p android/app
 
-          # Prefer a base64-encoded secret if provided (more robust for multiline)
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" ]; then
-            echo "Decoding google-services.json from GOOGLE_SERVICES_JSON_BASE64"
-            echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
-            echo "Wrote android/app/google-services.json (from base64 secret)"
-          else
-            # Fallback: try raw JSON secret, else try base64 text stored in the same secret
-            SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
-            printf "%s" "$SECRET" > android/app/google-services.json
-            echo "Wrote android/app/google-services.json (attempt as raw JSON)"
+      #   # Prefer a base64-encoded secret if provided (more robust for multiline)
+      #   if [ -n "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" ]; then
+      #     echo "Decoding google-services.json from GOOGLE_SERVICES_JSON_BASE64"
+      #     echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+      #     echo "Wrote android/app/google-services.json (from base64 secret)"
+      #   else
+      #     # Fallback: try raw JSON secret, else try base64 text stored in the same secret
+      #     SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
+      #     printf "%s" "$SECRET" > android/app/google-services.json
+      #     echo "Wrote android/app/google-services.json (attempt as raw JSON)"
 
-            # test JSON validity; if it fails, try base64 decode then re-test
-            if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
-              echo "google-services.json is valid JSON"
-            else
-              echo "Initial JSON parse failed — attempting base64 decode of secret"
-              echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
-              echo "Wrote android/app/google-services.json (after base64 decode)"
-              jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
-            fi
-          fi
+      #     # test JSON validity; if it fails, try base64 decode then re-test
+      #     if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
+      #       echo "google-services.json is valid JSON"
+      #     else
+      #       echo "Initial JSON parse failed — attempting base64 decode of secret"
+      #       echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+      #       echo "Wrote android/app/google-services.json (after base64 decode)"
+      #       jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
+      #     fi
+      #   fi
 
-          # final check: ensure project_info exists
-          jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
+      #   # final check: ensure project_info exists
+      #   jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
 
       - name: Create .env file with keystore credentials
         run: |
@@ -192,17 +192,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `### 🤖 Android Build Complete
-            
+
             | Property | Value |
             |----------|-------|
             | **Version** | v${{ steps.version.outputs.version }} |
             | **Commit** | ${{ steps.version.outputs.short_sha }} |
             | **APK** | MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk |
-            
+
             📦 **Download:** Available in [GitHub Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
+
             *Build completed at ${{ steps.version.outputs.timestamp }}*`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
