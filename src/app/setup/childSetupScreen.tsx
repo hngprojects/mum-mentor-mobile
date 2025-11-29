@@ -37,10 +37,13 @@ const ChildSetupScreen: React.FC = () => {
 
   // Check session and redirect if setup already exists or session is invalid
   useEffect(() => {
-    // REDIRECT GUARDS
+    // 1. Always wait for the context to finish its main check OR the buffer period to end.
 
-    // User session is NULL AND MomData is NULL (Go back to Auth/Login)
+    // --- REDIRECT GUARDS ---
+
+    // 2. CRITICAL CHECK: User session is NULL AND MomData is NULL (Go back to Auth/Login)
     if (!user && !momSetupData) {
+      // 📢 CRITICAL LOG: This is the most likely failure point
       console.error(
         `[ChildSetup Guard] REDIRECT: CRITICAL FAILURE. User: NULL, MomData: NULL. Redirecting to LOGIN.`
       );
@@ -48,7 +51,7 @@ const ChildSetupScreen: React.FC = () => {
       return;
     }
 
-    // User is VALID, but Mom data is missing (Go back to Mom setup)
+    // 3. FLOW CHECK: User is VALID, but Mom data is missing (Go back to Mom setup)
     if (user && !momSetupData) {
       console.warn(
         "[ChildSetup Guard] REDIRECT: FLOW BREAK. User is VALID but MomData is MISSING. Redirecting to Mum setup."
@@ -57,8 +60,9 @@ const ChildSetupScreen: React.FC = () => {
       return;
     }
 
-    // User session LOST but Mom data exists (Go back to Login)
-    if (!user && momSetupData) {
+    // 4. EDGE CASE CHECK: User session LOST but Mom data exists (Go back to Login - This is the silent logout)
+    if (!momSetupData) {
+      // 📢 CRITICAL LOG: This captures the silent session failure
       console.error(
         "[ChildSetup Guard] REDIRECT: SESSION LOST. User is NULL but MomData EXISTS. Redirecting to LOGIN."
       );
@@ -66,6 +70,8 @@ const ChildSetupScreen: React.FC = () => {
       return;
     }
   }, [user, isSessionLoading, momSetupData]);
+
+  // ... rest of the component remains the same (handleDone, render, etc.)
 
   const addChild = useCallback(() => {
     setChildren((prev) => [
@@ -75,15 +81,6 @@ const ChildSetupScreen: React.FC = () => {
   }, []);
 
   const updateChild = useCallback((index: number, updatedChild: ChildData) => {
-    // CRITICAL FIX: Always recalculate age when DOB is present
-    if (updatedChild.dob) {
-      const calculatedAge = calculateAgeFromDOB(updatedChild.dob);
-      updatedChild.age = calculatedAge;
-      console.log(
-        `[updateChild] Recalculated age for child ${index}: ${calculatedAge} from DOB: ${updatedChild.dob}`
-      );
-    }
-
     setChildren((prev) => prev.map((c, i) => (i === index ? updatedChild : c)));
   }, []);
 
@@ -158,13 +155,14 @@ const ChildSetupScreen: React.FC = () => {
         };
       }
     } catch (error: any) {
+      // Extract fields from thrown error
       const message =
         error?.detail || error?.message || "Failed to complete setup";
 
       // Handle toasts and redirects based on backend status
       if (message === "Profile setup already exists") {
         await AsyncStorage.setItem("hasCompletedSetup", "true");
-        showToast.warning(message);
+        showToast.warning(message); // now uses backend message
         setTimeout(() => router.replace("/(tabs)/Home"), 100);
       } else {
         showToast.error("Setup Error", message);
@@ -179,7 +177,7 @@ const ChildSetupScreen: React.FC = () => {
     router.replace("/(tabs)/Home");
   }, [hide]);
 
-  // Render a loading state if session is loading
+  // Render a loading state if session is loading OR we are in the initial navigation buffer
   if (isSessionLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -226,7 +224,7 @@ const ChildSetupScreen: React.FC = () => {
           message="Your profile is ready. Let's get started!"
           iconComponent={
             <Image
-              source={require("@/src/assets/images/success-icon.png")}
+              source={require("../../assets/images/success-icon.png")}
               style={styles.successIcon}
             />
           }
@@ -236,6 +234,7 @@ const ChildSetupScreen: React.FC = () => {
           <PrimaryButton
             title="Done"
             onPress={handleDone}
+            // disabled={!isFormComplete() || isLoading || !user}
             isLoading={isLoading}
           />
           <SecondaryButton
@@ -249,6 +248,7 @@ const ChildSetupScreen: React.FC = () => {
   );
 };
 
+// IMPORTANT: Define the component export outside the const definition
 export default ChildSetupScreen;
 
 const styles = StyleSheet.create({
