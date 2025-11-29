@@ -6,7 +6,6 @@ import {
   onToggleSuccessModal,
 } from "@/src/store/milestoneSlice";
 import React from "react";
-
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function SuccessModal() {
@@ -25,6 +24,8 @@ export default function SuccessModal() {
           <View style={styles.modalHeader}>
             <Image
               source={require("../../../assets/images/green-success.png")}
+              style={styles.successIcon}
+              resizeMode="contain"
             />
             <Text style={styles.successHeaderText}>
               Milestone created successfully
@@ -35,7 +36,7 @@ export default function SuccessModal() {
             style={[styles.button, styles.buttonSave]}
             onPress={onCloseModal}
           >
-            Done
+            <Text style={styles.buttonText}>Done</Text>
           </Pressable>
         </View>
       </View>
@@ -44,25 +45,26 @@ export default function SuccessModal() {
 }
 
 const styles = StyleSheet.create({
-  // successful modal
-
+  // success header
   successHeaderText: {
     ...typography.heading3,
     color: "black",
-    fontWeight: 600,
+    fontWeight: "600", // fixed
     textAlign: "center",
   },
+
   successIcon: {
     width: 57.52,
     height: 52.52,
   },
+
   modalHeader: {
-    gap: 12,
+    marginBottom: 12, // replaced gap
     alignItems: "center",
   },
 
   modalTextBox: {
-    gap: 32,
+    marginBottom: 32, // replaced gap
   },
 
   modalContainer: {
@@ -70,27 +72,30 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "white",
   },
+
   buttonSave: {
-    color: "white",
     backgroundColor: colors.primary,
   },
 
   button: {
-    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    ...typography.buttonText,
-    fontWeight: 500,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
   },
 
+  buttonText: {
+    ...typography.buttonText,
+    color: "white",
+    fontWeight: "500", // fixed
+  },
+
   backgroundOverlay: {
     backgroundColor: "#00000099",
-    position: "fixed",
+    position: "absolute", // fixed
     width: "100%",
     height: "100%",
     top: 0,

@@ -47,10 +47,10 @@ export default function EditForm() {
 
   useEffect(() => {
     if (currentMilestone) {
-      setFormData((cur) => ({
+      setFormData({
         name: currentMilestone.name,
         description: currentMilestone.description,
-      }));
+      });
     }
   }, [currentMilestone]);
 
@@ -81,15 +81,12 @@ export default function EditForm() {
       onBackdropPress={() => dispatch(onToggleEditForm({ isOpenForm: false }))}
       style={{ justifyContent: "flex-end", margin: 0 }}
     >
-      {/* container */}
       <View style={styles.milestoneFormContainer}>
-        {/* header */}
         <View style={styles.formHeaderBox}>
           <Text style={styles.formTitle}>edit milestones</Text>
           <Text style={styles.formDescription}></Text>
         </View>
 
-        {/* forms */}
         <FormInput label="Milestone Name">
           <TextInput
             style={styles.input}
@@ -125,20 +122,22 @@ export default function EditForm() {
             style={[
               styles.buttons,
               styles.buttonSave,
-              !isNameInputFilled && styles.buttonDisabled,
-              isUpdatingMilestone && styles.buttonDisabled,
+              (!isNameInputFilled || isUpdatingMilestone) && styles.buttonDisabled,
             ]}
             onPress={handleMilestoneUpdate}
             disabled={!isNameInputFilled || isUpdatingMilestone}
           >
-            {isUpdatingMilestone ? "Updating Milestone..." : "Update"}
+            <Text style={styles.buttonText}>
+              {isUpdatingMilestone ? "Updating Milestone..." : "Update"}
+            </Text>
           </Pressable>
 
           <Pressable
             style={[styles.buttons, styles.buttonCancel]}
             onPress={() => dispatch(onToggleEditForm({ isOpenForm: false }))}
+            disabled={isUpdatingMilestone}
           >
-            Cancel
+            <Text style={styles.buttonCancelText}>Cancel</Text>
           </Pressable>
         </View>
       </View>
@@ -147,29 +146,36 @@ export default function EditForm() {
 }
 
 const styles = StyleSheet.create({
-  // create milestone form
   buttonCancel: {
     backgroundColor: "white",
-    color: colors.primary,
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
 
   buttonSave: {
-    color: "white",
     backgroundColor: colors.primary,
   },
+
   buttonDisabled: {
     opacity: 0.6,
   },
 
+  buttonText: {
+    ...typography.buttonText,
+    color: "white",
+    fontWeight: "500",
+  },
+
+  buttonCancelText: {
+    ...typography.buttonText,
+    color: colors.primary,
+    fontWeight: "500",
+  },
+
   buttons: {
-    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    ...typography.buttonText,
-    fontWeight: 500,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
@@ -179,16 +185,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  errorText: {
-    fontSize: 12,
-    color: colors.error,
-    textAlign: "right",
-  },
-
   input: {
     borderRadius: 8,
     padding: 8,
-    gap: 10,
     borderWidth: 1,
     borderColor: colors.outline,
     ...typography.caption,
@@ -196,28 +195,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  label: {
-    ...typography.labelLarge,
-    color: colors.textSecondary,
-    fontWeight: "500",
-  },
-
-  inputGroup: {
-    gap: 4,
-  },
-
   formDescription: {
     ...typography.bodySmall,
-    alignItems: "center",
     color: colors.textGrey1,
     maxWidth: 271.62,
-    marginHorizontal: "auto",
     textAlign: "center",
   },
 
   formTitle: {
     ...typography.heading3,
-    fontWeight: 600,
+    fontWeight: "600",
     color: "black",
     textTransform: "capitalize",
     textAlign: "center",
@@ -234,16 +221,5 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 24,
     gap: 24,
-  },
-
-  createMilestoneOverlay: {
-    backgroundColor: "#00000099",
-    position: "fixed",
-    width: "100%",
-    height: "100%",
-    top: 0,
-    left: 0,
-    flex: 1,
-    justifyContent: "flex-end",
   },
 });

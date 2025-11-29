@@ -22,41 +22,41 @@ export default function CategoryBox({
   ownerId,
   childId,
 }: CategoryBoxType) {
-  // const { milestoneData } = useAppSelector(getMilestoneStates);
-
-  console.log(category);
-
   const router = useRouter();
-  const {
-    data: milestoneData,
-    isLoading,
-    error,
-  } = useQuery({
+
+  const { data: milestoneData, isLoading, error } = useQuery({
     queryKey: ["milestonesByCat", category.label, childId],
     queryFn: () => getMilestonesByCategory(category.label, childId),
   });
 
+  // Guard against undefined milestoneData
   const completedMilestones =
     milestoneData?.filter((milestone) => milestone.status === "completed")
       .length ?? 0;
   const milestonesDataLength = milestoneData?.length ?? 0;
 
-  console.log(milestoneData, category.label, "milestone");
-
-  if (isLoading) {
-    return <View>Loading</View>;
-  }
-
   const progress = milestonesDataLength
     ? (completedMilestones / milestonesDataLength) * 100
     : 0;
 
-  console.log(progress, "progress", category.label, "ridwan");
-
+  // Guard against invalid category data
   const categoryData = CATEGORIES[category.label];
+  if (!categoryData) return null;
 
+  // Safe error handling
   if (error) {
-    showToast.error(error.message);
+    const errMsg =
+      (error as any)?.message ||
+      "Something went wrong while fetching milestone data";
+    showToast.error(errMsg);
+  }
+
+  if (isLoading) {
+    return (
+      <View>
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
   return (
@@ -77,9 +77,11 @@ export default function CategoryBox({
         <View style={styles.content}>
           {/* header */}
           <View style={styles.contentHeader}>
-            <Image source={categoryData.icon} style={styles.contentIcon} />
+            {categoryData.icon && (
+              <Image source={categoryData.icon} style={styles.contentIcon} />
+            )}
             <CircularProgress
-              value={progress}
+              value={isNaN(progress) ? 0 : progress}
               radius={28}
               duration={1000}
               progressValueColor={colors.textGrey1}
@@ -88,7 +90,7 @@ export default function CategoryBox({
               activeStrokeWidth={5}
               inActiveStrokeWidth={5}
               showProgressValue={false}
-              title={`${Math.floor(progress)}%`}
+              title={`${Math.floor(isNaN(progress) ? 0 : progress)}%`}
               titleColor={colors.textGrey1}
               titleStyle={{ fontSize: 16, fontWeight: "500" }}
             />

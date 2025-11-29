@@ -5,25 +5,15 @@ on:
     branches:
       - main
       - staging
-      - dev
   pull_request:
     branches:
       - main
       - staging
-      - dev
   workflow_dispatch:
 
 jobs:
   build:
     name: Build Android APK
-    # Only run this job for:
-    # - push to main or staging
-    # - workflow_dispatch (manual run)
-    # - pull_request where the base branch is main or staging
-    if: >-
-      (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'staging')) ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'staging'))
     runs-on: ubuntu-latest
 
     steps:
@@ -33,47 +23,47 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Create google-services.json from secret
-        run: |
-          # write secret contents to android app folder
-          mkdir -p android/app
+      # - name: Create google-services.json from secret
+      # run: |
+      #   # write secret contents to android app folder
+      #   mkdir -p android/app
 
-          # Prefer a base64-encoded secret if provided (more robust for multiline)
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" ]; then
-            echo "Decoding google-services.json from GOOGLE_SERVICES_JSON_BASE64"
-            echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
-            echo "Wrote android/app/google-services.json (from base64 secret)"
-          else
-            # Fallback: try raw JSON secret, else try base64 text stored in the same secret
-            SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
-            printf "%s" "$SECRET" > android/app/google-services.json
-            echo "Wrote android/app/google-services.json (attempt as raw JSON)"
+      #   # Prefer a base64-encoded secret if provided (more robust for multiline)
+      #   if [ -n "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" ]; then
+      #     echo "Decoding google-services.json from GOOGLE_SERVICES_JSON_BASE64"
+      #     echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+      #     echo "Wrote android/app/google-services.json (from base64 secret)"
+      #   else
+      #     # Fallback: try raw JSON secret, else try base64 text stored in the same secret
+      #     SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
+      #     printf "%s" "$SECRET" > android/app/google-services.json
+      #     echo "Wrote android/app/google-services.json (attempt as raw JSON)"
 
-            # test JSON validity; if it fails, try base64 decode then re-test
-            if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
-              echo "google-services.json is valid JSON"
-            else
-              echo "Initial JSON parse failed — attempting base64 decode of secret"
-              echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
-              echo "Wrote android/app/google-services.json (after base64 decode)"
-              jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
-            fi
-          fi
+      #     # test JSON validity; if it fails, try base64 decode then re-test
+      #     if jq -e '.' android/app/google-services.json >/dev/null 2>&1; then
+      #       echo "google-services.json is valid JSON"
+      #     else
+      #       echo "Initial JSON parse failed — attempting base64 decode of secret"
+      #       echo "$SECRET" | base64 --decode > android/app/google-services.json || (echo "base64 decode failed" && exit 1)
+      #       echo "Wrote android/app/google-services.json (after base64 decode)"
+      #       jq -e '.' android/app/google-services.json >/dev/null 2>&1 || (echo "Decoded content is not valid JSON" && exit 1)
+      #     fi
+      #   fi
 
-          # final check: ensure project_info exists
-          jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
+      #   # final check: ensure project_info exists
+      #   jq -e '.project_info' android/app/google-services.json >/dev/null || (echo "google-services.json missing project_info" && exit 1)
 
       - name: Create .env file with keystore credentials
         run: |
@@ -138,7 +128,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload APK to Appetize.io
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+        # if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
         env:
           APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
         run: |
@@ -175,8 +165,6 @@ jobs:
 
           echo "appetize_url=$APP_URL" >> $GITHUB_OUTPUT
           echo "appetize_public_key=$PUBLIC_KEY" >> $GITHUB_OUTPUT
-#
-    
 
       - name: Build Summary
         if: always()
@@ -204,17 +192,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `### 🤖 Android Build Complete
-            
+
             | Property | Value |
             |----------|-------|
             | **Version** | v${{ steps.version.outputs.version }} |
             | **Commit** | ${{ steps.version.outputs.short_sha }} |
             | **APK** | MumMentor-v${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}.apk |
-            
+
             📦 **Download:** Available in [GitHub Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
+
             *Build completed at ${{ steps.version.outputs.timestamp }}*`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -229,55 +217,3 @@ jobs:
           rm -f keystore.jks
           rm -f android/app/google-services.json
           echo "Sensitive files cleaned up"
-
-  build-ios:
-    name: Build iOS
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Decode GoogleService-Info.plist
-        run: |
-          mkdir -p ios/Runner
-          echo $GOOGLE_SERVICE_INFO_PLIST_BASE64 | base64 --decode > ios/Runner/GoogleService-Info.plist
-
-      - name: Verify Podfile exists
-        run: |
-          if [ ! -f ios/Podfile ]; then
-            echo "Podfile not found in ios directory. Exiting."
-            exit 1
-          fi
-
-      - name: Install CocoaPods
-        run: pod install --project-directory=ios
-
-      - name: Build iOS App
-        run: |
-          xcodebuild \
-            -workspace ios/MumMentor.xcworkspace \
-            -scheme MumMentor \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath ios/build/MumMentor.xcarchive \
-            DEVELOPMENT_TEAM=36CFL54G89 \
-            PRODUCT_BUNDLE_IDENTIFIER=36CFL54G89.com.hng.mummentor \
-            archive
-
-      - name: Export .ipa File
-        run: |
-          xcodebuild \
-            -exportArchive \
-            -archivePath ios/build/MumMentor.xcarchive \
-            -exportPath ios/build \
-            -exportOptionsPlist ios/ExportOptions.plist

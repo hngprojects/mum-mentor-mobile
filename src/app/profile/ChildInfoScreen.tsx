@@ -1,7 +1,7 @@
 // screens/ChildInfoScreen.tsx
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Image,
   ScrollView,
@@ -31,6 +31,46 @@ import {
 } from "../../core/services/childProfile.service";
 import { ChildProfile } from "../../types/child.types";
 
+// Utils: Get stable avatar URL
+const getStableAvatarUrl = (profilePictureUrl?: string): string => {
+  if (!profilePictureUrl) {
+    return "https://i.pravatar.cc/150?img=1";
+  }
+  
+  // If it's already a full URL (including our avatar endpoint), return as-is
+  if (profilePictureUrl.includes('child-profiles/avatar/')) {
+    return profilePictureUrl;
+  }
+  
+  // If it's already a full URL but not our avatar endpoint, use it directly
+  if (profilePictureUrl.startsWith('http')) {
+    return profilePictureUrl;
+  }
+  
+  // Extract filename from the profile_picture_url
+  let filename: string;
+  
+  if (profilePictureUrl.includes('/')) {
+    filename = profilePictureUrl.split('/').pop() || '';
+  } else {
+    filename = profilePictureUrl;
+  }
+  
+  // If we couldn't extract a valid filename, use placeholder
+  if (!filename) {
+    return "https://i.pravatar.cc/150?img=1";
+  }
+  
+  // Construct the full avatar URL using the public endpoint
+  const baseUrl = "https://api.staging.kaizen.emerj.net/api/v1";
+  const avatarUrl = `${baseUrl}/child-profiles/avatar/${filename}`;
+  
+  return avatarUrl;
+};
+
+// Stable placeholder image
+const PLACEHOLDER_IMAGE = "https://i.pravatar.cc/150?img=1";
+
 // Main Child Info Screen
 export default function ChildInfoScreen({ navigation }: any) {
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -39,13 +79,7 @@ export default function ChildInfoScreen({ navigation }: any) {
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  // utils/getFullImageUrl.ts
-const getFullImageUrl = (relativeUrl?: string) => {
-  if (!relativeUrl) return undefined;
-  if (relativeUrl.startsWith("http")) return relativeUrl;
-  return `https://api.staging.kaizen.emerj.net/api/v1${relativeUrl}`;
-};
-
+  const [imageLoadStates, setImageLoadStates] = useState<{ [key: string]: { loaded: boolean; error: boolean; url: string } }>({});
 
   // Fetch children on mount
   useEffect(() => {
@@ -61,12 +95,27 @@ const getFullImageUrl = (relativeUrl?: string) => {
       
       const profiles = await getChildProfiles();
       
+      console.log("👶 Fetched child profiles:", profiles);
+      
       // Defensive: ensure we always set an array
       if (Array.isArray(profiles)) {
         setChildren(profiles);
+        
+        // Pre-initialize image load states
+        const initialLoadStates: { [key: string]: { loaded: boolean; error: boolean; url: string } } = {};
+        profiles.forEach((child) => {
+          const avatarUrl = getStableAvatarUrl(child.profile_picture_url);
+          initialLoadStates[child.id] = {
+            loaded: false,
+            error: false,
+            url: avatarUrl
+          };
+        });
+        setImageLoadStates(initialLoadStates);
       } else {
         console.warn('⚠️ API returned non-array, setting empty array. Received:', profiles);
         setChildren([]);
+        setImageLoadStates({});
       }
     } catch (error) {
       console.error("❌ Error fetching children:", error);
@@ -74,8 +123,8 @@ const getFullImageUrl = (relativeUrl?: string) => {
         "Error",
         "Failed to load children profiles. Please try again."
       );
-      // Always ensure children is an array even on error
       setChildren([]);
+      setImageLoadStates({});
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -87,6 +136,7 @@ const getFullImageUrl = (relativeUrl?: string) => {
    */
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
+    setImageLoadStates({});
     fetchChildren();
   }, []);
 
@@ -117,7 +167,7 @@ const getFullImageUrl = (relativeUrl?: string) => {
             try {
               await deleteChildProfile(child.id);
               Alert.alert("Success", "Child profile deleted successfully");
-              fetchChildren(); // Refresh the list
+              fetchChildren();
             } catch (error) {
               console.error("Error deleting child:", error);
               Alert.alert("Error", "Failed to delete child profile");
@@ -135,13 +185,121 @@ const getFullImageUrl = (relativeUrl?: string) => {
     setEditModalVisible(false);
     setAddModalVisible(false);
     setSelectedChild(null);
-    fetchChildren(); // Refresh the list after add/edit
+    fetchChildren();
   };
+
+  /**
+   * Handle image load error
+   */
+  const handleImageError = useCallback((childId: string) => {
+    console.log(`❌ Image failed to load for child ${childId}`);
+    setImageLoadStates(prev => ({
+      ...prev,
+      [childId]: {
+        ...prev[childId],
+        error: true,
+        loaded: true
+      }
+    }));
+  }, []);
+
+  /**
+   * Handle image load success
+   */
+  const handleImageLoad = useCallback((childId: string) => {
+    console.log(`✅ Image loaded for child ${childId}`);
+    setImageLoadStates(prev => ({
+      ...prev,
+      [childId]: {
+        ...prev[childId],
+        loaded: true,
+        error: false
+      }
+    }));
+  }, []);
+
+  /**
+   * Get image source for child
+   */
+  const getImageSource = useCallback((child: ChildProfile) => {
+    const loadState = imageLoadStates[child.id];
+    
+    if (!loadState) {
+      // Not initialized yet, use calculated URL
+      const avatarUrl = getStableAvatarUrl(child.profile_picture_url);
+      return { uri: avatarUrl };
+    }
+    
+    if (loadState.error || !child.profile_picture_url) {
+      return { uri: PLACEHOLDER_IMAGE };
+    }
+    
+    return { uri: loadState.url };
+  }, [imageLoadStates]);
+
+  /**
+   * Memoized child list to prevent unnecessary re-renders
+   */
+  const renderedChildren = useMemo(() => {
+    return children.map((child) => {
+      const imageSource = getImageSource(child);
+      const loadState = imageLoadStates[child.id];
+      const isLoading = loadState && !loadState.loaded && !loadState.error;
+
+      return (
+        <View key={child.id} style={styles.childCard}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={imageSource}
+              style={styles.childAvatar}
+              onError={() => handleImageError(child.id)}
+              onLoad={() => handleImageLoad(child.id)}
+              resizeMode="cover"
+              defaultSource={{ uri: PLACEHOLDER_IMAGE }}
+            />
+            {isLoading && (
+              <View style={styles.imageLoadingOverlay}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            )}
+          </View>
+          <View style={styles.childInfo}>
+            <Text style={styles.childName}>{child.full_name}</Text>
+            <Text style={styles.childAge}>
+              {calculateAge(child.date_of_birth)}
+            </Text>
+            <Text style={styles.childDetails}>
+              {child.gender} • {child.birth_order === 1 ? "First" : child.birth_order === 2 ? "Second" : child.birth_order === 3 ? "Third" : `${child.birth_order}th`} born
+            </Text>
+          </View>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => handleEditChild(child)}
+              accessibilityLabel={`Edit ${child.full_name}`}
+              accessibilityRole="button"
+            >
+              <Feather name="edit-2" size={ms(20)} color={colors.textPrimary} />
+              <Text style={styles.editText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteChild(child)}
+              accessibilityLabel={`Delete ${child.full_name}`}
+              accessibilityRole="button"
+            >
+              <Feather name="trash-2" size={ms(20)} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    });
+  }, [children, imageLoadStates, getImageSource, handleImageError, handleImageLoad]);
 
   /**
    * Render loading state
    */
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
@@ -233,45 +391,7 @@ const getFullImageUrl = (relativeUrl?: string) => {
           />
         }
       >
-        {/* Children List */}
-        {Array.isArray(children) && children.map((child) => (
-          <View key={child.id} style={styles.childCard}>
-       <Image
-  source={{
-    uri: getFullImageUrl(child.profile_picture_url) || "https://i.pravatar.cc/150?img=1",
-  }}
-  style={styles.childAvatar}
-/>
-            <View style={styles.childInfo}>
-              <Text style={styles.childName}>{child.full_name}</Text>
-              <Text style={styles.childAge}>
-                {calculateAge(child.date_of_birth)}
-              </Text>
-              <Text style={styles.childDetails}>
-                {child.gender} • {child.birth_order === 1 ? "First" : child.birth_order === 2 ? "Second" : child.birth_order === 3 ? "Third" : `${child.birth_order}th`} born
-              </Text>
-            </View>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEditChild(child)}
-                accessibilityLabel={`Edit ${child.full_name}`}
-                accessibilityRole="button"
-              >
-                <Feather name="edit-2" size={ms(20)} color={colors.textPrimary} />
-                <Text style={styles.editText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteChild(child)}
-                accessibilityLabel={`Delete ${child.full_name}`}
-                accessibilityRole="button"
-              >
-                <Feather name="trash-2" size={ms(20)} color={colors.error} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+        {renderedChildren}
       </ScrollView>
 
       {/* Add Another Child Button - Fixed at Bottom */}
@@ -342,11 +462,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.outlineVariant,
   },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: ms(spacing.md),
+  },
   childAvatar: {
     width: ms(60),
     height: ms(60),
     borderRadius: ms(30),
-    marginRight: ms(spacing.md),
+    backgroundColor: colors.backgroundSubtle,
+  },
+  imageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: ms(30),
   },
   childInfo: {
     flex: 1,

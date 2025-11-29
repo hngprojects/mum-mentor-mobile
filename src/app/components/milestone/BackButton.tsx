@@ -9,11 +9,12 @@ export default function BackButton({
   categoryHeading: string;
 }) {
   const router = useRouter();
+  
   return (
     <Pressable style={styles.backButton} onPress={() => router.back()}>
       <Image
         source={require("../../../assets/images/arrow-left.png")}
-        style={styles.backButton}
+        style={styles.buttonIcon}
       />
       <Text style={styles.buttonText}>{categoryHeading}</Text>
     </Pressable>
@@ -25,10 +26,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
+
   buttonText: {
     ...typography.heading2,
     color: colors.textPrimary,
   },
+
   backButton: {
     flexDirection: "row",
     gap: 8,

@@ -13,114 +13,130 @@ import {
   onAddMilestoneOnMount,
   onToggleCreateForm,
 } from "@/src/store/milestoneSlice";
+
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
-
 import React, { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CategoryDetails() {
   const dispatch = useAppDispatch();
-  const { categoryValue, ownerType, ownerId, childId } = useLocalSearchParams();
+  const { categoryValue, childId } = useLocalSearchParams();
+
   const [milestoneStatus, setMilestoneStatus] = useState("pending");
 
-  const { data, error, isError, isLoading } = useQuery({
-    queryKey: ["milestonesByCat", categoryValue, childId],
-    queryFn: () =>
-      getMilestonesByCategory(
-        categoryValue as string,
-        childId as string | undefined
-      ),
+  const category = categoryValue ? String(categoryValue) : "";
+  const child = childId ? String(childId) : undefined;
+
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["milestonesByCat", category, child],
+    queryFn: () => getMilestonesByCategory(category, child),
+    enabled: Boolean(category && child),
   });
 
   useEffect(() => {
-    if (data) {
-      dispatch(onAddMilestoneOnMount(data));
-    }
-  }, [data, dispatch]);
+    if (data) dispatch(onAddMilestoneOnMount(data));
+  }, [data]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
         enableOnAndroid={true}
         extraScrollHeight={20}
       >
-        <ScrollView style={styles.scrollContent}>
-          <View style={styles.container}>
-            <BackButton categoryHeading={categoryValue as string} />
+        <View style={styles.container}>
+          <BackButton categoryHeading={category} />
 
-            {/* main content */}
+          {/* main content */}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.milestoneContainer}>
               <MilestoneProgressBar />
 
-              <View>
-                {/* header */}
-                <View style={styles.mileStonesHeading}>
-                  {MILESTONE_STATUS.map((section) => (
-                    <Text
-                      onPress={() => setMilestoneStatus(section.status)}
-                      key={section.id}
-                      style={[
-                        styles.sectionText,
-                        section.status === milestoneStatus &&
-                          styles.sectionTextActive,
-                      ]}
-                    >
-                      {section?.status}
-                    </Text>
-                  ))}
-                </View>
+              {/* Status header */}
+              <View style={styles.mileStonesHeading}>
+                {MILESTONE_STATUS.map((section) => (
+                  <Text
+                    onPress={() => setMilestoneStatus(section.status)}
+                    key={section.id}
+                    style={[
+                      styles.sectionText,
+                      section.status === milestoneStatus &&
+                        styles.sectionTextActive,
+                    ]}
+                  >
+                    {section.status}
+                  </Text>
+                ))}
               </View>
 
               <MilestonesList milestoneStatus={milestoneStatus} />
             </View>
 
+            {/* Modals */}
             <CreateForm />
             <SuccessModal />
             <DeleteModal />
             <EditForm />
-          </View>
-        </ScrollView>
-
-        <Pressable
-          style={styles.createMilestoneButton}
-          onPress={() => dispatch(onToggleCreateForm(true))}
-        >
-          <Image
-            source={require("../../assets/images/add-icon.png")}
-            style={styles.createIcon}
-          />
-        </Pressable>
+          </ScrollView>
+        </View>
       </KeyboardAwareScrollView>
+
+      {/* Floating Add Button */}
+      <Pressable
+        style={styles.createMilestoneButton}
+        onPress={() => dispatch(onToggleCreateForm(true))}
+      >
+        <Image
+          source={require("../../assets/images/add-icon.png")}
+          style={styles.createIcon}
+        />
+      </Pressable>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // create milestone button
-  createIcon: {
-    height: 24,
-    width: 24,
+  safeArea: {
+    flex: 1,
+    backgroundColor: "white",
   },
-  createMilestoneButton: {
-    width: 56,
-    height: 56,
-    position: "fixed",
-    borderRadius: 8,
-    padding: 16,
-    backgroundColor: colors.primary,
-    bottom: 30,
-    right: 24,
+
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    paddingTop: 20,
+    paddingHorizontal: 14,
+  },
+
+  scrollContent: {
+    paddingBottom: 80,
   },
 
   milestoneContainer: {
-    gap: 24,
     marginTop: 32,
   },
+
+  mileStonesHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+
   sectionText: {
     ...typography.labelLarge,
     color: colors.textGrey1,
@@ -137,31 +153,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
   },
 
-  mileStonesHeading: {
-    flexDirection: "row",
+  // Floating create button
+  createMilestoneButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: colors.primary,
+    position: "absolute",
+    bottom: 30,
+    right: 24,
+    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
-    gap: 10,
-    marginTop: 0,
+    elevation: 3,
   },
 
-  // general
-  container: {
-    backgroundColor: "white",
-    flex: 1,
-    paddingTop: 20,
-    paddingHorizontal: 14,
-  },
-
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-
-  safeArea: {
-    flex: 1,
-    backgroundColor: "white",
+  createIcon: {
+    width: 24,
+    height: 24,
   },
 });
-
-// continue with the add milestone buttons.
