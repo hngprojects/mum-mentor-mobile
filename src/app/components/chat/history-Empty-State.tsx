@@ -35,6 +35,8 @@ export const HistoryEmptyState = ({
   onChatPress,
   onRenameChat,
 }: HistoryEmptyStateProps) => {
+  console.log("HistoryEmptyState received chats:", chats.length);
+
   const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
 
