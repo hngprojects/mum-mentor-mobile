@@ -1,13 +1,9 @@
 // src/screens/ChangePasswordScreen.tsx
 
-import {
-  ApiErrorResponse,
-  changePassword,
-} from "@/src/core/services/authService";
+import { useChangePassword } from "@/src/core/hooks/useChangePassword";
 import { colors, typography } from "@/src/core/styles";
 import { ms, vs } from "@/src/core/styles/scaling";
 import { Ionicons } from "@expo/vector-icons";
-import { AxiosError } from "axios";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -30,6 +26,8 @@ interface ChangePasswordPayload {
 }
 
 const ChangePassword = () => {
+  const { update: changePasswordMutation } = useChangePassword();
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -48,102 +46,76 @@ const ChangePassword = () => {
     newPassword === confirmNewPassword && newPassword.length > 0;
 
   const handleChangePassword = async () => {
-    // Reset errors
     setErrors({});
 
-    // Validation
-    const newErrors: { [key: string]: string } = {};
+    const newErrors: any = {};
 
-    if (!oldPassword) {
-      newErrors.oldPassword = "Old password is required";
-    }
+    if (!oldPassword) newErrors.oldPassword = "Old password is required";
+    if (!newPassword) newErrors.newPassword = "New password is required";
+    else if (!isPasswordStrong)
+      newErrors.newPassword = "Password must be at least 8 characters";
 
-    if (!newPassword) {
-      newErrors.newPassword = "New password is required";
-    } else if (!isPasswordStrong) {
-      newErrors.newPassword =
-        "Password too weak, must be at least 8 characters";
-    }
-
-    if (!confirmNewPassword) {
+    if (!confirmNewPassword)
       newErrors.confirmNewPassword = "Please confirm your password";
-    } else if (newPassword !== confirmNewPassword) {
+    else if (newPassword !== confirmNewPassword)
       newErrors.confirmNewPassword = "Passwords do not match";
-    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Call the API to change password
     setIsLoading(true);
+
     try {
-      const payload: ChangePasswordPayload = {
-        old_password: oldPassword,
-        new_password: newPassword,
-        confirm_password: confirmNewPassword,
-      };
+      await changePasswordMutation.mutateAsync({
+        data: {
+          old_password: oldPassword,
+          new_password: newPassword,
+          confirm_password: confirmNewPassword,
+        },
+      });
 
-      const response = await changePassword(payload);
-
-      // Clear form
       setOldPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
-
-      // Show success modal
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error("❌ Error changing password:", error);
+    } catch (err: any) {
+      console.log("❌ Password change error:", err);
 
-      const axiosError = error as AxiosError<ApiErrorResponse>;
-      const statusCode = axiosError.response?.status;
-      const responseData = axiosError.response?.data;
+      const backend = err.response?.data;
 
-      // Handle different error cases
-      if (statusCode === 401) {
-        setErrors({ oldPassword: "Old password is incorrect" });
-      } else if (statusCode === 422) {
-        // Check if errors are nested in error.errors (your backend structure)
-        const validationErrors =
-          //@ts-ignore
-          responseData?.error?.errors || responseData?.detail;
-
-        if (Array.isArray(validationErrors)) {
-          const fieldErrors: { [key: string]: string } = {};
-
-          validationErrors.forEach((err: any) => {
-            // Get the field name from the loc array (last item, converting snake_case to camelCase)
-            const field = err.loc[err.loc.length - 1];
-            const camelCaseField = field.replace(/_([a-z])/g, (g: string) =>
-              g[1].toUpperCase()
-            );
-
-            // Use the error message from the backend
-            fieldErrors[camelCaseField] = err.msg || "Invalid input";
-          });
-
-          setErrors(fieldErrors);
-        } else {
-          setErrors({
-            general: "Validation failed. Please check your inputs.",
-          });
-        }
-      } else if (responseData?.message) {
-        // Handle the top-level message field from your backend
-        setErrors({ general: responseData.message });
-      } else if (responseData?.detail) {
-        // Fallback to detail field
-        setErrors({
-          general:
-            typeof responseData.detail === "string"
-              ? responseData.detail
-              : "Failed to change password",
-        });
-      } else {
-        setErrors({ general: "Failed to change password. Please try again." });
+      // 401 – Old password incorrect
+      if (err.response?.status === 401) {
+        return setErrors({ oldPassword: "Old password is incorrect" });
       }
+
+      // 422 – Validation errors from backend
+      if (err.response?.status === 422) {
+        const errorsFromBackend =
+          backend?.error?.errors || backend?.detail || backend?.errors;
+
+        if (Array.isArray(errorsFromBackend)) {
+          const formatted: any = {};
+          errorsFromBackend.forEach((e: any) => {
+            const field = e.loc?.[e.loc.length - 1];
+            if (field) {
+              formatted[field] = e.msg;
+            }
+          });
+          return setErrors(formatted);
+        }
+      }
+
+      if (backend?.message) {
+        return setErrors({ general: backend.message });
+      }
+
+      if (backend?.detail) {
+        return setErrors({ general: backend.detail });
+      }
+
+      setErrors({ general: "Failed to change password. Please try again." });
     } finally {
       setIsLoading(false);
     }

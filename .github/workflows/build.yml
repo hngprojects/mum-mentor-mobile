@@ -33,7 +33,7 @@ jobs:
           java-version: "17"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # - name: Create google-services.json from secret
       # run: |
