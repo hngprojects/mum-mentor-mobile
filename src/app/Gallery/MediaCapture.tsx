@@ -1,14 +1,14 @@
 // src/app/gallery/media-capture.tsx
 
-import { colors, spacing, typography } from "@/src/core/styles";
-import { showToast } from "@/src/core/utils/toast";
-import { Ionicons } from "@expo/vector-icons";
+import {colors, spacing, typography} from "@/src/core/styles";
+import {showToast} from "@/src/core/utils/toast";
+import {Ionicons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { router, useLocalSearchParams } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ms, vs } from "../../core/styles/scaling";
+import {router, useLocalSearchParams} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import React, {useEffect, useState} from "react";
+import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {ms, vs} from "../../core/styles/scaling";
 import PrimaryButton from "../components/PrimaryButton";
 import PageHeader from "../components/shared/PageHeader";
 
@@ -63,7 +63,7 @@ export default function MediaCaptureScreen() {
   const handleUploadPhoto = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: 'images',
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,

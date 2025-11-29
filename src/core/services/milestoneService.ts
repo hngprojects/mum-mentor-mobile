@@ -1,20 +1,20 @@
-import apiClient from "@/src/core/services/apiClient";
-import { logErrorInDevMode } from "@/src/core/utils/logErrorInDevMode";
+import {logErrorInDevMode} from "@/src/core/utils/logErrorInDevMode";
 import {
-  CategoriesData,
-  ChildrenDataType,
-  CreateMilestoneType,
-  EditMilestoneType,
-  MilestoneApiRes,
-  MilestoneDataDetails,
-  MilestoneDataType,
-  ToggleMilestonePayload,
+    CategoriesData,
+    ChildrenDataType,
+    CreateMilestoneType,
+    EditMilestoneType,
+    MilestoneApiRes,
+    MilestoneDataDetails,
+    MilestoneDataType,
+    ToggleMilestonePayload,
 } from "@/src/types/milestones";
-import { isAxiosError } from "axios";
+import {isAxiosError} from "axios";
+import {authApi} from "@/src/lib/api";
 
 export async function getChildProfiles(): Promise<ChildrenDataType> {
   try {
-    const res = await apiClient.get<MilestoneApiRes<ChildrenDataType>>(
+      const res = await authApi.get<MilestoneApiRes<ChildrenDataType>>(
       "/api/v1/child-profiles/"
     );
 
@@ -30,7 +30,7 @@ export async function getChildProfiles(): Promise<ChildrenDataType> {
 
 export async function getMilestoneProgress(childId?: string) {
   try {
-    const res = await apiClient.get("/api/v1/milestones/progress", {
+      const res = await authApi.get("/api/v1/milestones/progress", {
       params: {
         child_id: childId,
       },
@@ -50,7 +50,7 @@ export async function getPendingMilestones(
   childId?: string
 ): Promise<MilestoneDataType[]> {
   try {
-    const res = await apiClient.get<MilestoneApiRes<MilestoneDataDetails>>(
+      const res = await authApi.get<MilestoneApiRes<MilestoneDataDetails>>(
       `/api/v1/milestones/pending`,
       {
         params: {
@@ -79,7 +79,7 @@ export async function toggleMilestoneStatusAction(
 ) {
   console.log(payload, "payload");
   try {
-    const res = await apiClient.patch(
+      const res = await authApi.patch(
       `/api/v1/milestones/${milestoneId}/status`,
       payload
     );
@@ -98,7 +98,7 @@ export async function toggleMilestoneStatusAction(
 
 export async function deleteMilestoneAction(milestoneId: string) {
   try {
-    const res = await apiClient.delete(`/api/v1/milestones/${milestoneId}`);
+      const res = await authApi.delete(`/api/v1/milestones/${milestoneId}`);
 
     return res.data;
   } catch (error) {
@@ -116,7 +116,7 @@ export async function editMilestone(
   payload: EditMilestoneType
 ): Promise<MilestoneDataType> {
   try {
-    const res = await apiClient.put<MilestoneApiRes<MilestoneDataType>>(
+      const res = await authApi.put<MilestoneApiRes<MilestoneDataType>>(
       `/api/v1/milestones/${milestoneId}`,
       payload
     );
@@ -138,7 +138,7 @@ export async function getMilestonesByCategory(
   childId?: string
 ): Promise<MilestoneDataType[]> {
   try {
-    const res = await apiClient.get<MilestoneApiRes<MilestoneDataDetails>>(
+      const res = await authApi.get<MilestoneApiRes<MilestoneDataDetails>>(
       "/api/v1/milestones/",
       {
         params: {
@@ -166,7 +166,7 @@ export async function getMilestonesByCategory(
 //   childId?: string
 // ): Promise<MilestoneDataType | null> {
 //   try {
-//     const res = await apiClient.get("/api/v1/milestones/", {
+//     const res = await authApi.get("/api/v1/milestones/", {
 //       params: {
 //         child_id: childId,
 //         category: category,
@@ -186,7 +186,7 @@ export async function createMilestone(
   payload: CreateMilestoneType
 ): Promise<string | null> {
   try {
-    const res = await apiClient.post<string>("/api/v1/milestones/", payload);
+      const res = await authApi.post<string>("/api/v1/milestones/", payload);
 
     return res.data;
   } catch (error) {
@@ -202,7 +202,7 @@ export async function createMilestone(
 export async function getMilestoneCategories(
   childId?: string
 ): Promise<CategoriesData> {
-  const res = await apiClient.get<MilestoneApiRes<CategoriesData>>(
+    const res = await authApi.get<MilestoneApiRes<CategoriesData>>(
     "/api/v1/milestones/categories",
     {
       params: {

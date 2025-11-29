@@ -1,10 +1,9 @@
 // core/services/profileSetup.service.ts
 
-// ✅ CHANGE: Import the unified client and remove the local 'axios' import
-import apiClient from "./apiClient"; 
-import { AxiosError } from "axios"; // Keep this for type checking
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { ChildProfile } from "../../types/child.types";
+import {AxiosError} from "axios"; // Keep this for type checking
+import type {ChildProfile} from "../../types/child.types";
+import {authApi} from "@/src/lib/api";
+import storage from "@/src/store/storage";
 
 // ======================================================
 // API CONFIGURATION - REMOVED: Now handled in apiClient.ts
@@ -49,7 +48,7 @@ export async function createProfileSetup(
   try {
 
     // FIX: Use the imported apiClient instead of the local 'api' instance
-    const response = await apiClient.post("/api/v1/profile-setup/", data);
+      const response = await authApi.post("/api/v1/profile-setup/", data);
     const rawData = response.data;
 
     let profileSetupId: string;
@@ -62,7 +61,7 @@ export async function createProfileSetup(
       throw new Error("Unexpected profile setup response format");
     }
 
-    await AsyncStorage.setItem("profile_setup_id", profileSetupId);
+      await storage.set("profile_setup_id", profileSetupId);
 
     return { id: profileSetupId };
   } catch (error) {
@@ -93,11 +92,11 @@ export async function createProfileSetup(
 export async function getProfileSetup(): Promise<ProfileSetupData | null> {
   try {
     // ✅ FIX: Use the imported apiClient instead of the local 'api' instance
-    const response = await apiClient.get<ProfileSetupResponse>("/api/v1/profile-setup/");
+      const response = await authApi.get<ProfileSetupResponse>("/api/v1/profile-setup/");
     const profileSetup = response.data.data;
 
     if (profileSetup?.id) {
-      await AsyncStorage.setItem("profile_setup_id", profileSetup.id);
+        await storage.set("profile_setup_id", profileSetup.id);
       return profileSetup;
     }
 
@@ -119,10 +118,10 @@ export async function getProfileSetup(): Promise<ProfileSetupData | null> {
 
 export async function getProfileSetupId(): Promise<string | null> {
   try {
-    const storedId = await AsyncStorage.getItem("profile_setup_id");
+      const storedId = await storage.get("profile_setup_id");
     if (storedId) return storedId;
   } catch (error) {
-    console.error("❌ Error reading AsyncStorage:", error);
+      console.error("❌ Error reading storage:", error);
   }
 
   const profileSetup = await getProfileSetup();

@@ -34,6 +34,7 @@ import {
   register,
   RegisterPayload,
 } from "../../core/services/authService";
+import { getProfileSetup } from "../../core/services/profileSetup.service";
 
 // --- Password Validation Types ---
 interface PasswordRequirement {
@@ -173,6 +174,18 @@ export default function SignUpScreen() {
     return isValid;
   };
 
+  const redirectAfterLogin = async () => {
+    try {
+      const profile = await getProfileSetup();
+      if (profile?.mom_status) {
+        router.replace("/(tabs)/Home");
+      } else router.replace("/setup/Mum");
+    } catch (err) {
+      console.error("Error fetching profile setup:", err);
+      router.replace("/setup/Mum");
+    }
+  };
+
   const handleSignup = async () => {
     if (!validate()) return;
 
@@ -272,7 +285,8 @@ export default function SignUpScreen() {
             ? `Signed in as ${result.user.name}`
             : "Google login successful."
         );
-        router.replace("/(tabs)/Home");
+
+        await redirectAfterLogin();
       } else {
         setGeneralError(
           result.error || "Google sign in failed. Please try again."

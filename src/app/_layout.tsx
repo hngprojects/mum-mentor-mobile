@@ -7,8 +7,11 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { store } from "@/src/store/store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import Toast from "react-native-toast-message";
+import { Provider } from "react-redux";
 import { SetupProvider } from "../core/hooks/setupContext";
 import { AuthProvider, useAuth } from "../core/services/authContext";
 import { SavedResourcesProvider } from "../core/services/savedResourcesContext";
@@ -148,13 +151,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SetupProvider>
-            <SavedResourcesProvider>
-              <RootLayoutContent />
-            </SavedResourcesProvider>
-          </SetupProvider>
-        </AuthProvider>
+        <Provider store={store}>
+          <AuthProvider>
+            <SetupProvider>
+              <SavedResourcesProvider>
+                <KeyboardProvider>
+                  <RootLayoutContent />
+                </KeyboardProvider>
+              </SavedResourcesProvider>
+            </SetupProvider>
+          </AuthProvider>
+        </Provider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

@@ -39,7 +39,6 @@ export const configureGoogleSignIn = () => {
     forceCodeForRefreshToken: true,
     scopes: ["profile", "email", "openid"],
   });
-
 };
 
 /**
@@ -47,7 +46,6 @@ export const configureGoogleSignIn = () => {
  */
 export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
   try {
-
     // Check if device has Google Play Services (Android only)
     await GoogleSignin.hasPlayServices({
       showPlayServicesUpdateDialog: true,
@@ -95,7 +93,6 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
     }
 
     if (data.status === "success" && data.data) {
-
       const { access_token, refresh_token } = data.data;
 
       // This part should be in your code
@@ -116,7 +113,7 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
           name: user?.name || "",
           photo: user?.photo || undefined,
         },
-        userProfile: userProfile || undefined, 
+        userProfile: userProfile || undefined,
         tokens: {
           accessToken: access_token,
           refreshToken: refresh_token,
@@ -165,7 +162,6 @@ export const signOutFromGoogle = async (): Promise<{
   error?: string;
 }> => {
   try {
-
     const refreshToken = await SecureStore.getItemAsync("refresh_token");
     if (refreshToken) {
       try {
@@ -331,7 +327,6 @@ export const makeAuthenticatedRequest = async (
     });
 
     if (response.status === 401) {
-
       const refreshResult = await refreshAccessToken();
 
       if (!refreshResult.success) {

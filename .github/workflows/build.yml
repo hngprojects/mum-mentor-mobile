@@ -33,7 +33,7 @@ jobs:
           java-version: "17"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # - name: Create google-services.json from secret
       # run: |
@@ -215,5 +215,4 @@ jobs:
         run: |
           rm -f .env
           rm -f keystore.jks
-          rm -f android/app/google-services.json
           echo "Sensitive files cleaned up"

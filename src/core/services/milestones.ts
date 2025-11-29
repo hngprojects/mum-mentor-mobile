@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import {authApi} from "@/src/lib/api";
 
 const MILESTONES_ENDPOINT = "/api/v1/milestones";
 
@@ -18,7 +18,7 @@ export async function createMilestones({
   if (description) body.description = description;
   if (child_id) body.child_id = child_id;
 
-  const response = await apiClient.post(`${MILESTONES_ENDPOINT}`, body);
+    const response = await authApi.post(`${MILESTONES_ENDPOINT}`, body);
 
   if (response.status >= 200 && response.status < 300) return response.data;
   throw new Error(response.data?.message || "Failed to create milestone");
@@ -39,7 +39,7 @@ export async function getAllMilestones({
   if (child_id) params.append("child_id", child_id);
   if (category) params.append("category", category);
 
-  const response = await apiClient.get(
+    const response = await authApi.get(
     `${MILESTONES_ENDPOINT}?${params.toString()}`
   );
 
@@ -69,7 +69,7 @@ export async function getMilestonesByCategory({
   if (page) url += `&page=${page}`;
   if (limit) url += `&limit=${limit}`;
 
-  const response = await apiClient.get(url);
+    const response = await authApi.get(url);
 
   if (response.status >= 200 && response.status < 300) {
     return response.data;
@@ -95,7 +95,7 @@ export async function toggleMilestoneStatus({
   const body: any = { completed };
   if (child_id) body.child_id = child_id;
 
-  const response = await apiClient.patch(
+    const response = await authApi.patch(
     `${MILESTONES_ENDPOINT}/${milestone_id}/status`,
     body
   );
@@ -125,7 +125,7 @@ export async function updateMilestone({
   if (description) body.description = description;
   if (category) body.category = category;
 
-  const response = await apiClient.put(
+    const response = await authApi.put(
     `${MILESTONES_ENDPOINT}/${milestone_id}`,
     body
   );
@@ -138,7 +138,7 @@ export async function updateMilestone({
 /*                             DELETE MILESTONE                               */
 /* -------------------------------------------------------------------------- */
 export async function deleteMilestone(milestone_id: string) {
-  const response = await apiClient.delete(
+    const response = await authApi.delete(
     `${MILESTONES_ENDPOINT}/${milestone_id}`
   );
 
@@ -161,7 +161,7 @@ export async function getMilestonesSummary({
 
   if (query.length > 0) url += `?${query.join("&")}`;
 
-  const response = await apiClient.get(url);
+    const response = await authApi.get(url);
 
   if (response.status >= 200 && response.status < 300) {
     return response.data;
@@ -183,7 +183,7 @@ export async function getPendingMilestones({
     url += `?child_id=${child_id}`;
   }
 
-  const response = await apiClient.get(url);
+    const response = await authApi.get(url);
 
   if (response.status >= 200 && response.status < 300) {
     return response.data;
@@ -205,7 +205,7 @@ export async function getMilestoneProgress({
     url += `?child_id=${child_id}`;
   }
 
-  const response = await apiClient.get(url);
+    const response = await authApi.get(url);
 
   if (response.status >= 200 && response.status < 300) {
     return response.data;
@@ -227,7 +227,7 @@ export async function getAvailableCategories({
     url += `?child_id=${child_id}`;
   }
 
-  const response = await apiClient.get(url);
+    const response = await authApi.get(url);
 
   if (response.status >= 200 && response.status < 300) {
     return response.data;

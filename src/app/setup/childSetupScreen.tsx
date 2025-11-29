@@ -2,7 +2,6 @@ import { useAuth } from "@/src/core/services/authContext";
 import { colors, spacing, typography } from "@/src/core/styles";
 import { ms, vs } from "@/src/core/styles/scaling";
 import { showToast } from "@/src/core/utils/toast";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
@@ -17,59 +16,21 @@ import {
   View,
 } from "react-native";
 import { useSetup } from "../../core/hooks/setupContext";
+// ✅ FIXED: ChildData interface is correctly imported here
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { getProfileSetup } from "../../core/services/profileSetup.service";
+import storage from "@/src/store/storage";
 import { completeSetupFlow } from "../../core/services/setupService";
 import ChildSetupItem, { ChildData } from "../components/ChildSetupItem";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
 import { SuccessModal, useSuccessModal } from "../components/SuccessModal";
 
-// Utility function to calculate age from DOB
-const calculateAgeFromDOB = (dob: string): string => {
-  if (!dob) return "";
-
-  try {
-    const birth = new Date(dob);
-    const today = new Date();
-
-    // Check if the date is valid
-    if (isNaN(birth.getTime())) {
-      console.warn("[calculateAge] Invalid date provided:", dob);
-      return "";
-    }
-
-    // Check if date is in the future
-    if (birth > today) {
-      console.warn("[calculateAge] Date of birth is in the future:", dob);
-      return "";
-    }
-
-    // Calculate age
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-
-    // Adjust if birthday hasn't occurred yet this year
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birth.getDate())
-    ) {
-      age--;
-    }
-
-    // Return empty string if age is negative
-    if (age < 0) return "";
-
-    return age.toString();
-  } catch (error) {
-    console.error("[calculateAge] Error computing age:", error);
-    return "";
-  }
-};
-
 const ChildSetupScreen: React.FC = () => {
   const { user, isSessionLoading } = useAuth();
   const { momSetupData } = useSetup();
   const [children, setChildren] = useState<ChildData[]>([
-    { fullName: "", age: "", dob: "", gender: "" },
+    { fullName: "", dob: "", gender: "" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const { visible, show, hide } = useSuccessModal();
@@ -143,16 +104,14 @@ const ChildSetupScreen: React.FC = () => {
 
   const areAllFilledChildrenComplete = useCallback(() => {
     const filled = children.filter(
-      (child) => child.fullName || child.age || child.dob || child.gender
+      (child) => child.fullName || child.dob || child.gender
     );
-    return filled.every(
-      (child) => child.fullName && child.age && child.dob && child.gender
-    );
+    return filled.every((child) => child.fullName && child.dob && child.gender);
   }, [children]);
 
   const getCompleteChildren = useCallback(() => {
     return children.filter(
-      (child) => child.fullName && child.age && child.dob && child.gender
+      (child) => child.fullName && child.dob && child.gender
     );
   }, [children]);
 
@@ -187,20 +146,16 @@ const ChildSetupScreen: React.FC = () => {
 
       if (result.success) {
         // Mark setup complete
-        await AsyncStorage.setItem("hasCompletedSetup", "true");
-        if (typeof window !== "undefined" && window.localStorage) {
-          localStorage.setItem("hasCompletedSetup", "true");
-        }
+        await storage.set("hasCompletedSetup", "true");
         show(); // success modal
       } else {
         // Normalize the backend error
-        const errorToThrow = {
+        // Throw it so it can be handled in catch
+        throw {
           message: result.error?.message || "Setup failed",
-          status_code: result.error?.status_code,
-          detail: result.error?.detail,
+          status_code: result.error?.status_code, // backend status code
+          detail: result.error?.detail, // backend detail message
         };
-
-        throw errorToThrow;
       }
     } catch (error: any) {
       const message =

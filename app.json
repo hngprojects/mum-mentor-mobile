@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MumMentor",
+    "name": "Nora",
     "slug": "MumMentorMobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,7 +29,6 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.hng.mummentor",
-      "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "permissions": [
         "android.permission.CAMERA",
@@ -65,16 +64,22 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow MumMentor to access your camera to capture precious moments.",
-          "microphonePermission": "Allow MumMentor to access your microphone for video recording.",
+          "cameraPermission": "Allow Nora to access your camera to capture precious moments.",
+          "microphonePermission": "Allow Nora to access your microphone for video recording.",
           "recordAudioAndroid": true
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow MumMentor to access your photos to select and save memories.",
-          "cameraPermission": "Allow MumMentor to access your camera to take photos."
+          "photosPermission": "Allow Nora to access your photos to select and save memories.",
+          "cameraPermission": "Allow Nora to access your camera to take photos."
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.177967447276-9ncqmgbbs4rq2i3r682e91npjss49ir4"
         }
       ]
     ],

@@ -1,10 +1,10 @@
 // src/core/services/galleryService.ts
 
-import apiClient from "./apiClient";
+import {authApi} from "@/src/lib/api";
 
-const ALBUMS_ENDPOINT = "/api/v1/album";
-const ALBUMS_ENDPOINT_LIST = "/api/v1/albums";
-const MEMORIES_ENDPOINT = "/api/v1/memories";
+const ALBUMS_ENDPOINT = "/api/v1/album/";
+const ALBUMS_ENDPOINT_LIST = "/api/v1/albums/";
+const MEMORIES_ENDPOINT = "/api/v1/memories/";
 
 // ========== ALBUM ENDPOINTS ==========
 
@@ -32,7 +32,7 @@ export interface Memory {
  */
 export async function fetchAlbums(): Promise<Album[]> {
   try {
-    const response = await apiClient.get(ALBUMS_ENDPOINT_LIST);
+      const response = await authApi.get(ALBUMS_ENDPOINT_LIST);
 
     if (response.status >= 200 && response.status < 300) {
       return response.data.data || response.data;
@@ -50,7 +50,7 @@ export async function fetchAlbums(): Promise<Album[]> {
  */
 export async function fetchAlbumById(albumId: string): Promise<Album> {
   try {
-    const response = await apiClient.get(`${ALBUMS_ENDPOINT_LIST}/${albumId}`);
+      const response = await authApi.get(`${ALBUMS_ENDPOINT_LIST}${albumId}`);
 
     if (response.status >= 200 && response.status < 300) {
       return response.data.data || response.data;
@@ -68,7 +68,7 @@ export async function fetchAlbumById(albumId: string): Promise<Album> {
  */
 export async function createAlbum(albumName: string): Promise<Album> {
   try {
-    const response = await apiClient.post(ALBUMS_ENDPOINT, {
+      const response = await authApi.post(ALBUMS_ENDPOINT, {
       name: albumName,
     });
 
@@ -88,7 +88,7 @@ export async function createAlbum(albumName: string): Promise<Album> {
  */
 export async function deleteAlbum(albumId: string): Promise<void> {
   try {
-    const response = await apiClient.delete(`${ALBUMS_ENDPOINT}/${albumId}`);
+      const response = await authApi.delete(`${ALBUMS_ENDPOINT}${albumId}`);
 
     if (response.status >= 200 && response.status < 300) {
       return;
@@ -108,8 +108,8 @@ export async function deleteAlbum(albumId: string): Promise<void> {
  */
 export async function fetchAlbumMemories(albumId: string): Promise<Memory[]> {
   try {
-    const response = await apiClient.get(
-      `${ALBUMS_ENDPOINT_LIST}/${albumId}/memories`
+      const response = await authApi.get(
+          `${ALBUMS_ENDPOINT_LIST}${albumId}/memories`
     );
 
     if (response.status >= 200 && response.status < 300) {
@@ -132,7 +132,7 @@ export async function createMemory(data: {
   caption?: string;
 }): Promise<Memory> {
   try {
-    const response = await apiClient.post(MEMORIES_ENDPOINT, data);
+      const response = await authApi.post(MEMORIES_ENDPOINT, data);
 
     if (response.status >= 200 && response.status < 300) {
       return response.data.data || response.data;
@@ -172,7 +172,7 @@ export async function uploadMemoryPhoto(data: {
       formData.append("caption", data.caption);
     }
 
-    const response = await apiClient.post(MEMORIES_ENDPOINT, formData, {
+      const response = await authApi.post(MEMORIES_ENDPOINT, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -194,7 +194,7 @@ export async function uploadMemoryPhoto(data: {
  */
 export async function deleteMemory(memoryId: string): Promise<void> {
   try {
-    const response = await apiClient.delete(`${MEMORIES_ENDPOINT}/${memoryId}`);
+      const response = await authApi.delete(`${MEMORIES_ENDPOINT}${memoryId}`);
 
     if (response.status >= 200 && response.status < 300) {
       return;

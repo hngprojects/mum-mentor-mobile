@@ -63,13 +63,6 @@ export default function SignInScreen() {
       const result = await signInWithGoogle();
 
       if (result.success) {
-        // ✅ Check if user profile was fetched
-        if (result.userProfile) {
-          //
-        } else {
-          console.warn("⚠️ User profile not fetched, but proceeding anyway");
-        }
-
         showToast.success(
           "Welcome Back!",
           result.user?.name
@@ -77,8 +70,7 @@ export default function SignInScreen() {
             : "Google login successful."
         );
 
-        // ✅ Navigate to home
-        router.replace("/(tabs)/Home");
+        await redirectAfterLogin();
       } else {
         setGeneralError(
           result.error || "Google sign in failed. Please try again."
