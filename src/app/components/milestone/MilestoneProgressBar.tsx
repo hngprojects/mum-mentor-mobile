@@ -1,12 +1,11 @@
 import { colors, typography } from "@/src/core/styles";
-import { useAppSelector } from "@/src/store/hooks";
-import { getMilestoneStates } from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import * as Progress from "react-native-progress";
 
 export default function MilestoneProgressBar() {
-  const { milestoneData } = useAppSelector(getMilestoneStates);
+  const milestoneData = useMilestoneStore((state) => state.milestoneData);
 
   const completedMilestone = milestoneData?.filter(
     (milestone) => milestone.status === "completed"

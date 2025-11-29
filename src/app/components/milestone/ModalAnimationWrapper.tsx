@@ -18,7 +18,7 @@ export default function ModalAnimationWrapper({
   isVisible,
   onBackdropPress,
 }: ModalAnimationProps) {
-  const { width, height } = Dimensions.get("window");
+  const { width, height } = Dimensions.get("screen");
   return (
     <Modal
       isVisible={isVisible}
@@ -30,7 +30,9 @@ export default function ModalAnimationWrapper({
       animationOutTiming={300}
       deviceHeight={height}
       deviceWidth={width}
+      statusBarTranslucent={true}
       useNativeDriver
+      coverScreen={true}
       style={styles.overlay}
     >
       <KeyboardAvoidingView

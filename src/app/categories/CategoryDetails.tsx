@@ -9,11 +9,7 @@ import SuccessModal from "@/src/app/components/milestone/SuccessModal";
 import { MILESTONE_STATUS } from "@/src/core/data/milestone-data";
 import { getMilestonesByCategory } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
-import { useAppDispatch } from "@/src/store/hooks";
-import {
-  onAddMilestoneOnMount,
-  onToggleCreateForm,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
@@ -24,7 +20,13 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CategoryDetails() {
-  const dispatch = useAppDispatch();
+  const onAddMilestoneOnMount = useMilestoneStore(
+    (state) => state.onAddMilestoneOnMount
+  );
+  const onToggleCreateForm = useMilestoneStore(
+    (state) => state.onToggleCreateForm
+  );
+
   const { categoryValue, childId } = useLocalSearchParams();
 
   const [milestoneStatus, setMilestoneStatus] = useState("pending");
@@ -38,9 +40,12 @@ export default function CategoryDetails() {
     enabled: !!category,
   });
 
+  console.log(data);
   useEffect(() => {
-    if (data) dispatch(onAddMilestoneOnMount(data));
-  }, [data, dispatch]);
+    if (data) {
+      onAddMilestoneOnMount(data);
+    }
+  }, [data, onAddMilestoneOnMount]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -90,7 +95,7 @@ export default function CategoryDetails() {
       {/* Floating Add Button */}
       <Pressable
         style={styles.createMilestoneButton}
-        onPress={() => dispatch(onToggleCreateForm(true))}
+        onPress={() => onToggleCreateForm(true)}
       >
         <Image
           source={require("../../assets/images/add-icon.png")}

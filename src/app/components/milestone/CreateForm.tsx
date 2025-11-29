@@ -2,13 +2,7 @@ import FormInput from "@/src/app/components/milestone/FormInput";
 import { createMilestone } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
 import { showToast } from "@/src/core/utils/toast";
-import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import {
-  getMilestoneStates,
-  onAddMilestone,
-  onToggleCreateForm,
-  onToggleSuccessModal,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import { CreateMilestoneType, MilestoneDataType } from "@/src/types/milestones";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Crypto from "expo-crypto";
@@ -27,8 +21,15 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import Modal from "react-native-modal";
 
 export default function CreateForm() {
-  const { isCreateFormOpen } = useAppSelector(getMilestoneStates);
-  const dispatch = useAppDispatch();
+  const isCreateFormOpen = useMilestoneStore((state) => state.isCreateFormOpen);
+  const onToggleCreateForm = useMilestoneStore(
+    (state) => state.onToggleCreateForm
+  );
+  const onAddMilestone = useMilestoneStore((state) => state.onAddMilestone);
+  const onToggleSuccessModal = useMilestoneStore(
+    (state) => state.onToggleSuccessModal
+  );
+
   const [formData, setFormData] = useState({ name: "", description: "" });
   const queryClient = useQueryClient();
   const { categoryValue, ownerId, childId } = useLocalSearchParams();
@@ -40,8 +41,8 @@ export default function CreateForm() {
     useMutation({
       mutationFn: (payload: CreateMilestoneType) => createMilestone(payload),
       onSuccess: () => {
-        dispatch(onToggleCreateForm(false));
-        dispatch(onToggleSuccessModal(true));
+        onToggleCreateForm(false);
+        onToggleSuccessModal(true);
         queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
       },
       onError: (error: any) => {
@@ -68,7 +69,7 @@ export default function CreateForm() {
       child_id: childId as string | undefined,
     };
 
-    dispatch(onAddMilestone(newMilestone));
+    onAddMilestone(newMilestone);
     createNewMilestone(serverNewMilestone);
     setFormData({ name: "", description: "" });
   }
@@ -79,7 +80,7 @@ export default function CreateForm() {
       animationIn="slideInUp"
       animationOut="slideOutDown"
       backdropOpacity={0.5}
-      onBackdropPress={() => dispatch(onToggleCreateForm(false))}
+      onBackdropPress={() => onToggleCreateForm(false)}
       style={{ justifyContent: "flex-end", margin: 0 }}
       avoidKeyboard={false}
     >
@@ -148,7 +149,7 @@ export default function CreateForm() {
 
               <Pressable
                 style={[styles.buttons, styles.buttonCancel]}
-                onPress={() => dispatch(onToggleCreateForm(false))}
+                onPress={() => onToggleCreateForm(false)}
                 disabled={isCreatingMilestone}
               >
                 <Text style={styles.buttonCancelText}>Cancel</Text>

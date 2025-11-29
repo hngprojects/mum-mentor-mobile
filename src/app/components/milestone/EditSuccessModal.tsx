@@ -1,19 +1,21 @@
 import ModalAnimationWrapper from "@/src/app/components/milestone/ModalAnimationWrapper";
 import { colors, typography } from "@/src/core/styles";
-import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import {
-  getMilestoneStates,
-  onToggleEditSuccessModal,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import React from "react";
 
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
 export default function EditSuccessModal() {
-  const { isEditSuccessModalOpen } = useAppSelector(getMilestoneStates);
-  const dispatch = useAppDispatch();
+  const { onToggleEditSuccessModal, isEditSuccessModalOpen } =
+    useMilestoneStore(
+      useShallow((state) => ({
+        onToggleEditSuccessModal: state.onToggleEditSuccessModal,
+        isEditSuccessModalOpen: state.isEditSuccessModalOpen,
+      }))
+    );
 
-  const onCloseModal = () => dispatch(onToggleEditSuccessModal(false));
+  const onCloseModal = () => onToggleEditSuccessModal(false);
 
   return (
     <ModalAnimationWrapper

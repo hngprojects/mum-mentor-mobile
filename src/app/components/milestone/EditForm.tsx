@@ -5,13 +5,7 @@ import Modal from "react-native-modal";
 
 import { editMilestone } from "@/src/core/services/milestoneService";
 import { showToast } from "@/src/core/utils/toast";
-import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import {
-  getMilestoneStates,
-  onEditMileStone,
-  onToggleEditForm,
-  onToggleEditSuccessModal,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import { EditMilestoneType } from "@/src/types/milestones";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
@@ -24,11 +18,27 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useShallow } from "zustand/react/shallow";
 
 export default function EditForm() {
-  const { isEditModalOpen, milestoneData, milestoneToEditId } =
-    useAppSelector(getMilestoneStates);
-  const dispatch = useAppDispatch();
+  const {
+    isEditModalOpen,
+    milestoneData,
+    milestoneToEditId,
+    onEditMileStone,
+    onToggleEditSuccessModal,
+    onToggleEditForm,
+  } = useMilestoneStore(
+    useShallow((state) => ({
+      isEditModalOpen: state.isEditModalOpen,
+      milestoneData: state.milestoneData,
+      milestoneToEditId: state.milestoneToEditId,
+      onEditMileStone: state.onEditMileStone,
+      onToggleEditSuccessModal: state.onToggleEditSuccessModal,
+      onToggleEditForm: state.onToggleEditForm,
+    }))
+  );
+
   const [formData, setFormData] = useState({ name: "", description: "" });
   const { categoryValue } = useLocalSearchParams();
   const isNameInputFilled = formData.name;
@@ -43,7 +53,7 @@ export default function EditForm() {
       mutationFn: (payload: EditMilestoneType) =>
         editMilestone(milestoneToEditId, payload),
       onSuccess: () => {
-        dispatch(onToggleEditForm({ isOpenForm: false }));
+        onToggleEditForm({ isOpenForm: false });
 
         queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
       },
@@ -73,9 +83,9 @@ export default function EditForm() {
       category: categoryValue as string,
     };
 
-    dispatch(onEditMileStone(milestoneToUpdate));
+    onEditMileStone(milestoneToUpdate);
     updateMilestone(serverMilestoneToUpdate, {
-      onSuccess: () => dispatch(onToggleEditSuccessModal(true)),
+      onSuccess: () => onToggleEditSuccessModal(true),
     });
 
     setFormData({ name: "", description: "" });
@@ -87,7 +97,7 @@ export default function EditForm() {
       animationIn="slideInUp"
       animationOut="slideOutDown"
       backdropOpacity={0.5}
-      onBackdropPress={() => dispatch(onToggleEditForm({ isOpenForm: false }))}
+      onBackdropPress={() => onToggleEditForm({ isOpenForm: false })}
       style={{ justifyContent: "flex-end", margin: 0 }}
       avoidKeyboard={false}
     >
@@ -151,7 +161,7 @@ export default function EditForm() {
 
             <Pressable
               style={[styles.buttons, styles.buttonCancel]}
-              onPress={() => dispatch(onToggleEditForm({ isOpenForm: false }))}
+              onPress={() => onToggleEditForm({ isOpenForm: false })}
               disabled={isUpdatingMilestone}
             >
               <Text style={styles.buttonCancelText}>Cancel</Text>

@@ -1,8 +1,7 @@
 import EmptyMilestoneMessage from "@/src/app/components/milestone/EmptyMilestoneMessage";
 import { MilestoneBox } from "@/src/app/components/milestone/MilestoneBox";
 
-import { useAppSelector } from "@/src/store/hooks";
-import { getMilestoneStates } from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -12,7 +11,7 @@ export default function MilestonesList({
 }: {
   milestoneStatus: string;
 }) {
-  const { milestoneData } = useAppSelector(getMilestoneStates);
+  const milestoneData = useMilestoneStore((state) => state.milestoneData);
   const { categoryValue } = useLocalSearchParams();
 
   console.log(categoryValue, "cat");

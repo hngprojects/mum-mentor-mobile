@@ -3,18 +3,14 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { toggleMilestoneStatusAction } from "@/src/core/services/milestoneService";
 import { showToast } from "@/src/core/utils/toast";
-import { useAppDispatch } from "@/src/store/hooks";
-import {
-  onCheckMilestoneStatus,
-  onToggleDeleteModal,
-  onToggleEditForm,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import {
   MilestoneDataType,
   ToggleMilestonePayload,
 } from "@/src/types/milestones";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { useShallow } from "zustand/react/shallow";
 
 type Actions = "edit" | "delete";
 
@@ -35,7 +31,14 @@ export const ACTION_BUTTONS_ICONS = [
 ];
 
 export function MilestoneBox({ milestone }: { milestone: MilestoneDataType }) {
-  const dispatch = useAppDispatch();
+  const { onToggleEditForm, onToggleDeleteModal, onCheckMilestoneStatus } =
+    useMilestoneStore(
+      useShallow((state) => ({
+        onToggleEditForm: state.onToggleEditForm,
+        onToggleDeleteModal: state.onToggleDeleteModal,
+        onCheckMilestoneStatus: state.onCheckMilestoneStatus,
+      }))
+    );
   const queryClient = useQueryClient();
 
   const { mutate: toggleMilestoneMutation } = useMutation({
@@ -60,21 +63,17 @@ export function MilestoneBox({ milestone }: { milestone: MilestoneDataType }) {
 
   function handleMilestoneAction(actionType: Actions) {
     if (actionType === "edit") {
-      dispatch(
-        onToggleEditForm({ isOpenForm: true, milestoneId: milestone.id })
-      );
+      onToggleEditForm({ isOpenForm: true, milestoneId: milestone.id });
     } else {
-      dispatch(
-        onToggleDeleteModal({
-          isOpenForm: true,
-          milestoneId: milestone.id,
-        })
-      );
+      onToggleDeleteModal({
+        isOpenForm: true,
+        milestoneId: milestone.id,
+      });
     }
   }
 
   function handleToggleStatus() {
-    dispatch(onCheckMilestoneStatus({ id: milestone?.id }));
+    onCheckMilestoneStatus({ id: milestone?.id });
     const togglePayload = {
       completed: milestone.status === "completed" ? false : true,
     };
