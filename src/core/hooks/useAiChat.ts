@@ -1,6 +1,7 @@
-import { auth } from "@/src/lib/auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authApi } from "../../lib/api";
+import {auth} from "@/src/lib/auth";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {authApi} from "../../lib/api";
+import {fetch} from 'expo/fetch';
 
 interface ChatSession {
   id: string;
@@ -71,8 +72,7 @@ export const useChatList = () => {
     queryKey: CHAT_KEYS.all,
     queryFn: async () => {
       const res = await authApi.get("/api/v1/ai-chat/chats/");
-      const data = res.data.data as ChatData;
-      return data; // Returns the full ChatData object with conversations array
+        return res.data.data as ChatData; // Returns the full ChatData object with conversations array
     },
   });
 };

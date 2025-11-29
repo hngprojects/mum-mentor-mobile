@@ -1,16 +1,9 @@
-import { colors, typography } from "@/src/core/styles";
-import { ms, rbr, vs } from "@/src/core/styles/scaling";
-import { Ionicons } from "@expo/vector-icons";
+import {colors, typography} from "@/src/core/styles";
+import {ms, rbr, vs} from "@/src/core/styles/scaling";
+import {Ionicons} from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useState } from "react";
-import {
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, {useState} from "react";
+import {Modal, Platform, StyleSheet, Text, TouchableOpacity, View,} from "react-native";
 
 interface DatePickerInputProps {
   label: string;
@@ -37,8 +30,8 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   const formatDate = (dateObj: Date): string => {
     const day = dateObj.getDate().toString().padStart(2, "0");
     const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
-    const year = dateObj.getFullYear().toString().slice(-2);
-    return `${day}/${month}/${year}`;
+      const year = dateObj.getFullYear();
+      return `${year}/${month}/${day}`;
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {

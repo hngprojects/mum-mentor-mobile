@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import {authApi} from "@/src/lib/api";
 
 const TASKS_ENDPOINT = "/api/v1/tasks";
 
@@ -17,7 +17,7 @@ export async function fetchTasks(params?: {
   if (params?.order_direction) query.order_direction = params.order_direction;
 
   try {
-    const response = await apiClient.get(TASKS_ENDPOINT, { params: query });
+      const response = await authApi.get(`${TASKS_ENDPOINT}/`, {params: query});
     return response.data;
   } catch (error) {
     console.debug("Error fetching tasks:", error);
@@ -33,7 +33,7 @@ export async function createTask({
   description: string;
   due_date: string;
 }) {
-  const response = await apiClient.post(`${TASKS_ENDPOINT}`, {
+    const response = await authApi.post(`${TASKS_ENDPOINT}/`, {
     name,
     description,
     due_date,
@@ -57,7 +57,7 @@ export async function updateTask({
   description: string;
   due_date: string;
 }) {
-  const response = await apiClient.patch(`${TASKS_ENDPOINT}/${id}`, {
+    const response = await authApi.patch(`${TASKS_ENDPOINT}/${id}`, {
     name,
     description,
     due_date,
@@ -73,7 +73,7 @@ export async function updateTask({
 
 export async function deleteTask(taskId: string) {
   try {
-    const response = await apiClient.delete(`${TASKS_ENDPOINT}/${taskId}`);
+      const response = await authApi.delete(`${TASKS_ENDPOINT}/${taskId}`);
     return response.data;
   } catch (error) {
     console.debug("Error deleting task:", error);
@@ -83,7 +83,7 @@ export async function deleteTask(taskId: string) {
 
 export async function toggleTaskStatus(taskId: string, status: boolean) {
   try {
-    const response = await apiClient.patch(
+      const response = await authApi.patch(
       `${TASKS_ENDPOINT}/${taskId}/status`,
       { completed: status }
     );

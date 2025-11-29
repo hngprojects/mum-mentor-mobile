@@ -1,5 +1,4 @@
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
+import storage from "@/src/store/storage";
 
 // --- KEYSTORE CONFIGURATION ---
 const AUTH_TOKEN_KEY = "NoraAppAuthToken";
@@ -11,25 +10,19 @@ const AUTH_TOKEN_KEY = "NoraAppAuthToken";
  */
 export async function setAuthToken(token: string): Promise<void> {
 
-  // Validate token
-  const trimmedToken = token?.trim();
-  if (typeof trimmedToken !== "string" || trimmedToken.length === 0) {
-    console.error("AUTH STORAGE: Invalid token received");
-    throw new Error("Invalid token: must be a non-empty string");
-  }
-
-  try {
-    if (Platform.OS === "web") {
-      // Use localStorage for web
-      localStorage.setItem(AUTH_TOKEN_KEY, trimmedToken);
-    } else {
-      // Use SecureStore for native (iOS/Android)
-      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, trimmedToken);
+    // Validate token
+    const trimmedToken = token?.trim();
+    if (typeof trimmedToken !== "string" || trimmedToken.length === 0) {
+        console.error("AUTH STORAGE: Invalid token received");
+        throw new Error("Invalid token: must be a non-empty string");
     }
-  } catch (error) {
-    console.error("AUTH STORAGE ERROR: Failed to save auth token.", error);
-    throw error;
-  }
+
+    try {
+        storage.set(AUTH_TOKEN_KEY, trimmedToken, true);
+    } catch (error) {
+        console.error("AUTH STORAGE ERROR: Failed to save auth token.", error);
+        throw error;
+    }
 }
 
 /**
@@ -37,33 +30,21 @@ export async function setAuthToken(token: string): Promise<void> {
  * @returns The stored token string, or null if not found.
  */
 export async function getAuthToken(): Promise<string | null> {
-  try {
-    if (Platform.OS === "web") {
-      // Use localStorage for web
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      return token;
-    } else {
-      // Use SecureStore for native
-      const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-      return token;
+    try {
+        return storage.get(AUTH_TOKEN_KEY, true);
+    } catch (error) {
+        console.error("AUTH STORAGE ERROR: Failed to retrieve token.", error);
+        return null;
     }
-  } catch (error) {
-    console.error("AUTH STORAGE ERROR: Failed to retrieve token.", error);
-    return null;
-  }
 }
 
 /**
  * Removes the stored authentication token.
  */
 export async function removeAuthToken(): Promise<void> {
-  try {
-    if (Platform.OS === "web") {
-      localStorage.clear();
-    } else {
-      await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+    try {
+        return storage.remove(AUTH_TOKEN_KEY);
+    } catch (error) {
+        console.error("AUTH STORAGE ERROR: Failed to remove token.", error);
     }
-  } catch (error) {
-    console.error("AUTH STORAGE ERROR: Failed to remove token.", error);
-  }
 }

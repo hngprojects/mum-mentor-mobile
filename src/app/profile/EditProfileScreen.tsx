@@ -1,27 +1,27 @@
 // components/EditProfileModal.tsx
-import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import {Feather} from "@expo/vector-icons";
+import React, {useEffect, useState} from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 // --- Style Imports ---
-import { colors, fontFamilies, spacing, typography } from "../../core/styles";
-import { ms } from "../../core/styles/scaling";
+import {colors, fontFamilies, spacing, typography} from "../../core/styles";
+import {ms} from "../../core/styles/scaling";
 
 // --- API Imports ---
-import { showToast } from "@/src/core/utils/toast";
-import apiClient from "../../core/services/apiClient";
+import {showToast} from "@/src/core/utils/toast";
+import {authApi} from "@/src/lib/api";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -113,7 +113,7 @@ export default function EditProfileModal({
 
       try {
         // Try PATCH first
-        const patchResponse = await apiClient.patch(
+          const patchResponse = await authApi.patch(
           "/api/v1/profile-setup/",
           profileSetupData
         );
@@ -155,7 +155,7 @@ export default function EditProfileModal({
               createData.partner = userProfile.partner;
             }
 
-            const postResponse = await apiClient.post(
+              const postResponse = await authApi.post(
               "/api/v1/profile-setup/",
               createData
             );

@@ -215,5 +215,4 @@ jobs:
         run: |
           rm -f .env
           rm -f keystore.jks
-          rm -f android/app/google-services.json
           echo "Sensitive files cleaned up"
