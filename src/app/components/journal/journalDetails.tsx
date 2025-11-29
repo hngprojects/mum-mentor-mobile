@@ -1,33 +1,44 @@
-// src/app/components/journal/journalDetails.tsx
-
-import { colors, spacing, typography } from '@/src/core/styles';
-import { ms, rfs, vs } from '@/src/core/styles/scaling';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { categories } from './editForm';
-import { formatDate, JournalCardProps } from './journalCard';
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, rfs, vs } from "@/src/core/styles/scaling";
+import { Ionicons } from "@expo/vector-icons";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { categories } from "./editForm";
+import { formatDate, type JournalCardProps } from "./journalCard";
 
 const JournalDetails = ({ journal }: JournalCardProps) => {
-  const matchedCategory = categories.find((cat) => cat.title === journal.category);
+  const matchedCategory = categories.find(
+    (cat) => cat.title === journal.category
+  );
   const moodEmoji = journal.mood.split(" ")[1] || "";
 
+  const imageSource =
+    typeof journal.imageUrl === "string"
+      ? { uri: journal.imageUrl }
+      : journal.imageUrl;
+
   return (
-    <ScrollView 
-      showsVerticalScrollIndicator={false} 
+    <ScrollView
+      showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.container}>
         {/* Meta Info */}
         <View style={styles.headerRow}>
-          <View style={[
-            styles.categoryBadge, 
-            { backgroundColor: matchedCategory?.bgColor || colors.backgroundSubtle }
-          ]}>
-            <Text style={[
-              styles.categoryText, 
-              { color: matchedCategory?.color || colors.textPrimary }
-            ]}>
+          <View
+            style={[
+              styles.categoryBadge,
+              {
+                backgroundColor:
+                  matchedCategory?.bgColor || colors.backgroundSubtle,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.categoryText,
+                { color: matchedCategory?.color || colors.textPrimary },
+              ]}
+            >
               {journal.category}
             </Text>
           </View>
@@ -39,18 +50,24 @@ const JournalDetails = ({ journal }: JournalCardProps) => {
 
         {/* Date */}
         <View style={styles.dateRow}>
-          <Ionicons name="calendar-outline" size={18} color={colors.textGrey1} />
+          <Ionicons
+            name="calendar-outline"
+            size={18}
+            color={colors.textGrey1}
+          />
           <Text style={styles.dateText}>{formatDate(journal.date)}</Text>
         </View>
 
-        {/* Big Image */}
-        <View style={styles.imageContainer}>
-          <Image 
-            source={journal.imageUrl} 
-            style={styles.mainImage} 
-            resizeMode="cover"
-          />
-        </View>
+        {/* Big Image - only show if exists */}
+        {journal.imageUrl ? (
+          <View style={styles.imageContainer}>
+            <Image
+              source={imageSource}
+              style={styles.mainImage}
+              resizeMode="cover"
+            />
+          </View>
+        ) : null}
 
         {/* Thoughts Body */}
         <Text style={styles.bodyText}>{journal.thoughts}</Text>
@@ -62,6 +79,7 @@ const JournalDetails = ({ journal }: JournalCardProps) => {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: vs(40),
+    paddingHorizontal: ms(spacing.md),
   },
   container: {
     width: "100%",
@@ -106,7 +124,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: "100%",
-    aspectRatio: 1.2, // Keeps consistent shape
+    aspectRatio: 1.2,
     marginBottom: vs(spacing.lg),
     borderRadius: ms(8),
     overflow: "hidden",
