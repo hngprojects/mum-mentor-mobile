@@ -6,8 +6,8 @@ import { MILESTONE_SECTION } from "@/src/core/data/milestone-data";
 import { colors, typography } from "@/src/core/styles";
 import { MilestoneType } from "@/src/types/milestones";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Milestone() {

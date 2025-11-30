@@ -5,28 +5,46 @@ import Modal from "react-native-modal";
 
 import { editMilestone } from "@/src/core/services/milestoneService";
 import { showToast } from "@/src/core/utils/toast";
-import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import {
-  getMilestoneStates,
-  onEditMileStone,
-  onToggleEditForm,
-  onToggleEditSuccessModal,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import { EditMilestoneType } from "@/src/types/milestones";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useShallow } from "zustand/react/shallow";
 
 export default function EditForm() {
-  const { isEditModalOpen, milestoneData, milestoneToEditId } =
-    useAppSelector(getMilestoneStates);
-  const dispatch = useAppDispatch();
+  const {
+    isEditModalOpen,
+    milestoneData,
+    milestoneToEditId,
+    onEditMileStone,
+    onToggleEditSuccessModal,
+    onToggleEditForm,
+  } = useMilestoneStore(
+    useShallow((state) => ({
+      isEditModalOpen: state.isEditModalOpen,
+      milestoneData: state.milestoneData,
+      milestoneToEditId: state.milestoneToEditId,
+      onEditMileStone: state.onEditMileStone,
+      onToggleEditSuccessModal: state.onToggleEditSuccessModal,
+      onToggleEditForm: state.onToggleEditForm,
+    }))
+  );
+
   const [formData, setFormData] = useState({ name: "", description: "" });
   const { categoryValue } = useLocalSearchParams();
   const isNameInputFilled = formData.name;
   const queryClient = useQueryClient();
 
-  const currentMilestone = milestoneData.find(
+  const currentMilestone = milestoneData?.find(
     (milestone) => milestone.id === milestoneToEditId
   );
 
@@ -35,21 +53,20 @@ export default function EditForm() {
       mutationFn: (payload: EditMilestoneType) =>
         editMilestone(milestoneToEditId, payload),
       onSuccess: () => {
-        dispatch(onToggleEditForm({ isOpenForm: false }));
-        dispatch(onToggleEditSuccessModal(true));
+        onToggleEditForm({ isOpenForm: false });
+
         queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
       },
       onError: (error) => {
         showToast.error(error.message);
-        dispatch(onToggleEditForm({ isOpenForm: false }));
       },
     });
 
   useEffect(() => {
     if (currentMilestone) {
       setFormData({
-        name: currentMilestone.name,
-        description: currentMilestone.description,
+        name: currentMilestone.name || "",
+        description: currentMilestone.description || "",
       });
     }
   }, [currentMilestone]);
@@ -66,8 +83,10 @@ export default function EditForm() {
       category: categoryValue as string,
     };
 
-    dispatch(onEditMileStone(milestoneToUpdate));
-    updateMilestone(serverMilestoneToUpdate);
+    onEditMileStone(milestoneToUpdate);
+    updateMilestone(serverMilestoneToUpdate, {
+      onSuccess: () => onToggleEditSuccessModal(true),
+    });
 
     setFormData({ name: "", description: "" });
   }
@@ -78,69 +97,78 @@ export default function EditForm() {
       animationIn="slideInUp"
       animationOut="slideOutDown"
       backdropOpacity={0.5}
-      onBackdropPress={() => dispatch(onToggleEditForm({ isOpenForm: false }))}
+      onBackdropPress={() => onToggleEditForm({ isOpenForm: false })}
       style={{ justifyContent: "flex-end", margin: 0 }}
+      avoidKeyboard={false}
     >
-      <View style={styles.milestoneFormContainer}>
-        <View style={styles.formHeaderBox}>
-          <Text style={styles.formTitle}>edit milestones</Text>
-          <Text style={styles.formDescription}></Text>
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === "ios" ? 20 : 100}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.milestoneFormContainer}>
+          <View style={styles.formHeaderBox}>
+            <Text style={styles.formTitle}>edit milestones</Text>
+            <Text style={styles.formDescription}></Text>
+          </View>
+
+          <FormInput label="Milestone Name">
+            <TextInput
+              style={styles.input}
+              placeholder="e.g 5 Minutes Exercise"
+              placeholderTextColor={colors.textGrey2}
+              keyboardType="default"
+              autoCapitalize="none"
+              value={formData.name}
+              editable={!isUpdatingMilestone}
+              onChangeText={(text) =>
+                setFormData((cur) => ({ ...cur, name: text }))
+              }
+            />
+          </FormInput>
+
+          <FormInput label="Add Description">
+            <TextInput
+              style={styles.input}
+              placeholder="eg. Tried a 5 Minutes Exercise Plan..."
+              placeholderTextColor={colors.textGrey2}
+              keyboardType="default"
+              autoCapitalize="none"
+              editable={!isUpdatingMilestone}
+              value={formData.description}
+              onChangeText={(text) =>
+                setFormData((cur) => ({ ...cur, description: text }))
+              }
+            />
+          </FormInput>
+
+          <View style={styles.buttonsContainer}>
+            <Pressable
+              style={[
+                styles.buttons,
+                styles.buttonSave,
+                (!isNameInputFilled || isUpdatingMilestone) &&
+                  styles.buttonDisabled,
+              ]}
+              onPress={handleMilestoneUpdate}
+              disabled={!isNameInputFilled || isUpdatingMilestone}
+            >
+              <Text style={styles.buttonText}>
+                {isUpdatingMilestone ? "Updating Milestone..." : "Update"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.buttons, styles.buttonCancel]}
+              onPress={() => onToggleEditForm({ isOpenForm: false })}
+              disabled={isUpdatingMilestone}
+            >
+              <Text style={styles.buttonCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
         </View>
-
-        <FormInput label="Milestone Name">
-          <TextInput
-            style={styles.input}
-            placeholder="e.g 5 Minutes Exercise"
-            placeholderTextColor={colors.textGrey2}
-            keyboardType="default"
-            autoCapitalize="none"
-            value={formData.name}
-            editable={!isUpdatingMilestone}
-            onChangeText={(text) =>
-              setFormData((cur) => ({ ...cur, name: text }))
-            }
-          />
-        </FormInput>
-
-        <FormInput label="Add Description">
-          <TextInput
-            style={styles.input}
-            placeholder="eg. Tried a 5 Minutes Exercise Plan..."
-            placeholderTextColor={colors.textGrey2}
-            keyboardType="default"
-            autoCapitalize="none"
-            editable={!isUpdatingMilestone}
-            value={formData.description}
-            onChangeText={(text) =>
-              setFormData((cur) => ({ ...cur, description: text }))
-            }
-          />
-        </FormInput>
-
-        <View style={styles.buttonsContainer}>
-          <Pressable
-            style={[
-              styles.buttons,
-              styles.buttonSave,
-              (!isNameInputFilled || isUpdatingMilestone) && styles.buttonDisabled,
-            ]}
-            onPress={handleMilestoneUpdate}
-            disabled={!isNameInputFilled || isUpdatingMilestone}
-          >
-            <Text style={styles.buttonText}>
-              {isUpdatingMilestone ? "Updating Milestone..." : "Update"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.buttons, styles.buttonCancel]}
-            onPress={() => dispatch(onToggleEditForm({ isOpenForm: false }))}
-            disabled={isUpdatingMilestone}
-          >
-            <Text style={styles.buttonCancelText}>Cancel</Text>
-          </Pressable>
-        </View>
-      </View>
+      </KeyboardAwareScrollView>
     </Modal>
   );
 }

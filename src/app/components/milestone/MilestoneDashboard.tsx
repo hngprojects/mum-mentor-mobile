@@ -5,7 +5,7 @@ import { getMilestoneCategories } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
 import { showToast } from "@/src/core/utils/toast";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import React, { useEffect } from "react";
 // import Checkbox from "@/src/assets/images/tick-square.png";
 
 import { StyleSheet, Text, View } from "react-native";
@@ -25,8 +25,14 @@ export default function MilestoneDashboard({
 
   const categories = data?.categories;
 
-  if (error) {
-    showToast.error(error.message);
+  useEffect(() => {
+    if (isError) {
+      showToast.error(error.message);
+    }
+  }, [isError, error]);
+
+  if (isLoading) {
+    return <View>Loading...</View>;
   }
 
   return (
@@ -36,8 +42,15 @@ export default function MilestoneDashboard({
         <Text style={styles.categoryText}>Category</Text>
 
         <View style={styles.categoryContents}>
-          <View style={styles.categories}>
-            {categories?.slice(0, 2).map((category, idx) => (
+          <View
+            style={{
+              ...styles.categories,
+              flexWrap: "wrap",
+              flexDirection: "row",
+              gap: 5.6,
+            }}
+          >
+            {categories?.map((category, idx) => (
               <CategoryBox
                 key={idx}
                 category={category}
@@ -48,7 +61,7 @@ export default function MilestoneDashboard({
             ))}
           </View>
 
-          <View style={styles.categories}>
+          {/* <View style={styles.categories}>
             {categories?.slice(2).map((category, idx) => (
               <CategoryBox
                 key={idx}
@@ -58,7 +71,7 @@ export default function MilestoneDashboard({
                 childId={childId}
               />
             ))}
-          </View>
+          </View> */}
         </View>
       </View>
 
@@ -77,7 +90,6 @@ const styles = StyleSheet.create({
 
   categoryContents: {
     gap: 16,
-
     flexWrap: "wrap",
   },
 

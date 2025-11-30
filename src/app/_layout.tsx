@@ -7,18 +7,19 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { store } from "@/src/store/store";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import Toast from "react-native-toast-message";
-import { Provider } from "react-redux";
 import { SetupProvider } from "../core/hooks/setupContext";
 import { AuthProvider, useAuth } from "../core/services/authContext";
 import { SavedResourcesProvider } from "../core/services/savedResourcesContext";
 import { colors } from "../core/styles";
 import { useAssetLoading } from "../core/utils/assetsLoading";
 import { toastConfig } from "../core/utils/toast";
+
 import { JournalProvider } from "./components/journal/journalContext";
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -152,7 +153,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <Provider store={store}>
+       
           <AuthProvider>
             <SetupProvider>
               <SavedResourcesProvider>
@@ -164,7 +165,7 @@ export default function RootLayout() {
               </SavedResourcesProvider>
             </SetupProvider>
           </AuthProvider>
-        </Provider>
+       
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

@@ -2,22 +2,29 @@ import ModalAnimationWrapper from "@/src/app/components/milestone/ModalAnimation
 import { deleteMilestoneAction } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
 import { showToast } from "@/src/core/utils/toast";
-import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import {
-  getMilestoneStates,
-  onDeleteMilestone,
-  onToggleDeleteModal,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { useShallow } from "zustand/react/shallow";
 
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function DeleteModal() {
-  const { isDeleteModalOpen, milestoneToDelId } =
-    useAppSelector(getMilestoneStates);
+  const {
+    milestoneToDelId,
+    onDeleteMilestone,
+    onToggleDeleteModal,
+    isDeleteModalOpen,
+  } = useMilestoneStore(
+    useShallow((state) => ({
+      milestoneToDelId: state.milestoneToDelId,
+      onDeleteMilestone: state.onDeleteMilestone,
+      onToggleDeleteModal: state.onToggleDeleteModal,
+      isDeleteModalOpen: state.isDeleteModalOpen,
+    }))
+  );
+
   const queryClient = useQueryClient();
-  const dispatch = useAppDispatch();
 
   const { mutate: deleteMilestone, isPending: isDeletingMilestone } =
     useMutation({
@@ -26,18 +33,22 @@ export default function DeleteModal() {
       onSuccess: () => {
         onCloseModal();
         queryClient.invalidateQueries({ queryKey: ["milestonesByCat"] });
+        queryClient.invalidateQueries({ queryKey: ["pending-milestones"] });
+        showToast.success("Milestone deleted successfully");
       },
       onError: (error) => {
         showToast.error(error.message);
       },
     });
 
-  const onCloseModal = () =>
-    dispatch(onToggleDeleteModal({ isOpenForm: false }));
+  const onCloseModal = () => onToggleDeleteModal({ isOpenForm: false });
 
   const handleDeleteMilestone = () => {
-    dispatch(onDeleteMilestone());
-    deleteMilestone(milestoneToDelId);
+    deleteMilestone(milestoneToDelId, {
+      onSuccess: () => {
+        onDeleteMilestone();
+      },
+    });
   };
 
   return (
@@ -127,7 +138,7 @@ const styles = StyleSheet.create({
   },
 
   modalContainer: {
-    padding: 24,
+    paddingTop: 10,
     gap: 24,
     borderRadius: 8,
     backgroundColor: "white",

@@ -1,5 +1,7 @@
 import { getChildProfiles } from "@/src/core/services/milestoneService";
 import { colors, typography } from "@/src/core/styles";
+import { getChildInitials } from "@/src/core/utils/avatar";
+import { getAge } from "@/src/core/utils/dates";
 import { showToast } from "@/src/core/utils/toast";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -45,16 +47,40 @@ export default function ChildList() {
           style={styles.childBox}
           onPress={() => handleChildPress(child.id, child.full_name)}
         >
-          <Image
-            source={{
-              uri: child.profile_picture_url || "https://via.placeholder.com/53", // fallback avatar
-            }}
-            style={styles.childBoxAvatar}
-          />
+          {child.profile_picture_url ? (
+            <Image
+              source={{
+                uri:
+                  child.profile_picture_url || "https://via.placeholder.com/53", // fallback avatar
+              }}
+              style={styles.childBoxAvatar}
+            />
+          ) : (
+            <View
+              style={[
+                styles.avatarContainer,
+                {
+                  width: 52,
+                  height: 52,
+                  borderRadius: 26,
+                  backgroundColor: getChildInitials(child.full_name)
+                    .backgroundColor,
+                },
+              ]}
+            >
+              <Text style={[styles.initials, { fontSize: 26 * 0.75 }]}>
+                {getChildInitials(child.full_name).initials}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.childBoxTextBox}>
-            <Text style={styles.childBoxTitle}>{child.full_name || "Unknown"}</Text>
-            <Text style={styles.childBoxDesc}>5 months old</Text>
+            <Text style={styles.childBoxTitle}>
+              {child.full_name || "Unknown"}
+            </Text>
+            <Text style={styles.childBoxDesc}>
+              {getAge(child.date_of_birth)} old
+            </Text>
           </View>
         </TouchableOpacity>
       ))}
@@ -63,6 +89,17 @@ export default function ChildList() {
 }
 
 const styles = StyleSheet.create({
+  avatarContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#fff",
+  },
+  initials: {
+    ...typography.labelLarge,
+    color: "#555",
+    fontWeight: "bold",
+  },
   childBoxDesc: {
     ...typography.bodyMedium,
     color: colors.textSecondary,

@@ -1,5 +1,11 @@
 import React, { PropsWithChildren } from "react";
-import { StyleSheet, KeyboardAvoidingView, Platform, View } from "react-native";
+import {
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 import Modal from "react-native-modal";
 
 interface ModalAnimationProps extends PropsWithChildren {
@@ -12,6 +18,7 @@ export default function ModalAnimationWrapper({
   isVisible,
   onBackdropPress,
 }: ModalAnimationProps) {
+  const { width, height } = Dimensions.get("screen");
   return (
     <Modal
       isVisible={isVisible}
@@ -21,7 +28,11 @@ export default function ModalAnimationWrapper({
       animationOut="zoomOut"
       animationInTiming={300}
       animationOutTiming={300}
+      deviceHeight={height}
+      deviceWidth={width}
+      statusBarTranslucent={true}
       useNativeDriver
+      coverScreen={true}
       style={styles.overlay}
     >
       <KeyboardAvoidingView

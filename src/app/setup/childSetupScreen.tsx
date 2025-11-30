@@ -1,27 +1,36 @@
-import {useAuth} from "@/src/core/services/authContext";
-import {colors, spacing, typography} from "@/src/core/styles";
-import {ms, vs} from "@/src/core/styles/scaling";
-import {showToast} from "@/src/core/utils/toast";
-import {router} from "expo-router";
-import {StatusBar} from "expo-status-bar";
-import React, {useCallback, useEffect, useState} from "react";
-import {ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from "react-native";
-import {useSetup} from "../../core/hooks/setupContext";
+import { useAuth } from "@/src/core/services/authContext";
+import { colors, spacing, typography } from "@/src/core/styles";
+import { ms, vs } from "@/src/core/styles/scaling";
+import { showToast } from "@/src/core/utils/toast";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSetup } from "../../core/hooks/setupContext";
 // ✅ FIXED: ChildData interface is correctly imported here
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // import { getProfileSetup } from "../../core/services/profileSetup.service";
-import {completeSetupFlow} from "../../core/services/setupService";
-import ChildSetupItem, {ChildData} from "../components/ChildSetupItem";
+import storage from "@/src/store/storage";
+import { completeSetupFlow } from "../../core/services/setupService";
+import ChildSetupItem, { ChildData } from "../components/ChildSetupItem";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
-import {SuccessModal, useSuccessModal} from "../components/SuccessModal";
-import storage from "@/src/store/storage";
+import { SuccessModal, useSuccessModal } from "../components/SuccessModal";
 
 const ChildSetupScreen: React.FC = () => {
   const { user, isSessionLoading } = useAuth();
   const { momSetupData } = useSetup();
   const [children, setChildren] = useState<ChildData[]>([
-      {fullName: "", dob: "", gender: ""},
+    { fullName: "", dob: "", gender: "" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const { visible, show, hide } = useSuccessModal();
@@ -92,16 +101,14 @@ const ChildSetupScreen: React.FC = () => {
 
   const areAllFilledChildrenComplete = useCallback(() => {
     const filled = children.filter(
-        (child) => child.fullName || child.dob || child.gender
+      (child) => child.fullName || child.dob || child.gender
     );
-    return filled.every(
-        (child) => child.fullName && child.dob && child.gender
-    );
+    return filled.every((child) => child.fullName && child.dob && child.gender);
   }, [children]);
 
   const getCompleteChildren = useCallback(() => {
     return children.filter(
-        (child) => child.fullName && child.dob && child.gender
+      (child) => child.fullName && child.dob && child.gender
     );
   }, [children]);
 
@@ -136,15 +143,15 @@ const ChildSetupScreen: React.FC = () => {
 
       if (result.success) {
         // Mark setup complete
-          await storage.set("hasCompletedSetup", "true");
+        await storage.set("hasCompletedSetup", "true");
         show(); // success modal
       } else {
         // Normalize the backend error
-          // Throw it so it can be handled in catch
-          throw {
-              message: result.error?.message || "Setup failed",
-              status_code: result.error?.status_code, // backend status code
-              detail: result.error?.detail, // backend detail message
+        // Throw it so it can be handled in catch
+        throw {
+          message: result.error?.message || "Setup failed",
+          status_code: result.error?.status_code, // backend status code
+          detail: result.error?.detail, // backend detail message
         };
       }
     } catch (error: any) {

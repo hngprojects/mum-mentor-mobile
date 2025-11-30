@@ -1,102 +1,88 @@
 import ModalAnimationWrapper from "@/src/app/components/milestone/ModalAnimationWrapper";
 import { colors, typography } from "@/src/core/styles";
-import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import {
-  getMilestoneStates,
-  onToggleEditSuccessModal,
-} from "@/src/store/milestoneSlice";
+import { useMilestoneStore } from "@/src/store/useMilestone";
 import React from "react";
 
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
-export default function SuccessModal() {
-  const { isSuccessModalOpen } = useAppSelector(getMilestoneStates);
-  const dispatch = useAppDispatch();
+export default function EditSuccessModal() {
+  const { onToggleEditSuccessModal, isEditSuccessModalOpen } =
+    useMilestoneStore(
+      useShallow((state) => ({
+        onToggleEditSuccessModal: state.onToggleEditSuccessModal,
+        isEditSuccessModalOpen: state.isEditSuccessModalOpen,
+      }))
+    );
 
-  const onCloseModal = () => dispatch(onToggleEditSuccessModal(false));
+  const onCloseModal = () => onToggleEditSuccessModal(false);
 
   return (
     <ModalAnimationWrapper
-      isVisible={isSuccessModalOpen}
+      isVisible={isEditSuccessModalOpen}
       onBackdropPress={onCloseModal}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalTextBox}>
-          <View style={styles.modalHeader}>
-            <Image
-              source={require("../../../assets/images/green-success.png")}
-            />
-            <Text style={styles.successHeaderText}>
-              Milestone updated successfully
-            </Text>
-          </View>
-
-          <Pressable
-            style={[styles.button, styles.buttonSave]}
-            onPress={onCloseModal}
-          >
-            Done
-          </Pressable>
+      <View style={styles.modalTextBox}>
+        <View style={styles.modalHeader}>
+          <Image source={require("../../../assets/images/green-success.png")} />
+          <Text style={styles.successHeaderText}>
+            Milestone updated successfully
+          </Text>
         </View>
+
+        <Pressable
+          style={[styles.button, styles.buttonSave]}
+          onPress={onCloseModal}
+        >
+          <Text style={styles.buttonText}>Done</Text>
+        </Pressable>
       </View>
     </ModalAnimationWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  // successful modal
-
+  buttonText: {
+    ...typography.buttonText,
+    color: "white",
+    fontWeight: "500",
+  },
   successHeaderText: {
     ...typography.heading3,
     color: "black",
-    fontWeight: 600,
+    fontWeight: "600",
     textAlign: "center",
   },
+
   successIcon: {
     width: 57.52,
     height: 52.52,
   },
+
   modalHeader: {
-    gap: 12,
+    marginBottom: 12,
     alignItems: "center",
+    gap: 12,
   },
 
   modalTextBox: {
-    gap: 32,
+    gap: 6,
   },
 
-  modalContainer: {
-    padding: 24,
-    borderRadius: 8,
-    backgroundColor: "white",
-  },
   buttonSave: {
-    color: "white",
     backgroundColor: colors.primary,
+    ...typography.buttonText,
+    color: "white",
+    fontWeight: "500",
   },
 
   button: {
-    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    ...typography.buttonText,
-    fontWeight: 500,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-  },
-
-  backgroundOverlay: {
-    backgroundColor: "#00000099",
-    position: "fixed",
-    width: "100%",
-    height: "100%",
-    top: 0,
-    left: 0,
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
   },
 });
