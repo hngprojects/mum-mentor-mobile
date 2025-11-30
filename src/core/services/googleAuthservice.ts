@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {GoogleSignin} from "@react-native-google-signin/google-signin";
 import * as SecureStore from "expo-secure-store";
-import { getAuthToken, removeAuthToken, setAuthToken } from "./authStorage";
-import { getCurrentUser, UserProfile } from "./userService";
+import {getAuthToken, removeAuthToken, setAuthToken} from "./authStorage";
+import {getCurrentUser, UserProfile} from "./userService";
 
 const API_BASE_URL = "https://api.staging.kaizen.emerj.net";
 
@@ -99,7 +99,8 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
       await setAuthToken(access_token);
 
       // This part should fetch user profile
-      const userProfile = await getCurrentUser();
+        const userProfile = await
+            getCurrentUser();
 
       if (userProfile) {
       } else {

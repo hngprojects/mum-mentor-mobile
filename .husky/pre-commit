@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+# Run the Node script to ensure the hook file exists
+node scripts/ensureXcodeCloudHooks.js
+
+# Ensure the required file is NOT accidentally committed if it was touched
+# by the copy operation and added to stage, unless you absolutely need it staged.
+# (Optional: Only if you want to explicitly unstage it before commit)
+git reset HEAD ios/ci_scripts/ci_post_clone.sh
